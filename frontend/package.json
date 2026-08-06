@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npx vite\" \"node server/index.js\"",
+    "dev": "npx vite",
+    "backend": "node ../backend/server/index.cjs",
+    "start": "concurrently \"npm run backend\" \"npm run dev\"",
     "build": "npx -p typescript tsc && npx vite build",
-    "preview": "npx vite preview",
-    "server": "node server/index.js"
+    "preview": "npx vite preview"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
