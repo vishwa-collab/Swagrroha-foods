@@ -1,31 +1,31 @@
 {
-  "hash": "0faa7f2b",
+  "hash": "824c5658",
   "configHash": "74787c29",
-  "lockfileHash": "c4cdf110",
-  "browserHash": "3f32517f",
+  "lockfileHash": "d16b1278",
+  "browserHash": "8d3eef76",
   "optimized": {
     "canvas-confetti": {
       "src": "../../node_modules/canvas-confetti/dist/confetti.module.mjs",
       "file": "canvas-confetti.js",
-      "fileHash": "1e4792d5",
+      "fileHash": "971d8387",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "2409f6fc",
+      "fileHash": "70a8894a",
       "needsInterop": false
     },
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "046d5fe6",
+      "fileHash": "ddfa2fcc",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "d5893f64",
+      "fileHash": "b7dca0df",
       "needsInterop": true
     }
   },
