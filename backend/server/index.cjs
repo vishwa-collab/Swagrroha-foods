@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { Pool } = require('pg');
 
 const app = express();
 
@@ -27,35 +28,110 @@ app.use(cors({
 
 app.use(express.json());
 
+// ── PostgreSQL Connection Pool (Render Database)
+const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
+let pool = null;
+
+if (dbUrl) {
+  pool = new Pool({
+    connectionString: dbUrl,
+    ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+  });
+
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      order_id VARCHAR(100) PRIMARY KEY,
+      phone VARCHAR(50),
+      utr VARCHAR(100),
+      data JSONB NOT NULL,
+      status VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `).then(() => console.log('✅ PostgreSQL Database connected and orders table ready'))
+    .catch(err => console.error('❌ PostgreSQL table init error:', err));
+} else {
+  console.log('ℹ️ DATABASE_URL not detected. Falling back to in-memory order store.');
+}
+
 // ── Root endpoint
 app.get('/', (req, res) => {
-  res.json({ message: 'PJR Swagrooha Foods API is running successfully' });
+  res.json({ 
+    message: 'PJR Swagrooha Foods API is running successfully',
+    database: pool ? 'PostgreSQL Connected' : 'In-Memory Mode' 
+  });
 });
 
 // ── Health check (Render uses this to confirm service is alive)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'PJR Swagrooha Foods API' });
+  res.json({ 
+    status: 'ok', 
+    service: 'PJR Swagrooha Foods API',
+    db: pool ? 'postgresql' : 'in-memory'
+  });
 });
 
-// ── Orders store (in-memory; replace with a DB later)
+// ── Fallback in-memory orders store
 let orders = [];
 
 // POST /api/orders — place new order
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
   const order = req.body;
   if (!order || !order.orderId) {
     return res.status(400).json({ error: 'Invalid order data' });
   }
-  // Remove duplicate orderId if re-submitted
+
+  // Save to PostgreSQL if connected
+  if (pool) {
+    try {
+      await pool.query(
+        `INSERT INTO orders (order_id, phone, utr, data, status)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (order_id) DO UPDATE SET data = $4, status = $5`,
+        [
+          order.orderId,
+          order.customer && order.customer.phone ? order.customer.phone.trim().toLowerCase() : '',
+          order.utrNumber ? order.utrNumber.trim().toLowerCase() : '',
+          JSON.stringify(order),
+          order.status || 'PLACED'
+        ]
+      );
+      console.log(`✅ New order saved to PostgreSQL: ${order.orderId}`);
+    } catch (e) {
+      console.error('Error saving to PostgreSQL:', e);
+    }
+  }
+
+  // Sync to fallback memory store
   orders = orders.filter(o => o.orderId !== order.orderId);
   orders.unshift(order);
   console.log(`New order received: ${order.orderId}`);
+
   res.status(201).json({ success: true, orderId: order.orderId });
 });
 
 // GET /api/orders/:query — track order by orderId / phone / UTR
-app.get('/api/orders/:query', (req, res) => {
+app.get('/api/orders/:query', async (req, res) => {
   const q = req.params.query.trim().toLowerCase();
+
+  if (pool) {
+    try {
+      const result = await pool.query(
+        `SELECT data FROM orders 
+         WHERE LOWER(order_id) = $1 
+            OR LOWER(phone) = $1 
+            OR LOWER(utr) = $1
+         LIMIT 1`,
+        [q]
+      );
+      if (result.rows.length > 0) {
+        const d = result.rows[0].data;
+        return res.json(typeof d === 'string' ? JSON.parse(d) : d);
+      }
+    } catch (e) {
+      console.error('Error querying PostgreSQL:', e);
+    }
+  }
+
   const found = orders.find(o =>
     o.orderId.toLowerCase() === q ||
     (o.customer && o.customer.phone === q) ||
@@ -66,18 +142,55 @@ app.get('/api/orders/:query', (req, res) => {
 });
 
 // PUT /api/orders/:orderId/status — owner updates status
-app.put('/api/orders/:orderId/status', (req, res) => {
+app.put('/api/orders/:orderId/status', async (req, res) => {
   const { orderId } = req.params;
   const { status, paymentStatus } = req.body;
+
+  let updatedOrder = null;
+
+  if (pool) {
+    try {
+      const result = await pool.query('SELECT data FROM orders WHERE order_id = $1', [orderId]);
+      if (result.rows.length > 0) {
+        let orderObj = typeof result.rows[0].data === 'string' ? JSON.parse(result.rows[0].data) : result.rows[0].data;
+        if (status) orderObj.status = status;
+        if (paymentStatus) orderObj.paymentStatus = paymentStatus;
+        
+        await pool.query(
+          'UPDATE orders SET data = $1, status = $2 WHERE order_id = $3',
+          [JSON.stringify(orderObj), status || orderObj.status, orderId]
+        );
+        updatedOrder = orderObj;
+      }
+    } catch (e) {
+      console.error('Error updating status in PostgreSQL:', e);
+    }
+  }
+
   const idx = orders.findIndex(o => o.orderId === orderId);
-  if (idx === -1) return res.status(404).json({ error: 'Order not found' });
-  if (status) orders[idx].status = status;
-  if (paymentStatus) orders[idx].paymentStatus = paymentStatus;
-  res.json({ success: true, order: orders[idx] });
+  if (idx !== -1) {
+    if (status) orders[idx].status = status;
+    if (paymentStatus) orders[idx].paymentStatus = paymentStatus;
+    if (!updatedOrder) updatedOrder = orders[idx];
+  }
+
+  if (!updatedOrder) return res.status(404).json({ error: 'Order not found' });
+  res.json({ success: true, order: updatedOrder });
 });
 
 // GET /api/admin/orders — owner fetches all orders
-app.get('/api/admin/orders', (req, res) => {
+app.get('/api/admin/orders', async (req, res) => {
+  if (pool) {
+    try {
+      const result = await pool.query('SELECT data FROM orders ORDER BY created_at DESC');
+      const pgOrders = result.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+      if (pgOrders.length > 0) {
+        return res.json(pgOrders);
+      }
+    } catch (e) {
+      console.error('Error fetching orders from PostgreSQL:', e);
+    }
+  }
   res.json(orders);
 });
 
