@@ -101,7 +101,7 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black">
-          {currentOrder.paymentStatus === 'VERIFIED_PAID' ? 'Payment Verified & Order Confirmed! 🎉' : 'UTR Submitted & Order Created!'}
+          Order Placed & Sent via WhatsApp! 🎉
         </h1>
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
@@ -112,31 +112,16 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
       <div className="bg-emerald-50 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500 shadow-lg text-center space-y-5">
         <div className="inline-flex items-center gap-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
           <MessageCircle className="w-4 h-4" />
-          {currentOrder.paymentStatus === 'VERIFIED_PAID' ? 'Order Sent via Backend & WhatsApp' : 'Send Order to Owner on WhatsApp'}
+          Order Receipt Sent to WhatsApp
         </div>
 
         <div className="space-y-1">
           <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            {currentOrder.paymentStatus === 'VERIFIED_PAID' ? 'Order Successfully Placed & Paid! ✅' : 'Click Below to Confirm Order on WhatsApp'}
+            Order Confirmed & Payment Received! ✅
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-            Payment Reference ID: <strong className="text-slate-900 font-mono">{currentOrder.razorpayPaymentId || currentOrder.utrNumber}</strong>
+            Order #{currentOrder.orderId} is registered for fresh delivery on <strong className="text-slate-900">{currentOrder.deliveryDate.dayOfWeekName}</strong>.
           </p>
-        </div>
-
-        {/* PAYMENT REF BOX CARD */}
-        <div className="bg-slate-900 text-white p-4 rounded-2xl max-w-md mx-auto flex items-center justify-between gap-4 border border-slate-800 shadow-md">
-          <div className="text-left">
-            <span className="text-[10px] font-extrabold uppercase text-amber-400 block tracking-wider">Payment Reference / UTR</span>
-            <span className="font-mono font-black text-lg text-white tracking-widest">{currentOrder.razorpayPaymentId || currentOrder.utrNumber}</span>
-          </div>
-          <button
-            onClick={copyUtr}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs px-3 py-2 rounded-xl border border-slate-700 transition-all shrink-0"
-          >
-            {utrCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            <span>{utrCopied ? 'Copied' : 'Copy Ref'}</span>
-          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -145,7 +130,7 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
             className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all text-sm"
           >
             <MessageCircle className="w-5 h-5" />
-            <span>Open WhatsApp Chat</span>
+            <span>Open WhatsApp Receipt</span>
             <ExternalLink className="w-4 h-4" />
           </button>
 
@@ -164,7 +149,7 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-swiggy border border-slate-100 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base">Order Summary & Verification Status</h3>
+            <h3 className="font-extrabold text-slate-900 text-base">Order Summary</h3>
             <p className="text-xs text-slate-400">PJR Swagrooha Foods • Scheduled Homemade Delivery</p>
           </div>
           <span className="bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1 rounded-lg">
@@ -187,33 +172,18 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
         </div>
 
         {/* Verification Status Badge */}
-        {currentOrder.paymentStatus === 'VERIFIED_PAID' ? (
-          <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 flex items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div>
-                <span className="font-extrabold text-emerald-950 block">Payment Verified & Paid ✅</span>
-                <span className="text-emerald-800 text-[11px]">Razorpay Payment ID: <strong className="font-mono">{currentOrder.razorpayPaymentId || currentOrder.utrNumber}</strong></span>
-              </div>
+        <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 flex items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div>
+              <span className="font-extrabold text-emerald-950 block">Payment Completed via PhonePe / GPay ✅</span>
+              <span className="text-emerald-800 text-[11px]">UPI Payee: <strong>8125154114@ybl</strong></span>
             </div>
-            <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-              Paid ✅
-            </span>
           </div>
-        ) : (
-          <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 flex items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-              <div>
-                <span className="font-extrabold text-amber-950 block">Payment Verification Pending</span>
-                <span className="text-amber-800 text-[11px]">Owner Vishwa is matching UTR <strong className="font-mono">{currentOrder.utrNumber}</strong> in PhonePe app.</span>
-              </div>
-            </div>
-            <span className="bg-amber-200 text-amber-900 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-              Pending Owner Check
-            </span>
-          </div>
-        )}
+          <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
+            Paid ✅
+          </span>
+        </div>
 
         {/* Ordered Items List */}
         <div className="space-y-3">

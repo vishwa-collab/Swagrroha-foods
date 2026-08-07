@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const crypto = require('crypto');
 const { Pool } = require('pg');
-const Razorpay = require('razorpay');
 const { sendWhatsAppNotification } = require('./whatsappService.cjs');
 
 const app = express();
@@ -29,25 +27,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// ── Initialize Razorpay SDK
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
-
-let razorpayInstance = null;
-if (razorpayKeyId && razorpayKeySecret) {
-  try {
-    razorpayInstance = new Razorpay({
-      key_id: razorpayKeyId,
-      key_secret: razorpayKeySecret
-    });
-    console.log('✅ Razorpay SDK initialized successfully with provided API credentials');
-  } catch (err) {
-    console.error('❌ Error initializing Razorpay SDK:', err.message);
-  }
-} else {
-  console.log('ℹ️ RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET not set in environment. Running in Demo/Test payment mode.');
-}
-
 // ── PostgreSQL Connection Pool (Render Database)
 const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
 let pool = null;
@@ -63,8 +42,6 @@ if (dbUrl) {
       order_id VARCHAR(100) PRIMARY KEY,
       phone VARCHAR(50),
       utr VARCHAR(100),
-      razorpay_payment_id VARCHAR(100),
-      razorpay_order_id VARCHAR(100),
       data JSONB NOT NULL,
       status VARCHAR(50),
       payment_status VARCHAR(50),
@@ -80,8 +57,7 @@ if (dbUrl) {
 app.get('/', (req, res) => {
   res.json({ 
     message: 'PJR Swagrooha Foods API is running successfully',
-    database: pool ? 'PostgreSQL Connected' : 'In-Memory Mode',
-    razorpay: razorpayInstance ? 'Active' : 'Demo Mode'
+    database: pool ? 'PostgreSQL Connected' : 'In-Memory Mode'
   });
 });
 
@@ -90,8 +66,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     service: 'PJR Swagrooha Foods API',
-    db: pool ? 'postgresql' : 'in-memory',
-    razorpay: !!razorpayInstance
+    db: pool ? 'postgresql' : 'in-memory'
   });
 });
 
@@ -103,23 +78,20 @@ async function persistOrder(order) {
   if (pool) {
     try {
       await pool.query(
-        `INSERT INTO orders (order_id, phone, utr, razorpay_payment_id, razorpay_order_id, data, status, payment_status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO orders (order_id, phone, utr, data, status, payment_status)
+         VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (order_id) DO UPDATE SET 
-           data = $6, 
-           status = $7, 
-           payment_status = $8,
-           razorpay_payment_id = $4,
-           razorpay_order_id = $5`,
+           data = $4, 
+           status = $5, 
+           payment_status = $6,
+           utr = $3`,
         [
           order.orderId,
           order.customer && order.customer.phone ? order.customer.phone.trim().toLowerCase() : '',
-          order.utrNumber || order.razorpayPaymentId || '',
-          order.razorpayPaymentId || '',
-          order.razorpayOrderId || '',
+          order.utrNumber || 'DIRECT_UPI_PAYMENT',
           JSON.stringify(order),
           order.status || 'PLACED',
-          order.paymentStatus || 'VERIFIED_PAID'
+          order.paymentStatus || 'PAID_VIA_UPI'
         ]
       );
       console.log(`✅ Order ${order.orderId} saved to PostgreSQL`);
@@ -132,153 +104,33 @@ async function persistOrder(order) {
   orders.unshift(order);
 }
 
-// ── 1. Create Razorpay Order Endpoint
-app.post('/api/create-razorpay-order', async (req, res) => {
-  try {
-    const { amount, receipt, notes } = req.body;
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Valid payment amount is required' });
-    }
-
-    const amountInPaise = Math.round(Number(amount) * 100);
-    const orderReceipt = receipt || `rcpt_${Date.now()}`;
-
-    // If Razorpay SDK is configured with real API keys
-    if (razorpayInstance) {
-      const options = {
-        amount: amountInPaise,
-        currency: 'INR',
-        receipt: orderReceipt,
-        notes: notes || {}
-      };
-
-      const razorpayOrder = await razorpayInstance.orders.create(options);
-      return res.json({
-        success: true,
-        keyId: razorpayKeyId,
-        razorpayOrderId: razorpayOrder.id,
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        receipt: razorpayOrder.receipt
-      });
-    }
-
-    // Demo Mode (fallback if API keys are not provided yet)
-    const mockRazorpayOrderId = `order_demo_${Math.floor(100000 + Math.random() * 900000)}`;
-    return res.json({
-      success: true,
-      keyId: 'rzp_test_demo_key',
-      razorpayOrderId: mockRazorpayOrderId,
-      amount: amountInPaise,
-      currency: 'INR',
-      receipt: orderReceipt,
-      isDemoMode: true
-    });
-  } catch (err) {
-    console.error('❌ Error creating Razorpay order:', err);
-    res.status(500).json({ error: err.message || 'Failed to create payment order' });
-  }
-});
-
-// ── 2. Verify Razorpay Payment Endpoint & Save Order & Trigger WhatsApp
-app.post('/api/verify-razorpay-payment', async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order } = req.body;
-
-    if (!order || !order.orderId) {
-      return res.status(400).json({ error: 'Order details missing' });
-    }
-
-    let isSignatureValid = false;
-
-    if (razorpayKeySecret && razorpay_signature) {
-      const hmac = crypto.createHmac('sha256', razorpayKeySecret);
-      hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
-      const generatedSignature = hmac.digest('hex');
-      isSignatureValid = (generatedSignature === razorpay_signature);
-    } else {
-      // Demo / Test mode fallback
-      isSignatureValid = true;
-      console.log('ℹ️ Running in payment verification demo mode (signature accepted).');
-    }
-
-    if (!isSignatureValid) {
-      console.error('❌ Razorpay payment signature verification failed!');
-      return res.status(400).json({ error: 'Invalid payment signature. Transaction unverified.' });
-    }
-
-    // Construct confirmed order object
-    const finalOrder = {
-      ...order,
-      status: 'PLACED',
-      paymentStatus: 'VERIFIED_PAID',
-      razorpayOrderId: razorpay_order_id || order.razorpayOrderId || '',
-      razorpayPaymentId: razorpay_payment_id || order.razorpayPaymentId || `pay_demo_${Date.now()}`,
-      razorpaySignature: razorpay_signature || '',
-      utrNumber: razorpay_payment_id || order.utrNumber || `PAY-${Date.now()}`,
-      paidAt: new Date().toISOString()
-    };
-
-    // Save order in database & memory
-    await persistOrder(finalOrder);
-
-    // Trigger WhatsApp API Notification
-    const whatsappResult = await sendWhatsAppNotification(finalOrder);
-
-    res.status(200).json({
-      success: true,
-      message: 'Payment verified and order saved successfully',
-      orderId: finalOrder.orderId,
-      whatsapp: whatsappResult
-    });
-  } catch (err) {
-    console.error('❌ Error verifying Razorpay payment:', err);
-    res.status(500).json({ error: err.message || 'Payment verification failed' });
-  }
-});
-
-// ── 3. Razorpay Webhook (Server-to-Server Payment Capture Notification)
-app.post('/api/razorpay-webhook', async (req, res) => {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
-  if (webhookSecret) {
-    const signature = req.headers['x-razorpay-signature'];
-    const hmac = crypto.createHmac('sha256', webhookSecret);
-    hmac.update(JSON.stringify(req.body));
-    const generatedSignature = hmac.digest('hex');
-
-    if (generatedSignature !== signature) {
-      return res.status(400).json({ status: 'invalid_signature' });
-    }
-  }
-
-  const event = req.body.event;
-  console.log(`🔔 Razorpay Webhook Event received: ${event}`);
-
-  if (event === 'payment.captured' || event === 'order.paid') {
-    const paymentEntity = req.body.payload.payment.entity;
-    console.log('Payment Captured:', paymentEntity.id, 'Amount:', paymentEntity.amount / 100);
-  }
-
-  res.json({ status: 'ok' });
-});
-
-// ── POST /api/orders — place new order (Legacy / Manual UTR endpoint)
+// ── POST /api/orders — place new order via Direct UPI & trigger WhatsApp
 app.post('/api/orders', async (req, res) => {
   const order = req.body;
   if (!order || !order.orderId) {
     return res.status(400).json({ error: 'Invalid order data' });
   }
 
-  await persistOrder(order);
-  
-  // Also send WhatsApp notification for manual orders
-  sendWhatsAppNotification(order).catch(e => console.error('WhatsApp notify error:', e));
+  const finalOrder = {
+    ...order,
+    status: order.status || 'PLACED',
+    paymentStatus: order.paymentStatus || 'PAID_VIA_UPI',
+    createdAt: order.createdAt || new Date().toISOString()
+  };
 
-  res.status(201).json({ success: true, orderId: order.orderId });
+  await persistOrder(finalOrder);
+  
+  // Trigger WhatsApp notification to owner & customer
+  const whatsappResult = await sendWhatsAppNotification(finalOrder);
+
+  res.status(201).json({ 
+    success: true, 
+    orderId: finalOrder.orderId,
+    whatsapp: whatsappResult
+  });
 });
 
-// GET /api/orders/:query — track order by orderId / phone / UTR / paymentId
+// GET /api/orders/:query — track order by orderId / phone / UTR
 app.get('/api/orders/:query', async (req, res) => {
   const q = req.params.query.trim().toLowerCase();
 
@@ -289,7 +141,6 @@ app.get('/api/orders/:query', async (req, res) => {
          WHERE LOWER(order_id) = $1 
             OR LOWER(phone) = $1 
             OR LOWER(utr) = $1
-            OR LOWER(razorpay_payment_id) = $1
          LIMIT 1`,
         [q]
       );
@@ -305,8 +156,7 @@ app.get('/api/orders/:query', async (req, res) => {
   const found = orders.find(o =>
     o.orderId.toLowerCase() === q ||
     (o.customer && o.customer.phone === q) ||
-    (o.utrNumber && o.utrNumber.toLowerCase() === q) ||
-    (o.razorpayPaymentId && o.razorpayPaymentId.toLowerCase() === q)
+    (o.utrNumber && o.utrNumber.toLowerCase() === q)
   );
   if (!found) return res.status(404).json({ error: 'Order not found' });
   res.json(found);

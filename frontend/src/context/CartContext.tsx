@@ -23,7 +23,7 @@ export interface CustomerDetails {
 }
 
 export type OrderStageStatus = 'PLACED' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
-export type PaymentVerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED_PAID' | 'REJECTED';
+export type PaymentVerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED_PAID' | 'PAID_VIA_UPI' | 'REJECTED';
 
 export interface PlacedOrder {
   orderId: string;
@@ -37,9 +37,7 @@ export interface PlacedOrder {
   status: OrderStageStatus;
   paymentStatus: PaymentVerificationStatus;
   utrNumber?: string;
-  razorpayPaymentId?: string;
-  razorpayOrderId?: string;
-  razorpaySignature?: string;
+  paymentMethod?: string;
   paidAt?: string;
   createdAt: string;
 }
@@ -71,10 +69,6 @@ interface CartContextType {
   allOrders: PlacedOrder[];
   addOrder: (order: PlacedOrder) => Promise<{ success: boolean; message?: string }>;
   isUtrUsed: (utr: string) => boolean;
-
-  // Razorpay Gateway Methods
-  createRazorpayOrder: (amount: number, orderId: string) => Promise<{ success: boolean; razorpayOrderId?: string; keyId?: string; error?: string }>;
-  verifyRazorpayPayment: (paymentDetails: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; order: PlacedOrder }) => Promise<{ success: boolean; error?: string }>;
 
   deliveryDateInfo: CalculatedDeliveryDate;
   
@@ -278,70 +272,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  // Razorpay Gateway - Create Razorpay Order
-  const createRazorpayOrder = async (amount: number, orderId: string) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/create-razorpay-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, receipt: orderId }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Failed to initialize payment' };
-      }
-      return {
-        success: true,
-        razorpayOrderId: data.razorpayOrderId,
-        keyId: data.keyId
-      };
-    } catch (err: any) {
-      console.warn('Network error when calling create-razorpay-order:', err);
-      return {
-        success: true,
-        razorpayOrderId: `order_demo_${Math.floor(100000 + Math.random() * 900000)}`,
-        keyId: 'rzp_test_demo_key'
-      };
-    }
-  };
 
-  // Razorpay Gateway - Verify Payment & Trigger WhatsApp Notification
-  const verifyRazorpayPayment = async (paymentDetails: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-    order: PlacedOrder;
-  }) => {
-    const confirmedOrder: PlacedOrder = {
-      ...paymentDetails.order,
-      status: 'PLACED',
-      paymentStatus: 'VERIFIED_PAID',
-      razorpayOrderId: paymentDetails.razorpay_order_id,
-      razorpayPaymentId: paymentDetails.razorpay_payment_id,
-      razorpaySignature: paymentDetails.razorpay_signature,
-      utrNumber: paymentDetails.razorpay_payment_id || `PAY-${Date.now()}`
-    };
-
-    try {
-      const res = await fetch(`${API_BASE}/api/verify-razorpay-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentDetails),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Payment verification failed' };
-      }
-    } catch (err) {
-      console.warn('Backend API connection warning, saving order in local store:', err);
-    }
-
-    setCurrentOrder(confirmedOrder);
-    setAllOrders(prev => [confirmedOrder, ...prev.filter(o => o.orderId !== confirmedOrder.orderId)]);
-
-    return { success: true };
-  };
 
   // Owner Auth Functions
   const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
@@ -474,8 +405,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       allOrders,
       addOrder,
       isUtrUsed,
-      createRazorpayOrder,
-      verifyRazorpayPayment,
       deliveryDateInfo,
       adminToken,
       adminEmail,
