@@ -17,6 +17,7 @@ export interface Product {
   weightOptions: WeightOption[];
   isPopular?: boolean;
   isBestseller?: boolean;
+  isNew?: boolean;
 }
 
 // Snacks & Sweets: minimum order 500g (no 250g option)

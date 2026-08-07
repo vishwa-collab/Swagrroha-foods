@@ -27,6 +27,11 @@ app.use(cors({
 
 app.use(express.json());
 
+// ── Root endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'PJR Swagrooha Foods API is running successfully' });
+});
+
 // ── Health check (Render uses this to confirm service is alive)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'PJR Swagrooha Foods API' });
