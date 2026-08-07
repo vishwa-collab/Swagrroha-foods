@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    // Dev proxy — only active during `npm run dev`
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -19,5 +20,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  // Point production API calls to Render backend
+  // This env var is set automatically by Vercel from your project settings
+  define: {
+    'import.meta.env.VITE_API_BASE': JSON.stringify(
+      process.env.VITE_API_BASE || ''
+    ),
   },
 });

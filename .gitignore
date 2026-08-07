@@ -1,1 +1,27 @@
-node_modules
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+frontend/dist/
+frontend/.vite/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Java / Spring Boot
+backend/src/main/resources/application-prod.properties
+backend/target/
+*.class
+*.jar

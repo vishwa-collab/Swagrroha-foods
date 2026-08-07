@@ -1,0 +1,16 @@
+{
+  "name": "pjr-swagrooha-backend",
+  "version": "1.0.0",
+  "description": "PJR Swagrooha Foods - Express API server",
+  "main": "index.cjs",
+  "scripts": {
+    "start": "node index.cjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

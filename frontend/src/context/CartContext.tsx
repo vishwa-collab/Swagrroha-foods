@@ -3,6 +3,10 @@ import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
+// In production (Vercel) VITE_API_BASE = your Render URL, e.g. https://pjr-swagrooha-api.onrender.com
+// In dev it is empty so the Vite proxy (/api → localhost:5000) kicks in.
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || '';
+
 export interface CartItem {
   cartItemId: string;
   product: Product;
@@ -232,7 +236,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     try {
-      await fetch('/api/orders', {
+      await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fullOrder),
@@ -301,7 +305,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      await fetch(`/api/orders/${orderId}/status`, {
+      await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -333,7 +337,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const res = await fetch(`/api/orders/${encodeURIComponent(query)}`);
+      const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setTrackedOrder(data);
