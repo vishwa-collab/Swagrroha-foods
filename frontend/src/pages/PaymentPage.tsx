@@ -52,47 +52,20 @@ export const PaymentPage: React.FC = () => {
   // Generate unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
 
-  // Construct Direct UPI Payment Links with pre-filled exact money
-  const upiNote = encodeURIComponent(`Order ${orderId}`);
+  // Construct Direct NPCI Universal UPI Links with pre-filled exact money
   const payeeName = encodeURIComponent('PJR Swagrooha Foods');
+  const upiNote = encodeURIComponent(`Order ${orderId}`);
 
-  // Generic UPI link supported by PhonePe, GPay, Paytm, BHIM, Cred
-  const directUpiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  // Standard NPCI Universal UPI deep link
+  const universalUpiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
   
-  // App-specific Intent Links
-  const phonePeDeepLink = `phonepe://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
-  const gPayDeepLink = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
-  const paytmDeepLink = `paytmmp://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  // Specific App Intent URLs
+  const phonePeUrl = `phonepe://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  const gPayUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  const paytmUrl = `paytmmp://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
 
-  // Formatted WhatsApp receipt text to send after payment
-  const itemsTextList = cart.map(item => (
-    `• ${item.product.name} (${item.selectedWeightLabel}) x${item.quantity} - ₹${item.unitPrice * item.quantity}`
-  )).join('\n');
-
-  const formattedWhatsAppMessage = 
-`🚀 *New Order Placed — PJR Swagrooha Foods*
-
-*Order ID:* ${orderId}
-*Name:* ${customerDetails.name}
-*Phone:* ${customerDetails.phone}
-*Delivery Area:* ${selectedArea.name}
-*Address:* ${customerDetails.address}
-*Delivery Date:* ${deliveryDateInfo.dayOfWeekName} (${deliveryDateInfo.formattedDate})
-
-📦 *Items:*
-${itemsTextList}
-
-🚚 *Delivery Charge:* ₹${deliveryCharge}
-💰 *Total Paid:* ₹${grandTotal}
-💳 *Payment:* Paid via PhonePe / GPay ✅`;
-
-  const whatsappUrl = `https://wa.me/${businessWhatsAppNumber}?text=${encodeURIComponent(formattedWhatsAppMessage)}`;
-
-  // Handle direct payment click (opens PhonePe / GPay with pre-filled money & saves order)
-  const handleDirectUpiPayment = async (deepLink: string, appName: string) => {
-    setIsSubmitting(true);
-    showToast(`Opening ${appName} with exact amount ₹${grandTotal}...`);
-
+  // Direct Click Handler - Saves order synchronously and prepares state transition
+  const handlePayClick = (appName: string) => {
     const newOrder: PlacedOrder = {
       orderId,
       customer: customerDetails,
@@ -108,22 +81,19 @@ ${itemsTextList}
       createdAt: new Date().toISOString(),
     };
 
-    // Save order on backend DB & state
-    await addOrder(newOrder);
+    // Save order in context & DB asynchronously in background
+    addOrder(newOrder);
 
-    // Launch UPI app (PhonePe / GPay / Paytm)
-    window.location.href = deepLink;
+    showToast(`Opening ${appName} for ₹${grandTotal}...`);
 
+    // Prepare confirmation state for when user returns from UPI app
     setTimeout(() => {
       clearCart();
-      setIsSubmitting(false);
-      // Open WhatsApp chat with pre-filled order receipt
-      window.open(whatsappUrl, '_blank');
       setActiveTab('confirmation');
-    }, 1200);
+    }, 500);
   };
 
-  // Submit with UTR Number (Optional verification step)
+  // Manual Confirmation Form handler
   const handleConfirmWithUtr = async (e: React.FormEvent) => {
     e.preventDefault();
     setUtrError('');
@@ -160,7 +130,6 @@ ${itemsTextList}
 
     clearCart();
     setIsSubmitting(false);
-    window.open(whatsappUrl, '_blank');
     setActiveTab('confirmation');
   };
 
@@ -172,7 +141,7 @@ ${itemsTextList}
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
-      {/* Back button */}
+      {/* Back navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setActiveTab('checkout')}
@@ -193,7 +162,7 @@ ${itemsTextList}
           <Sparkles className="w-6 h-6 text-amber-500" />
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Tap your preferred payment app below. The exact amount <strong className="text-slate-900 font-black">₹{grandTotal}</strong> will open pre-filled automatically!
+          Tap your preferred payment app below. The exact money <strong className="text-slate-900 font-black">₹{grandTotal}</strong> will open pre-filled in your app!
         </p>
       </div>
 
@@ -208,15 +177,14 @@ ${itemsTextList}
           <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
         </div>
 
-        {/* 🚀 DIRECT PHONEPE & GPAY PAYMENT BUTTONS */}
+        {/* 🚀 DIRECT PHONEPE & GPAY PAYMENT LINKS */}
         <div className="max-w-md mx-auto space-y-3 pt-2">
           
-          {/* PhonePe Direct Pay Button */}
-          <button
-            type="button"
-            onClick={() => handleDirectUpiPayment(phonePeDeepLink, 'PhonePe')}
-            disabled={isSubmitting}
-            className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-purple-700/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-purple-500/40"
+          {/* PhonePe Direct Link */}
+          <a
+            href={phonePeUrl}
+            onClick={() => handlePayClick('PhonePe')}
+            className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-purple-700/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-purple-500/40 no-underline"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🟣</div>
@@ -226,14 +194,13 @@ ${itemsTextList}
               </div>
             </div>
             <ExternalLink className="w-5 h-5 shrink-0 text-purple-200" />
-          </button>
+          </a>
 
-          {/* Google Pay Direct Pay Button */}
-          <button
-            type="button"
-            onClick={() => handleDirectUpiPayment(gPayDeepLink, 'Google Pay')}
-            disabled={isSubmitting}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-slate-900/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-slate-700"
+          {/* Google Pay Direct Link */}
+          <a
+            href={gPayUrl}
+            onClick={() => handlePayClick('Google Pay')}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-slate-900/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-slate-700 no-underline"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🔵</div>
@@ -243,25 +210,24 @@ ${itemsTextList}
               </div>
             </div>
             <ExternalLink className="w-5 h-5 shrink-0 text-slate-300" />
-          </button>
+          </a>
 
-          {/* Paytm / Any UPI App Direct Button */}
-          <button
-            type="button"
-            onClick={() => handleDirectUpiPayment(paytmDeepLink, 'Paytm / UPI App')}
-            disabled={isSubmitting}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-6 rounded-2xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-sm flex items-center justify-between gap-3"
+          {/* Universal Any UPI App Link */}
+          <a
+            href={universalUpiUrl}
+            onClick={() => handlePayClick('UPI App')}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-6 rounded-2xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-sm flex items-center justify-between gap-3 no-underline"
           >
             <div className="flex items-center gap-2.5">
               <Smartphone className="w-5 h-5 text-emerald-100" />
               <span className="font-bold">Pay via Paytm / Any Installed UPI App</span>
             </div>
             <ExternalLink className="w-4 h-4 text-emerald-200" />
-          </button>
+          </a>
 
         </div>
 
-        {/* QR Code Section for Desktop / Secondary Scan */}
+        {/* QR Code Section for Desktop / Camera Scan */}
         <div className="pt-4 border-t border-slate-100 max-w-md mx-auto space-y-4">
           <div className="text-center space-y-1">
             <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center justify-center gap-1">
@@ -298,13 +264,13 @@ ${itemsTextList}
           </div>
         </div>
 
-        {/* 📲 CONFIRM ORDER & SEND DETAILS TO WHATSAPP BUTTON */}
+        {/* 📲 CONFIRM ORDER BUTTON */}
         <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-500/80 max-w-md mx-auto space-y-4 text-left">
           <div className="flex items-center gap-2 text-emerald-950">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div>
-              <h4 className="text-sm font-black">Completed Payment? Confirm Order & Send WhatsApp Receipt</h4>
-              <p className="text-xs text-emerald-700">Click below to save order & open WhatsApp chat with owner.</p>
+              <h4 className="text-sm font-black">Completed Payment in App?</h4>
+              <p className="text-xs text-emerald-700">Click below to view receipt & send details to WhatsApp.</p>
             </div>
           </div>
 
@@ -337,7 +303,7 @@ ${itemsTextList}
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Send on WhatsApp'}</span>
+              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Send to WhatsApp'}</span>
             </button>
           </form>
         </div>
