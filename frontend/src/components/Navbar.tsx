@@ -64,15 +64,6 @@ export const Navbar: React.FC = () => {
                   )}
                 </button>
               ))}
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ml-1 ${
-                  activeTab === 'admin' ? 'text-slate-900 bg-slate-100 font-semibold' : 'text-slate-400 hover:text-slate-700'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5" />
-                Owner
-              </button>
             </nav>
 
             {/* Right CTA Group */}
@@ -111,7 +102,6 @@ export const Navbar: React.FC = () => {
             { id: 'products', label: 'Menu', Icon: UtensilsCrossed },
             { id: 'track', label: 'Track', Icon: PackageCheck },
             { id: 'cart', label: 'Cart', Icon: ShoppingBag },
-            { id: 'admin', label: 'Owner', Icon: Settings },
           ].map(({ id, label, Icon }) => (
             <button
               key={id}

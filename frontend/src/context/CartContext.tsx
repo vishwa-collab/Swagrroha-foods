@@ -99,7 +99,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return found || DELIVERY_AREAS[4]; // Default LB Nagar
   });
 
-  const [activeTab, setActiveTab] = useState<'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      if (p.includes('admin') || p.includes('owner') || h.includes('admin') || h.includes('owner')) {
+        return 'admin';
+      }
+    }
+    return 'home';
+  });
 
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>(() => {
     const saved = localStorage.getItem('swagrooha_customer');
@@ -149,6 +158,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem('swagrooha_all_orders', JSON.stringify(allOrders));
   }, [allOrders]);
+
+  // Secret keyboard shortcut (Ctrl + Shift + A) to open Owner Panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setActiveTab('admin');
+        showToast('🔑 Owner Access Triggered');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

@@ -1,9 +1,11 @@
 import React from 'react';
 import { IMAGES } from '../assets/images';
-import { Phone, MessageCircle, MapPin, Calendar, Truck, ShieldCheck, Heart } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { Phone, MessageCircle, MapPin, Calendar, Truck, ShieldCheck, Heart, Lock } from 'lucide-react';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
 
 export const Footer: React.FC = () => {
+  const { setActiveTab } = useCart();
   return (
     <footer className="bg-slate-900 text-slate-300 pt-14 pb-8 border-t-4 border-brand-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
