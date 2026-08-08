@@ -260,13 +260,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     try {
-      await fetch(`${API_BASE}/api/orders`, {
+      const res = await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fullOrder),
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Revert local state additions since backend rejected
+        setAllOrders(prev => prev.filter(o => o.orderId !== fullOrder.orderId));
+        if (currentOrder?.orderId === fullOrder.orderId) {
+          setCurrentOrder(null);
+        }
+        return { success: false, message: errData.error || 'Failed to verify and place order on the server.' };
+      }
     } catch (e) {
-      console.log('Order saved in local state store');
+      console.log('Order saved in local state store (network error)');
     }
 
     return { success: true };

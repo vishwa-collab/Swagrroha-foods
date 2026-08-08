@@ -59,6 +59,7 @@ public class PaymentController {
             String razorpayOrderId = data.get("razorpay_order_id");
             String razorpayPaymentId = data.get("razorpay_payment_id");
             String razorpaySignature = data.get("razorpay_signature");
+            String amountStr = data.get("amount");
 
             org.json.JSONObject options = new org.json.JSONObject();
             options.put("razorpay_order_id", razorpayOrderId);
@@ -67,12 +68,32 @@ public class PaymentController {
 
             boolean isSignatureValid = Utils.verifyPaymentSignature(options, keySecret);
 
-            if (isSignatureValid) {
-                return ResponseEntity.ok(Map.of("success", true, "message", "Payment signature verified successfully."));
-            } else {
+            if (!isSignatureValid) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("success", false, "message", "Invalid payment signature."));
             }
+
+            // Verify the actual amount and status from Razorpay
+            if (amountStr != null) {
+                RazorpayClient razorpayClient = new RazorpayClient(keyId, keySecret);
+                com.razorpay.Payment payment = razorpayClient.payments.fetch(razorpayPaymentId);
+                
+                int expectedAmountInPaise = (int) (Double.parseDouble(amountStr) * 100);
+                int actualAmountInPaise = payment.get("amount");
+                String status = payment.get("status");
+
+                if (!"captured".equals(status)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("success", false, "message", "Payment is not captured. Status: " + status));
+                }
+
+                if (actualAmountInPaise != expectedAmountInPaise) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("success", false, "message", "Payment amount mismatch. Expected: " + expectedAmountInPaise + " paise, but got: " + actualAmountInPaise + " paise"));
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "Payment verified successfully."));
             
         } catch (RazorpayException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

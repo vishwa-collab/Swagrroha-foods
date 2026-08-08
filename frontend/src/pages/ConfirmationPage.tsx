@@ -176,8 +176,8 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <span className="font-extrabold text-emerald-950 block">Payment Completed via UPI / Scan &amp; Pay ✅</span>
-              <span className="text-emerald-800 text-[11px]">UPI Account Payee: <strong>Ganji Vishwateja (8125154114)</strong></span>
+              <span className="font-extrabold text-emerald-950 block">Payment Completed &amp; Verified ✅</span>
+              <span className="text-emerald-800 text-[11px]">Secured by: <strong>Razorpay</strong></span>
             </div>
           </div>
           <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">

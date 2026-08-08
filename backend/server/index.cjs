@@ -118,6 +118,39 @@ app.post('/api/orders', async (req, res) => {
     createdAt: order.createdAt || new Date().toISOString()
   };
 
+  // Verify Razorpay payment before finalizing the order
+  if (finalOrder.paymentStatus === 'PAID_VIA_RAZORPAY' && finalOrder.utrNumber) {
+    const paymentId = finalOrder.utrNumber;
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
+    
+    try {
+      const rzpResponse = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64')
+        }
+      });
+      
+      if (rzpResponse.ok) {
+        const paymentData = await rzpResponse.json();
+        const expectedAmountInPaise = Math.round(finalOrder.totalAmount * 100);
+        
+        if (paymentData.status !== 'captured') {
+          return res.status(400).json({ error: 'Payment is not fully captured. Status: ' + paymentData.status });
+        }
+        
+        if (paymentData.amount !== expectedAmountInPaise) {
+          return res.status(400).json({ error: 'Payment amount mismatch. Expected ₹' + finalOrder.totalAmount + ' but received ₹' + (paymentData.amount / 100) });
+        }
+      } else {
+        return res.status(400).json({ error: 'Failed to verify payment with Razorpay.' });
+      }
+    } catch (e) {
+      console.error('Error verifying Razorpay payment:', e);
+      return res.status(500).json({ error: 'Internal server error verifying payment.' });
+    }
+  }
+
   await persistOrder(finalOrder);
   
   // Trigger WhatsApp notification to owner & customer
