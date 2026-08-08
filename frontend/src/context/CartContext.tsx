@@ -68,7 +68,6 @@ interface CartContextType {
   // All Orders Store (Shared between Customer & Owner)
   allOrders: PlacedOrder[];
   addOrder: (order: PlacedOrder) => Promise<{ success: boolean; message?: string }>;
-  isUtrUsed: (utr: string) => boolean;
 
   deliveryDateInfo: CalculatedDeliveryDate;
   
@@ -230,26 +229,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCart([]);
   };
 
-  // UTR Duplicate Check (Owner fraud protection rule)
-  const isUtrUsed = (utr: string): boolean => {
-    if (!utr) return false;
-    const clean = utr.trim().toLowerCase();
-    return allOrders.some(o => o.utrNumber && o.utrNumber.trim().toLowerCase() === clean);
-  };
-
-  // Add new order with UTR check
   const addOrder = async (order: PlacedOrder): Promise<{ success: boolean; message?: string }> => {
-    if (isUtrUsed(order.utrNumber)) {
-      return { 
-        success: false, 
-        message: 'This UTR / Transaction ID has already been submitted for another order. Reusing UTR numbers is strictly prohibited.' 
-      };
-    }
-
     const fullOrder: PlacedOrder = {
       ...order,
       status: order.status || 'PLACED',
-      paymentStatus: 'PENDING_VERIFICATION'
+      paymentStatus: order.paymentStatus || 'PENDING_VERIFICATION'
     };
 
     setCurrentOrder(fullOrder);
@@ -414,7 +398,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentOrder,
       allOrders,
       addOrder,
-      isUtrUsed,
       deliveryDateInfo,
       adminToken,
       adminEmail,

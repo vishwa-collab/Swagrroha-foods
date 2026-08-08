@@ -75,8 +75,8 @@ Delivery Charge: ₹${currentOrder.deliveryCharge}
 Total Amount: ₹${currentOrder.totalAmount}
 Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.deliveryDate.formattedDate})
 
-🔑 UPI Transaction ID (UTR): ${currentOrder.utrNumber}
-⏳ Status: Payment Pending Owner Verification`;
+🔑 Razorpay Payment ID: ${currentOrder.utrNumber}
+✅ Status: Paid & Verified Successfully`;
 
   const whatsappUrl = `https://wa.me/${businessWhatsAppNumber}?text=${encodeURIComponent(formattedWhatsAppMessage)}`;
 

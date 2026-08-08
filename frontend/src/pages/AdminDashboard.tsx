@@ -122,9 +122,9 @@ export const AdminDashboard: React.FC = () => {
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
             Authenticated Owner Admin Panel • vishwa81251@gmail.com
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">Owner UTR Verification Center</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">Owner Order Dashboard</h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Match customer 12-digit UTR numbers in your PhonePe / bank app, then verify & confirm orders.
+            Manage incoming orders, track live status, and coordinate deliveries. Payments are auto-verified.
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export const AdminDashboard: React.FC = () => {
           <span>📦 1. New Orders</span>
           {newOrders.length > 0 && (
             <span className="bg-amber-400 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black animate-pulse">
-              {newOrders.length} UNVERIFIED UTR
+              {newOrders.length} NEW
             </span>
           )}
         </button>
@@ -210,17 +210,17 @@ export const AdminDashboard: React.FC = () => {
       {activeTabSection === 'new' && (
         <div className="space-y-6">
           <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <span>📦 Incoming New Orders (UTR Verification Required)</span>
+            <span>📦 Incoming New Orders</span>
             <span className="text-xs bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full">
-              Match UTR in PhonePe ➔ Click Confirm
+              Review and Accept Orders
             </span>
           </h2>
 
           {newOrders.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-100 shadow-sm">
               <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
-              <p className="font-extrabold text-slate-700 text-base">No Unverified Orders</p>
-              <p className="text-xs">All incoming customer UTR numbers have been verified in PhonePe.</p>
+              <p className="font-extrabold text-slate-700 text-base">No New Orders</p>
+              <p className="text-xs">All incoming orders have been accepted.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,56 +261,37 @@ export const AdminDashboard: React.FC = () => {
                     </ul>
                   </div>
 
-                  {/* PROMINENT UTR VERIFICATION CARD FOR OWNER */}
-                  <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 space-y-3 shadow-md">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                        <Hash className="w-4 h-4 text-amber-400" /> Submitted UTR Number
+                  {/* PROMINENT PAYMENT SUCCESS CARD */}
+                  <div className="bg-emerald-900 text-white p-4 rounded-2xl border border-emerald-800 space-y-3 shadow-md">
+                    <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
+                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Auto-Verified
                       </span>
-                      <span className="text-amber-300 bg-amber-400/20 border border-amber-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                        PENDING CHECK
+                      <span className="text-emerald-300 bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
+                        SECURE
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                      <span className="font-mono font-black text-lg text-amber-300 tracking-wider">
-                        {order.utrNumber || 'No UTR Submitted'}
+                    <div className="flex items-center justify-between gap-3 bg-emerald-950 p-2.5 rounded-xl border border-emerald-800">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-emerald-400 font-bold">Razorpay Payment ID:</span>
+                        <span className="font-mono font-black text-sm text-white tracking-wider">
+                          {order.utrNumber || 'N/A'}
+                        </span>
+                      </div>
+                      <span className="text-emerald-400 font-black text-lg">
+                        ₹{order.totalAmount}
                       </span>
-                      {order.utrNumber && (
-                        <button
-                          type="button"
-                          onClick={() => copyOrderUtr(order.utrNumber, order.orderId)}
-                          className="flex items-center gap-1 bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition-colors shrink-0"
-                        >
-                          {copiedUtrMap[order.orderId] ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5 text-amber-300" />
-                          )}
-                          <span>{copiedUtrMap[order.orderId] ? 'Copied' : 'Copy UTR'}</span>
-                        </button>
-                      )}
                     </div>
-
-                    {/* OWNER VERIFICATION CHECKLIST GUIDE */}
-                    <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 text-[11px] space-y-1 text-slate-300">
-                      <p className="font-bold text-amber-400">🔍 How Vishwa verifies in PhonePe App:</p>
-                      <ul className="list-disc list-inside space-y-0.5 text-[10px]">
-                        <li>Open PhonePe ➔ Check History ➔ Match UTR: <strong className="text-white font-mono">{order.utrNumber}</strong></li>
-                        <li>Verify exact amount received: <strong className="text-emerald-400">₹{order.totalAmount}</strong></li>
-                        <li>Verify customer name / timing matches recent payment</li>
-                      </ul>
-                    </div>
-
                   </div>
 
-                  {/* Action Button: Verify UTR & Confirm Order */}
+                  {/* Action Button: Confirm Order */}
                   <button
                     onClick={() => handleVerifyAndConfirm(order.orderId)}
-                    className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
+                    className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Verify UTR & Confirm Payment</span>
+                    <span>Accept Order & Start Preparing</span>
                   </button>
 
                 </div>
@@ -346,7 +327,7 @@ export const AdminDashboard: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-black text-slate-900 text-lg">#{order.orderId}</span>
                         <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
-                          Payment Verified • UTR: {order.utrNumber}
+                          Payment Verified • ID: {order.utrNumber}
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 font-bold mt-1">
@@ -456,7 +437,7 @@ export const AdminDashboard: React.FC = () => {
                 <div key={order.orderId} className="py-4 flex justify-between items-center">
                   <div>
                     <span className="font-extrabold text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
-                    <span className="text-slate-500 ml-2 font-medium">(UTR: {order.utrNumber})</span>
+                    <span className="text-slate-500 ml-2 font-medium">(Payment ID: {order.utrNumber})</span>
                     <p className="text-slate-400 text-[11px] mt-0.5">
                       {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel})`).join(', ')}
                     </p>
@@ -495,7 +476,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="space-y-2 text-xs">
                       {areaOrders.map(o => (
                         <div key={o.orderId} className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex justify-between">
-                          <span className="font-bold text-slate-800">{o.customer.name} (UTR: {o.utrNumber})</span>
+                          <span className="font-bold text-slate-800">{o.customer.name} (ID: {o.utrNumber})</span>
                           <span className="text-brand-600 font-bold">₹{o.totalAmount}</span>
                         </div>
                       ))}

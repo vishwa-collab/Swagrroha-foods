@@ -145,7 +145,7 @@ export const TrackingPage: React.FC = () => {
                   Active Order ID: #{activeOrder.orderId}
                 </span>
                 <span className="text-[10px] font-mono bg-slate-800 text-amber-300 px-2 py-0.5 rounded border border-slate-700">
-                  UTR: {activeOrder.utrNumber || 'N/A'}
+                  Payment ID: {activeOrder.utrNumber || 'N/A'}
                 </span>
               </div>
               <h2 className="text-2xl font-black text-white mt-1 flex items-center gap-2">
@@ -165,13 +165,13 @@ export const TrackingPage: React.FC = () => {
                 Auto Syncing Live
               </span>
               <span className={`text-[11px] font-extrabold px-3 py-1 rounded-full border block ${
-                activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.status !== 'PLACED'
+                (activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_RAZORPAY' || activeOrder.status !== 'PLACED')
                   ? 'bg-emerald-900/60 text-emerald-300 border-emerald-500/50'
                   : 'bg-amber-900/60 text-amber-300 border-amber-500/50 animate-pulse'
               }`}>
-                {activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.status !== 'PLACED'
+                {(activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_RAZORPAY' || activeOrder.status !== 'PLACED')
                   ? '✅ Payment Verified'
-                  : '⏳ Payment Pending UTR Verification'
+                  : '⏳ Payment Pending Verification'
                 }
               </span>
             </div>
@@ -332,7 +332,7 @@ export const TrackingPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="font-black text-slate-900 text-sm">Order #{ord.orderId}</span>
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                        ₹{ord.totalAmount} Paid via UPI
+                        ₹{ord.totalAmount} Paid Online
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-500">
