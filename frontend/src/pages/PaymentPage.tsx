@@ -6,13 +6,12 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   MessageCircle, 
-  ExternalLink,
   QrCode,
   Copy,
   Check,
-  Smartphone,
   Sparkles,
-  Hash
+  Hash,
+  Phone
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -32,70 +31,23 @@ export const PaymentPage: React.FC = () => {
   } = useCart();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedNumber, setCopiedNumber] = useState(false);
   const [utrNumber, setUtrNumber] = useState('');
   const [utrError, setUtrError] = useState('');
 
-  // Configured Payment Account Details matching PhonePe receiver Ganji Vishwateja
-  const upiId = '8125154114@axl';
+  // Payment Account Details
+  const upiNumber = '8125154114';
   const bankingName = 'Ganji Vishwateja';
-  const phonePeNumber = '8125154114';
 
   const copyNumber = () => {
-    navigator.clipboard.writeText(phonePeNumber);
-    setCopied(true);
-    showToast('PhonePe / UPI Number (8125154114) copied!');
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  const copyUpiId = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    showToast('UPI ID (8125154114@axl) copied!');
-    setTimeout(() => setCopied(false), 2500);
+    navigator.clipboard.writeText(upiNumber);
+    setCopiedNumber(true);
+    showToast('UPI Number (8125154114) copied!');
+    setTimeout(() => setCopiedNumber(false), 2500);
   };
 
   // Generate unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
-
-  // Construct Direct NPCI Universal UPI Links with pre-filled exact amount
-  const payeeNameEncoded = encodeURIComponent(bankingName);
-  const upiNoteEncoded = encodeURIComponent(`PJR Food Order ${orderId}`);
-
-  // Standard NPCI Universal UPI deep link
-  const universalUpiUrl = `upi://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
-  
-  // Specific App Intent URLs
-  const phonePeUrl = `phonepe://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
-  const gPayUrl = `upi://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
-
-  // Direct Click Handler - Saves order to customer account & transitions smoothly
-  const handlePayClick = async (appName: string) => {
-    const newOrder: PlacedOrder = {
-      orderId,
-      customer: customerDetails,
-      area: selectedArea,
-      items: cart,
-      subtotal,
-      deliveryCharge,
-      totalAmount: grandTotal,
-      deliveryDate: deliveryDateInfo,
-      status: 'PLACED',
-      paymentStatus: 'PAID_VIA_UPI',
-      paymentMethod: appName,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save order into Context & local/backend store
-    await addOrder(newOrder);
-
-    showToast(`Opening ${appName} to pay ₹${grandTotal} to ${bankingName}...`);
-
-    setTimeout(() => {
-      clearCart();
-      setActiveTab('confirmation');
-    }, 600);
-  };
 
   // Manual Confirmation Form handler
   const handleConfirmWithUtr = async (e: React.FormEvent) => {
@@ -103,7 +55,12 @@ export const PaymentPage: React.FC = () => {
     setUtrError('');
 
     const cleanUtr = utrNumber.trim();
-    if (cleanUtr && isUtrUsed(cleanUtr)) {
+    if (!cleanUtr) {
+      setUtrError('⚠️ Please enter your UTR / Transaction Reference Number.');
+      return;
+    }
+
+    if (isUtrUsed(cleanUtr)) {
       setUtrError('⚠️ This UTR has already been submitted for another order.');
       return;
     }
@@ -121,8 +78,8 @@ export const PaymentPage: React.FC = () => {
       deliveryDate: deliveryDateInfo,
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
-      utrNumber: cleanUtr || `UPI-${Date.now()}`,
-      paymentMethod: 'PhonePe/UPI',
+      utrNumber: cleanUtr,
+      paymentMethod: 'UPI Scan & Pay',
       createdAt: new Date().toISOString(),
     };
 
@@ -157,17 +114,17 @@ export const PaymentPage: React.FC = () => {
         </button>
         <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          Step 2 of 2: Pay via PhonePe / GPay
+          Step 2 of 2: Scan & Pay
         </span>
       </div>
 
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center justify-center gap-2">
-          <span>Pay Directly via PhonePe / UPI</span>
+          <span>Scan QR & Pay</span>
           <Sparkles className="w-6 h-6 text-amber-500" />
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Tap your preferred app below. The exact amount <strong className="text-slate-900 font-black">₹{grandTotal}</strong> will open pre-filled for account payee <strong className="text-purple-700 font-black">{bankingName}</strong>.
+          Scan the QR code or use the number below to pay exactly <strong className="text-slate-900 font-black">₹{grandTotal}</strong> to <strong className="text-amber-700 font-black">{bankingName}</strong>.
         </p>
       </div>
 
@@ -177,122 +134,60 @@ export const PaymentPage: React.FC = () => {
         {/* Exact Payable Amount Badge */}
         <div className="bg-slate-900 text-white p-5 rounded-2xl max-w-sm mx-auto space-y-1 shadow-xl relative overflow-hidden">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
-          <span className="text-[11px] uppercase tracking-wider font-extrabold text-amber-400 block">Exact Money to Pay</span>
+          <span className="text-[11px] uppercase tracking-wider font-extrabold text-amber-400 block">Exact Amount to Pay</span>
           <p className="text-4xl font-black text-white">₹{grandTotal}</p>
           <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
         </div>
 
-        {/* 🚀 DIRECT PHONEPE & GPAY PAYMENT LINKS */}
-        <div className="max-w-md mx-auto space-y-3 pt-2">
-          
-          {/* PhonePe Direct Link */}
-          <a
-            href={phonePeUrl}
-            onClick={() => handlePayClick('PhonePe')}
-            className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-purple-700/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-purple-500/40 no-underline"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🟣</div>
-              <div className="text-left">
-                <span className="text-sm font-black block">Pay ₹{grandTotal} on PhonePe</span>
-                <span className="text-[10px] text-purple-200 font-medium">Opens PhonePe app ➔ {bankingName} ({upiId})</span>
-              </div>
-            </div>
-            <ExternalLink className="w-5 h-5 shrink-0 text-purple-200" />
-          </a>
-
-          {/* Google Pay Direct Link */}
-          <a
-            href={gPayUrl}
-            onClick={() => handlePayClick('Google Pay')}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-slate-900/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-slate-700 no-underline"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🔵</div>
-              <div className="text-left">
-                <span className="text-sm font-black block">Pay ₹{grandTotal} on Google Pay</span>
-                <span className="text-[10px] text-slate-300 font-medium">Opens GPay app directly with ₹{grandTotal}</span>
-              </div>
-            </div>
-            <ExternalLink className="w-5 h-5 shrink-0 text-slate-300" />
-          </a>
-
-          {/* Universal Any UPI App Link */}
-          <a
-            href={universalUpiUrl}
-            onClick={() => handlePayClick('UPI App')}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-6 rounded-2xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-sm flex items-center justify-between gap-3 no-underline"
-          >
-            <div className="flex items-center gap-2.5">
-              <Smartphone className="w-5 h-5 text-emerald-100" />
-              <span className="font-bold">Pay via Paytm / Any Installed UPI App</span>
-            </div>
-            <ExternalLink className="w-4 h-4 text-emerald-200" />
-          </a>
-
-        </div>
-
-        {/* QR Code Section for Desktop / Camera Scan */}
-        <div className="pt-4 border-t border-slate-100 max-w-md mx-auto space-y-4">
+        {/* QR Code Section */}
+        <div className="pt-2 max-w-md mx-auto space-y-4">
           <div className="text-center space-y-1">
-            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center justify-center gap-1">
-              <QrCode className="w-4 h-4 text-amber-500" /> Or Scan PhonePe QR to Pay Exact Money
+            <h4 className="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center justify-center gap-1.5">
+              <QrCode className="w-5 h-5 text-amber-500" /> Scan QR Code to Pay
             </h4>
-            <p className="text-[11px] text-slate-500">Scan with PhonePe or Google Pay camera app</p>
+            <p className="text-[11px] text-slate-500">Open any UPI app and scan the code below</p>
           </div>
 
           <div className="relative inline-block border-4 border-amber-500 rounded-3xl p-3 bg-white shadow-xl max-w-[220px] mx-auto">
             <img 
               src={IMAGES.qrCode} 
-              alt="PJR Swagrooha Foods PhonePe UPI QR" 
+              alt="PJR Swagrooha Foods UPI QR" 
               className="w-48 h-48 object-contain rounded-2xl mx-auto"
             />
             <div className="mt-2 text-[10px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Ganji Vishwateja PhonePe QR
+              <ShieldCheck className="w-3.5 h-3.5" /> {bankingName}
             </div>
           </div>
 
-          {/* PhonePe Number & UPI ID Display */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
-              <div>
-                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">PhonePe Number</span>
-                <span className="font-black text-slate-900 text-sm">{phonePeNumber}</span>
+          {/* UPI Phone Number */}
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                <Phone className="w-4 h-4 text-amber-600" />
               </div>
-              <button
-                type="button"
-                onClick={copyNumber}
-                className="bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-300 flex items-center gap-1"
-              >
-                {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? 'Done' : 'Copy'}</span>
-              </button>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
-              <div>
-                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">UPI ID</span>
-                <span className="font-black text-purple-700 text-xs font-mono">{upiId}</span>
+              <div className="text-left">
+                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">UPI Mobile Number</span>
+                <span className="font-black text-slate-900 text-lg">{upiNumber}</span>
               </div>
-              <button
-                type="button"
-                onClick={copyUpiId}
-                className="bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-300 flex items-center gap-1"
-              >
-                {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? 'Done' : 'Copy'}</span>
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={copyNumber}
+              className="bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-xl border border-slate-300 flex items-center gap-1 shrink-0"
+            >
+              {copiedNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedNumber ? 'Copied!' : 'Copy'}</span>
+            </button>
           </div>
         </div>
 
-        {/* 📲 CONFIRM ORDER BUTTON */}
+        {/* ✅ CONFIRM ORDER with UTR */}
         <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-500/80 max-w-md mx-auto space-y-4 text-left">
           <div className="flex items-center gap-2 text-emerald-950">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div>
-              <h4 className="text-sm font-black">Completed Payment in PhonePe / GPay?</h4>
-              <p className="text-xs text-emerald-700">Click below to record your order, view receipt & send details to WhatsApp.</p>
+              <h4 className="text-sm font-black">Paid? Enter UTR to Confirm</h4>
+              <p className="text-xs text-emerald-700">Enter your UTR / Transaction Reference Number from the payment receipt, then confirm to send your order to WhatsApp.</p>
             </div>
           </div>
 
@@ -305,27 +200,28 @@ export const PaymentPage: React.FC = () => {
           <form onSubmit={handleConfirmWithUtr} className="space-y-3">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                <Hash className="w-3.5 h-3.5 text-slate-400" /> Optional: UPI UTR / Transaction Ref No
+                <Hash className="w-3.5 h-3.5 text-slate-400" /> UTR / Transaction Reference Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. 234567890123 (Optional)"
+                placeholder="e.g. 234567890123"
                 value={utrNumber}
                 onChange={(e) => {
                   setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''));
                   setUtrError('');
                 }}
-                className="w-full px-3 py-2 text-xs font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2.5 text-sm font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
+              <p className="text-[10px] text-slate-400">Find the UTR in your UPI app's transaction history.</p>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <MessageCircle className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Access My Account'}</span>
+              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Send to WhatsApp'}</span>
             </button>
           </form>
         </div>
@@ -335,4 +231,3 @@ export const PaymentPage: React.FC = () => {
     </div>
   );
 };
-
