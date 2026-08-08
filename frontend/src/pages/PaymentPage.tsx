@@ -12,9 +12,7 @@ import {
   Check,
   Smartphone,
   Sparkles,
-  Hash,
-  CreditCard,
-  UserCheck
+  Hash
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -176,36 +174,12 @@ export const PaymentPage: React.FC = () => {
       {/* Main Payment Container */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 text-center">
         
-        {/* Payee Account Details Card */}
-        <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl max-w-md mx-auto space-y-3 shadow-xl relative overflow-hidden text-left">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-purple-500/30 rounded-2xl flex items-center justify-center text-white font-black text-lg border border-purple-400/40">
-                GV
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-purple-300 tracking-wider block">Payment Recipient</span>
-                <h3 className="text-base font-black text-white flex items-center gap-1.5">
-                  {bankingName}
-                  <UserCheck className="w-4 h-4 text-emerald-400" />
-                </h3>
-              </div>
-            </div>
-            <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
-              Verified UPI
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-xs pt-1">
-            <div>
-              <span className="text-[10px] text-purple-300 font-medium block">UPI ID / PhonePe</span>
-              <span className="font-mono font-bold text-amber-300">{upiId}</span>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] text-purple-300 font-medium block">Exact Amount</span>
-              <span className="text-2xl font-black text-white">₹{grandTotal}</span>
-            </div>
-          </div>
+        {/* Exact Payable Amount Badge */}
+        <div className="bg-slate-900 text-white p-5 rounded-2xl max-w-sm mx-auto space-y-1 shadow-xl relative overflow-hidden">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+          <span className="text-[11px] uppercase tracking-wider font-extrabold text-amber-400 block">Exact Money to Pay</span>
+          <p className="text-4xl font-black text-white">₹{grandTotal}</p>
+          <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
         </div>
 
         {/* 🚀 DIRECT PHONEPE & GPAY PAYMENT LINKS */}
