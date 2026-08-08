@@ -6,6 +6,7 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   MessageCircle, 
+  ExternalLink,
   QrCode,
   Copy,
   Check,
@@ -37,6 +38,7 @@ export const PaymentPage: React.FC = () => {
 
   // Payment Account Details
   const upiNumber = '8125154114';
+  const upiId = '8125154114@axl';
   const bankingName = 'Ganji Vishwateja';
 
   const copyNumber = () => {
@@ -48,6 +50,11 @@ export const PaymentPage: React.FC = () => {
 
   // Generate unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
+
+  // PhonePe Direct Payment Deep Link
+  const payeeNameEncoded = encodeURIComponent(bankingName);
+  const upiNoteEncoded = encodeURIComponent(`PJR Food Order ${orderId}`);
+  const phonePeUrl = `phonepe://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
 
   // Manual Confirmation Form handler
   const handleConfirmWithUtr = async (e: React.FormEvent) => {
@@ -137,6 +144,30 @@ export const PaymentPage: React.FC = () => {
           <span className="text-[11px] uppercase tracking-wider font-extrabold text-amber-400 block">Exact Amount to Pay</span>
           <p className="text-4xl font-black text-white">₹{grandTotal}</p>
           <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
+        </div>
+
+        {/* 🟣 Direct PhonePe Pay Button */}
+        <div className="max-w-md mx-auto pt-2">
+          <a
+            href={phonePeUrl}
+            className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-purple-700/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-between gap-3 border border-purple-500/40 no-underline"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🟣</div>
+              <div className="text-left">
+                <span className="text-sm font-black block">Pay ₹{grandTotal} via PhonePe</span>
+                <span className="text-[10px] text-purple-200 font-medium">Opens PhonePe → Pay to {bankingName} ({upiNumber})</span>
+              </div>
+            </div>
+            <ExternalLink className="w-5 h-5 shrink-0 text-purple-200" />
+          </a>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 max-w-md mx-auto">
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">or scan manually</span>
+          <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
         {/* QR Code Section */}
