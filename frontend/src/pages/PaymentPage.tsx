@@ -74,7 +74,7 @@ export const PaymentPage: React.FC = () => {
 
       // 2. Open Razorpay Checkout
       const options = {
-        key: "rzp_test_YourTestKeyIdHere", // MUST MATCH BACKEND! Will be replaced with real key in production
+        key: "rzp_test_TNGuNg9TsCrgxS", // User's real test key
         amount: orderData.amount, // Amount is in paise
         currency: orderData.currency,
         name: "PJR Swagrooha Foods",
