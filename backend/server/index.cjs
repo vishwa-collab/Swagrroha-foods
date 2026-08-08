@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { sendWhatsAppNotification } = require('./whatsappService.cjs');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -103,6 +105,79 @@ async function persistOrder(order) {
   orders = orders.filter(o => o.orderId !== order.orderId);
   orders.unshift(order);
 }
+
+// ── Razorpay credentials
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
+
+// ── POST /api/payment/create-order — Create Razorpay order
+app.post('/api/payment/create-order', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const amountInPaise = Math.round(amount * 100);
+
+    const razorpay = new Razorpay({
+      key_id: RAZORPAY_KEY_ID,
+      key_secret: RAZORPAY_KEY_SECRET,
+    });
+
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: 'txn_' + Date.now(),
+    });
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+    });
+  } catch (e) {
+    console.error('Error creating Razorpay order:', e);
+    res.status(500).json({ error: 'Error creating payment order: ' + e.message });
+  }
+});
+
+// ── POST /api/payment/verify — Verify Razorpay payment signature & amount
+app.post('/api/payment/verify', async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+
+    // 1. Verify signature
+    const expectedSignature = crypto
+      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + '|' + razorpay_payment_id)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
+    }
+
+    // 2. Verify actual amount & status from Razorpay
+    if (amount) {
+      const razorpay = new Razorpay({
+        key_id: RAZORPAY_KEY_ID,
+        key_secret: RAZORPAY_KEY_SECRET,
+      });
+
+      const payment = await razorpay.payments.fetch(razorpay_payment_id);
+      const expectedAmountInPaise = Math.round(amount * 100);
+
+      if (payment.status !== 'captured') {
+        return res.status(400).json({ success: false, message: 'Payment not captured. Status: ' + payment.status });
+      }
+
+      if (payment.amount !== expectedAmountInPaise) {
+        return res.status(400).json({ success: false, message: `Amount mismatch. Expected ₹${amount}, got ₹${payment.amount / 100}` });
+      }
+    }
+
+    res.json({ success: true, message: 'Payment verified successfully.' });
+  } catch (e) {
+    console.error('Error verifying payment:', e);
+    res.status(500).json({ success: false, error: 'Error verifying payment: ' + e.message });
+  }
+});
 
 // ── POST /api/orders — place new order via Direct UPI & trigger WhatsApp
 app.post('/api/orders', async (req, res) => {
