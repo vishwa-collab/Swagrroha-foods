@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useCart, PlacedOrder } from '../context/CartContext';
 import { IMAGES } from '../assets/images';
 import { 
-  Phone, 
   ArrowLeft, 
   ShieldCheck, 
   CheckCircle2, 
@@ -13,8 +12,9 @@ import {
   Check,
   Smartphone,
   Sparkles,
-  Lock,
-  Hash
+  Hash,
+  CreditCard,
+  UserCheck
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -38,34 +38,41 @@ export const PaymentPage: React.FC = () => {
   const [utrNumber, setUtrNumber] = useState('');
   const [utrError, setUtrError] = useState('');
 
-  const upiId = '8125154114@ybl';
+  // Configured Payment Account Details matching PhonePe receiver Ganji Vishwateja
+  const upiId = '8125154114@axl';
+  const bankingName = 'Ganji Vishwateja';
   const phonePeNumber = '8125154114';
-  const businessWhatsAppNumber = '918125154114';
 
   const copyNumber = () => {
     navigator.clipboard.writeText(phonePeNumber);
     setCopied(true);
-    showToast('PhonePe / GPay number copied!');
+    showToast('PhonePe / UPI Number (8125154114) copied!');
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const copyUpiId = () => {
+    navigator.clipboard.writeText(upiId);
+    setCopied(true);
+    showToast('UPI ID (8125154114@axl) copied!');
     setTimeout(() => setCopied(false), 2500);
   };
 
   // Generate unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
 
-  // Construct Direct NPCI Universal UPI Links with pre-filled exact money
-  const payeeName = encodeURIComponent('PJR Swagrooha Foods');
-  const upiNote = encodeURIComponent(`Order ${orderId}`);
+  // Construct Direct NPCI Universal UPI Links with pre-filled exact amount
+  const payeeNameEncoded = encodeURIComponent(bankingName);
+  const upiNoteEncoded = encodeURIComponent(`PJR Food Order ${orderId}`);
 
   // Standard NPCI Universal UPI deep link
-  const universalUpiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  const universalUpiUrl = `upi://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
   
   // Specific App Intent URLs
-  const phonePeUrl = `phonepe://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
-  const gPayUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
-  const paytmUrl = `paytmmp://pay?pa=${upiId}&pn=${payeeName}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
+  const phonePeUrl = `phonepe://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
+  const gPayUrl = `upi://pay?pa=${upiId}&pn=${payeeNameEncoded}&am=${grandTotal}&cu=INR&tn=${upiNoteEncoded}`;
 
-  // Direct Click Handler - Saves order synchronously and prepares state transition
-  const handlePayClick = (appName: string) => {
+  // Direct Click Handler - Saves order to customer account & transitions smoothly
+  const handlePayClick = async (appName: string) => {
     const newOrder: PlacedOrder = {
       orderId,
       customer: customerDetails,
@@ -81,16 +88,15 @@ export const PaymentPage: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    // Save order in context & DB asynchronously in background
-    addOrder(newOrder);
+    // Save order into Context & local/backend store
+    await addOrder(newOrder);
 
-    showToast(`Opening ${appName} for ₹${grandTotal}...`);
+    showToast(`Opening ${appName} to pay ₹${grandTotal} to ${bankingName}...`);
 
-    // Prepare confirmation state for when user returns from UPI app
     setTimeout(() => {
       clearCart();
       setActiveTab('confirmation');
-    }, 500);
+    }, 600);
   };
 
   // Manual Confirmation Form handler
@@ -118,6 +124,7 @@ export const PaymentPage: React.FC = () => {
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
       utrNumber: cleanUtr || `UPI-${Date.now()}`,
+      paymentMethod: 'PhonePe/UPI',
       createdAt: new Date().toISOString(),
     };
 
@@ -148,7 +155,7 @@ export const PaymentPage: React.FC = () => {
           className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-amber-600"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Details
+          Back to Address Details
         </button>
         <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -158,23 +165,47 @@ export const PaymentPage: React.FC = () => {
 
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center justify-center gap-2">
-          <span>Pay Directly in PhonePe / GPay</span>
+          <span>Pay Directly via PhonePe / UPI</span>
           <Sparkles className="w-6 h-6 text-amber-500" />
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Tap your preferred payment app below. The exact money <strong className="text-slate-900 font-black">₹{grandTotal}</strong> will open pre-filled in your app!
+          Tap your preferred app below. The exact amount <strong className="text-slate-900 font-black">₹{grandTotal}</strong> will open pre-filled for account payee <strong className="text-purple-700 font-black">{bankingName}</strong>.
         </p>
       </div>
 
       {/* Main Payment Container */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 text-center">
         
-        {/* Exact Payable Amount Badge */}
-        <div className="bg-slate-900 text-white p-5 rounded-2xl max-w-sm mx-auto space-y-1 shadow-xl relative overflow-hidden">
-          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
-          <span className="text-[11px] uppercase tracking-wider font-extrabold text-amber-400 block">Exact Money to Pay</span>
-          <p className="text-4xl font-black text-white">₹{grandTotal}</p>
-          <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
+        {/* Payee Account Details Card */}
+        <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl max-w-md mx-auto space-y-3 shadow-xl relative overflow-hidden text-left">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-purple-500/30 rounded-2xl flex items-center justify-center text-white font-black text-lg border border-purple-400/40">
+                GV
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-purple-300 tracking-wider block">Payment Recipient</span>
+                <h3 className="text-base font-black text-white flex items-center gap-1.5">
+                  {bankingName}
+                  <UserCheck className="w-4 h-4 text-emerald-400" />
+                </h3>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+              Verified UPI
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs pt-1">
+            <div>
+              <span className="text-[10px] text-purple-300 font-medium block">UPI ID / PhonePe</span>
+              <span className="font-mono font-bold text-amber-300">{upiId}</span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] text-purple-300 font-medium block">Exact Amount</span>
+              <span className="text-2xl font-black text-white">₹{grandTotal}</span>
+            </div>
+          </div>
         </div>
 
         {/* 🚀 DIRECT PHONEPE & GPAY PAYMENT LINKS */}
@@ -190,7 +221,7 @@ export const PaymentPage: React.FC = () => {
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🟣</div>
               <div className="text-left">
                 <span className="text-sm font-black block">Pay ₹{grandTotal} on PhonePe</span>
-                <span className="text-[10px] text-purple-200 font-medium">Opens PhonePe app with exact money pre-filled</span>
+                <span className="text-[10px] text-purple-200 font-medium">Opens PhonePe app ➔ {bankingName} ({upiId})</span>
               </div>
             </div>
             <ExternalLink className="w-5 h-5 shrink-0 text-purple-200" />
@@ -243,24 +274,41 @@ export const PaymentPage: React.FC = () => {
               className="w-48 h-48 object-contain rounded-2xl mx-auto"
             />
             <div className="mt-2 text-[10px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> PhonePe / GPay UPI QR
+              <ShieldCheck className="w-3.5 h-3.5" /> Ganji Vishwateja PhonePe QR
             </div>
           </div>
 
-          {/* PhonePe Number Display */}
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-3 text-left">
-            <div>
-              <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">PhonePe / GPay Number</span>
-              <span className="font-black text-slate-900 text-base">{phonePeNumber}</span>
+          {/* PhonePe Number & UPI ID Display */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">PhonePe Number</span>
+                <span className="font-black text-slate-900 text-sm">{phonePeNumber}</span>
+              </div>
+              <button
+                type="button"
+                onClick={copyNumber}
+                className="bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-300 flex items-center gap-1"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                <span>{copied ? 'Done' : 'Copy'}</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={copyNumber}
-              className="bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 flex items-center gap-1 shadow-2xs"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Copied' : 'Copy'}</span>
-            </button>
+
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">UPI ID</span>
+                <span className="font-black text-purple-700 text-xs font-mono">{upiId}</span>
+              </div>
+              <button
+                type="button"
+                onClick={copyUpiId}
+                className="bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-300 flex items-center gap-1"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                <span>{copied ? 'Done' : 'Copy'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -269,8 +317,8 @@ export const PaymentPage: React.FC = () => {
           <div className="flex items-center gap-2 text-emerald-950">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div>
-              <h4 className="text-sm font-black">Completed Payment in App?</h4>
-              <p className="text-xs text-emerald-700">Click below to view receipt & send details to WhatsApp.</p>
+              <h4 className="text-sm font-black">Completed Payment in PhonePe / GPay?</h4>
+              <p className="text-xs text-emerald-700">Click below to record your order, view receipt & send details to WhatsApp.</p>
             </div>
           </div>
 
@@ -283,7 +331,7 @@ export const PaymentPage: React.FC = () => {
           <form onSubmit={handleConfirmWithUtr} className="space-y-3">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                <Hash className="w-3.5 h-3.5 text-slate-400" /> Optional: UPI UTR / Txn Ref Number
+                <Hash className="w-3.5 h-3.5 text-slate-400" /> Optional: UPI UTR / Transaction Ref No
               </label>
               <input
                 type="text"
@@ -303,7 +351,7 @@ export const PaymentPage: React.FC = () => {
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Send to WhatsApp'}</span>
+              <span>{isSubmitting ? 'Saving Order...' : 'Confirm Order & Access My Account'}</span>
             </button>
           </form>
         </div>
@@ -313,3 +361,4 @@ export const PaymentPage: React.FC = () => {
     </div>
   );
 };
+

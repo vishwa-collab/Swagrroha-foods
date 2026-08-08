@@ -10,7 +10,7 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'products', label: 'Menu', icon: UtensilsCrossed },
-    { id: 'track', label: 'Track Order', icon: PackageCheck },
+    { id: 'track', label: 'My Orders & Track', icon: PackageCheck },
   ] as const;
 
   return (

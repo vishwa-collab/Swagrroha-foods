@@ -300,6 +300,81 @@ export const TrackingPage: React.FC = () => {
         </div>
       )}
 
+      {/* MY ACCOUNT & ALL PAST ORDERS HISTORY */}
+      {allOrders.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-swiggy border border-slate-100 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+                <span>My Account & Orders History</span>
+                <span className="bg-brand-100 text-brand-700 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                  {allOrders.length} {allOrders.length === 1 ? 'Order' : 'Orders'}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                All successful payments and orders linked to your account.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {allOrders.map((ord) => (
+              <div 
+                key={ord.orderId}
+                className={`p-4 rounded-2xl border transition-all text-xs space-y-3 ${
+                  activeOrder?.orderId === ord.orderId 
+                    ? 'border-brand-500 bg-brand-50/40 ring-2 ring-brand-500/20' 
+                    : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-slate-900 text-sm">Order #{ord.orderId}</span>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                        ₹{ord.totalAmount} Paid via UPI
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500">
+                      Customer: {ord.customer.name} ({ord.customer.phone}) • {new Date(ord.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setActiveOrder(ord);
+                        setSearchQuery(ord.orderId);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] transition-all"
+                    >
+                      Track Status
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items Summary & Delivery Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 font-semibold block">Ordered Items:</span>
+                    <p className="font-bold text-slate-800">
+                      {ord.items.map(i => `${i.product.name} (${i.selectedWeightLabel}) × ${i.quantity}`).join(', ')}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-semibold block">Scheduled Delivery:</span>
+                    <p className="font-bold text-amber-700">
+                      {ord.deliveryDate?.dayOfWeekName} ({ord.deliveryDate?.formattedDate})
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
