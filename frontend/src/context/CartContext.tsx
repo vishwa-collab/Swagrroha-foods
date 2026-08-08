@@ -23,7 +23,7 @@ export interface CustomerDetails {
 }
 
 export type OrderStageStatus = 'PLACED' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
-export type PaymentVerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED_PAID' | 'PAID_VIA_UPI' | 'REJECTED';
+export type PaymentVerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED_PAID' | 'PAID_VIA_UPI' | 'PAID_VIA_RAZORPAY' | 'REJECTED';
 
 export interface PlacedOrder {
   orderId: string;
