@@ -70,7 +70,32 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     service: 'PJR Swagrooha Foods API',
-    db: pool ? 'postgresql' : 'in-memory'
+    db: pool ? 'postgresql' : 'in-memory',
+    emailConfigured: !!(process.env.GMAIL_USER || process.env.SMTP_USER)
+  });
+});
+
+// ── Test Email Endpoint
+app.get('/api/test-email', async (req, res) => {
+  const targetEmail = req.query.to || process.env.GMAIL_USER || 'vishwa81251@gmail.com';
+  const testOrder = {
+    orderId: 'TEST-101',
+    customer: { name: 'Test Customer', phone: '8125154114', email: targetEmail, address: 'Test Address, Hyderabad' },
+    area: { name: 'Hyderabad' },
+    items: [{ name: 'Mutton Pickle (250g)', quantity: 1, unitPrice: 450 }],
+    subtotal: 450,
+    deliveryCharge: 50,
+    totalAmount: 500,
+    utrNumber: '123456789012',
+    deliveryDate: { dayOfWeekName: 'Saturday', formattedDate: 'Upcoming Saturday' }
+  };
+
+  const result = await sendCustomerEmailReceipt(testOrder);
+  return res.json({
+    recipient: targetEmail,
+    gmailUserDetected: !!(process.env.GMAIL_USER || process.env.SMTP_USER),
+    gmailPassDetected: !!(process.env.GMAIL_PASS || process.env.SMTP_PASS),
+    result: result
   });
 });
 

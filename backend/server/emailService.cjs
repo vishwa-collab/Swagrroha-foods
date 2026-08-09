@@ -109,32 +109,30 @@ async function sendCustomerEmailReceipt(order) {
     const host = process.env.SMTP_HOST || (user ? 'smtp.gmail.com' : null);
 
     if (user && pass) {
-      const transportOpts = (host && host.includes('gmail'))
-        ? {
-            service: 'gmail',
-            auth: { user, pass }
-          }
-        : {
-            host: host || 'smtp.gmail.com',
-            port: parseInt(process.env.SMTP_PORT || '465'),
-            secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true,
-            auth: { user, pass }
-          };
-
-      const transporter = nodemailer.createTransport(transportOpts);
+      const cleanPass = pass.replace(/\s+/g, '');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: user.trim(),
+          pass: cleanPass,
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
 
       const info = await transporter.sendMail({
-        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
         to: customerEmail,
         subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
         html: htmlBody,
       });
 
-      console.log('✅ Email receipt automatically sent via SMTP/Gmail to:', customerEmail, info.messageId);
+      console.log('✅ Email receipt automatically sent via Gmail to:', customerEmail, info.messageId);
       return { success: true, messageId: info.messageId };
     } else {
-      console.log('ℹ️ SMTP/Gmail credentials not detected in env vars (GMAIL_USER & GMAIL_PASS). Email receipt logged to server console.');
-      return { success: true, simulated: true, recipient: customerEmail };
+      console.log('ℹ️ GMAIL_USER / GMAIL_PASS missing in environment variables. Email logged to console.');
+      return { success: false, message: 'GMAIL_USER or GMAIL_PASS environment variable missing' };
     }
   } catch (err) {
     console.error('❌ Error sending customer email receipt:', err.message);
