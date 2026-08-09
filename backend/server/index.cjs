@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { sendWhatsAppNotification } = require('./whatsappService.cjs');
+const { sendCustomerEmailReceipt } = require('./emailService.cjs');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -229,13 +230,17 @@ app.post('/api/orders', async (req, res) => {
 
   await persistOrder(finalOrder);
   
-  // Trigger WhatsApp notification to owner & customer
-  const whatsappResult = await sendWhatsAppNotification(finalOrder);
+  // Fire both: WhatsApp to owner + Email receipt to customer — automatically, no button needed
+  const [whatsappResult, emailResult] = await Promise.allSettled([
+    sendWhatsAppNotification(finalOrder),
+    sendCustomerEmailReceipt(finalOrder),
+  ]);
 
   res.status(201).json({ 
     success: true, 
     orderId: finalOrder.orderId,
-    whatsapp: whatsappResult
+    whatsapp: whatsappResult.value || whatsappResult.reason?.message,
+    email: emailResult.value || emailResult.reason?.message,
   });
 });
 

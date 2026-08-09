@@ -21,27 +21,16 @@ import {
 } from 'lucide-react';
 
 export const ConfirmationPage: React.FC = () => {
-  const { currentOrder, setActiveTab, showToast } = useCart();
-  const [whatsappLaunched, setWhatsappLaunched] = useState(false);
-  const [utrCopied, setUtrCopied] = useState(false);
+  const { currentOrder, setActiveTab } = useCart();
 
-  // Business Owner WhatsApp Number
-  const businessWhatsAppNumber = '918125154114';
-
+  // Fire confetti on mount
   useEffect(() => {
     confetti({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 }
     });
-
-    if (currentOrder && !whatsappLaunched) {
-      const timer = setTimeout(() => {
-        openWhatsAppOrderMessage();
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [currentOrder]);
+  }, []);
 
   if (!currentOrder) {
     return (
@@ -56,42 +45,6 @@ export const ConfirmationPage: React.FC = () => {
       </div>
     );
   }
-
-  const itemsTextList = currentOrder.items.map(item => (
-    `• ${item.product.name} (${item.selectedWeightLabel}) - ₹${item.unitPrice * item.quantity}`
-  )).join('\n');
-
-  const formattedWhatsAppMessage = 
-`📦 New Order Received!
-
-Name: ${currentOrder.customer.name}
-Phone: ${currentOrder.customer.phone}
-Area: ${currentOrder.area.name}
-Address: ${currentOrder.customer.address}
-
-Items:
-${itemsTextList}
-
-Delivery Charge: ₹${currentOrder.deliveryCharge}
-Total Amount: ₹${currentOrder.totalAmount}
-Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.deliveryDate.formattedDate})
-
-🔑 Razorpay Payment ID: ${currentOrder.utrNumber}
-✅ Status: Paid & Verified Successfully`;
-
-  const whatsappUrl = `https://wa.me/${businessWhatsAppNumber}?text=${encodeURIComponent(formattedWhatsAppMessage)}`;
-
-  const openWhatsAppOrderMessage = () => {
-    setWhatsappLaunched(true);
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const copyUtr = () => {
-    navigator.clipboard.writeText(currentOrder.utrNumber);
-    setUtrCopied(true);
-    showToast('UTR Number copied to clipboard!');
-    setTimeout(() => setUtrCopied(false), 2500);
-  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -109,57 +62,40 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
         </p>
       </div>
 
-      {/* NOTIFICATIONS CONTAINER: GMAIL FOR CUSTOMER & WHATSAPP FOR OWNER */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* AUTO-SENT: GMAIL TO CUSTOMER + WHATSAPP TO OWNER */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        {/* CUSTOMER GMAIL RECEIPT CARD */}
-        <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-400 shadow-lg text-center space-y-4 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 bg-blue-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
-              <Mail className="w-4 h-4" />
-              Customer Gmail Receipt
-            </div>
-            <h2 className="text-lg font-black text-slate-900">
-              Receipt Sent to Customer Email
-            </h2>
-            <p className="text-xs text-slate-600">
-              Sent to: <strong className="text-blue-900 font-mono">{currentOrder.customer.email || 'customer@gmail.com'}</strong>
+        {/* CUSTOMER GMAIL AUTO-RECEIPT */}
+        <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-300 shadow-md text-center space-y-3">
+          <div className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">
+            <Mail className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
+              ✅ Auto-Sent
+            </span>
+            <h3 className="font-extrabold text-slate-900 text-sm">Order Receipt Sent to Your Email</h3>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              A detailed order receipt has been automatically sent to:<br/>
+              <strong className="text-blue-800 font-mono">{currentOrder.customer.email || 'your email'}</strong>
             </p>
           </div>
-
-          <a
-            href={`mailto:${currentOrder.customer.email || ''}?subject=${encodeURIComponent('PJR Swagrooha Foods - Order Receipt #' + currentOrder.orderId)}&body=${encodeURIComponent(formattedWhatsAppMessage)}`}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider no-underline"
-          >
-            <Mail className="w-4 h-4" />
-            <span>Open Customer Gmail Receipt</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
         </div>
 
-        {/* OWNER WHATSAPP NOTIFICATION CARD */}
-        <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-500 shadow-lg text-center space-y-4 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
-              <MessageCircle className="w-4 h-4" />
-              Owner WhatsApp Notification
-            </div>
-            <h2 className="text-lg font-black text-slate-900">
-              Notification Sent to Owner
-            </h2>
-            <p className="text-xs text-slate-600">
-              Received at Owner Number: <strong className="text-emerald-950 font-bold">+91 8125154114</strong>
+        {/* OWNER WHATSAPP AUTO-NOTIFICATION */}
+        <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-300 shadow-md text-center space-y-3">
+          <div className="w-12 h-12 bg-emerald-600/10 rounded-full flex items-center justify-center mx-auto">
+            <MessageCircle className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
+              ✅ Auto-Sent
+            </span>
+            <h3 className="font-extrabold text-slate-900 text-sm">Order Notification Sent to Owner</h3>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Owner <strong className="text-emerald-900">PJR Swagrooha Foods</strong> has been automatically notified on WhatsApp (<strong>+91 8125154114</strong>) and will process your order.
             </p>
           </div>
-
-          <button
-            onClick={openWhatsAppOrderMessage}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Send to Owner WhatsApp</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
         </div>
 
       </div>
