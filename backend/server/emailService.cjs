@@ -111,7 +111,10 @@ async function sendCustomerEmailReceipt(order) {
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, '');
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        family: 4,
         auth: {
           user: user.trim(),
           pass: cleanPass,
