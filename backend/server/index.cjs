@@ -181,67 +181,75 @@ app.post('/api/payment/verify', async (req, res) => {
   }
 });
 
-// ── POST /api/orders — place new order via Direct UPI & trigger WhatsApp
+// ── POST /api/orders — place new order via Direct UPI / Razorpay & trigger notifications
 app.post('/api/orders', async (req, res) => {
-  const order = req.body;
-  if (!order || !order.orderId) {
-    return res.status(400).json({ error: 'Invalid order data' });
-  }
-
-  const finalOrder = {
-    ...order,
-    status: order.status || 'PLACED',
-    paymentStatus: order.paymentStatus || 'PAID_VIA_UPI',
-    createdAt: order.createdAt || new Date().toISOString()
-  };
-
-  // Verify Razorpay payment before finalizing the order
-  if (finalOrder.paymentStatus === 'PAID_VIA_RAZORPAY' && finalOrder.utrNumber) {
-    const paymentId = finalOrder.utrNumber;
-    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
-    
-    try {
-      const rzpResponse = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64')
-        }
-      });
-      
-      if (rzpResponse.ok) {
-        const paymentData = await rzpResponse.json();
-        const expectedAmountInPaise = Math.round(finalOrder.totalAmount * 100);
-        
-        if (paymentData.status !== 'captured') {
-          return res.status(400).json({ error: 'Payment is not fully captured. Status: ' + paymentData.status });
-        }
-        
-        if (paymentData.amount !== expectedAmountInPaise) {
-          return res.status(400).json({ error: 'Payment amount mismatch. Expected ₹' + finalOrder.totalAmount + ' but received ₹' + (paymentData.amount / 100) });
-        }
-      } else {
-        return res.status(400).json({ error: 'Failed to verify payment with Razorpay.' });
-      }
-    } catch (e) {
-      console.error('Error verifying Razorpay payment:', e);
-      return res.status(500).json({ error: 'Internal server error verifying payment.' });
+  try {
+    const order = req.body;
+    if (!order || !order.orderId) {
+      return res.status(400).json({ error: 'Invalid order data received' });
     }
+
+    const finalOrder = {
+      ...order,
+      status: order.status || 'PLACED',
+      paymentStatus: order.paymentStatus || 'PAID_VIA_UPI',
+      createdAt: order.createdAt || new Date().toISOString()
+    };
+
+    // Verify Razorpay payment only if paymentStatus is PAID_VIA_RAZORPAY and UTR is a Razorpay payment ID (starts with pay_)
+    if (finalOrder.paymentStatus === 'PAID_VIA_RAZORPAY' && finalOrder.utrNumber && finalOrder.utrNumber.startsWith('pay_')) {
+      const paymentId = finalOrder.utrNumber;
+      const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
+      const keySecret = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
+      
+      try {
+        const rzpResponse = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64')
+          }
+        });
+        
+        if (rzpResponse.ok) {
+          const paymentData = await rzpResponse.json();
+          const expectedAmountInPaise = Math.round(finalOrder.totalAmount * 100);
+          
+          if (paymentData.status !== 'captured') {
+            return res.status(400).json({ error: 'Payment is not fully captured. Status: ' + paymentData.status });
+          }
+          
+          if (paymentData.amount !== expectedAmountInPaise) {
+            return res.status(400).json({ error: 'Payment amount mismatch. Expected ₹' + finalOrder.totalAmount + ' but received ₹' + (paymentData.amount / 100) });
+          }
+        } else {
+          return res.status(400).json({ error: 'Failed to verify payment with Razorpay API.' });
+        }
+      } catch (e) {
+        console.error('Error verifying Razorpay payment:', e);
+        return res.status(500).json({ error: 'Internal server error verifying Razorpay payment.' });
+      }
+    } else {
+      // Direct UPI Payment (PhonePe / GPay)
+      finalOrder.paymentStatus = 'PAID_VIA_UPI';
+    }
+
+    await persistOrder(finalOrder);
+    
+    // Fire both: WhatsApp to owner + Email receipt to customer — automatically, no button needed
+    const [whatsappResult, emailResult] = await Promise.allSettled([
+      sendWhatsAppNotification(finalOrder),
+      sendCustomerEmailReceipt(finalOrder),
+    ]);
+
+    return res.status(201).json({ 
+      success: true, 
+      orderId: finalOrder.orderId,
+      whatsapp: whatsappResult.value || whatsappResult.reason?.message,
+      email: emailResult.value || emailResult.reason?.message,
+    });
+  } catch (err) {
+    console.error('❌ Error processing /api/orders:', err);
+    return res.status(500).json({ error: 'Failed to process order on server: ' + err.message });
   }
-
-  await persistOrder(finalOrder);
-  
-  // Fire both: WhatsApp to owner + Email receipt to customer — automatically, no button needed
-  const [whatsappResult, emailResult] = await Promise.allSettled([
-    sendWhatsAppNotification(finalOrder),
-    sendCustomerEmailReceipt(finalOrder),
-  ]);
-
-  res.status(201).json({ 
-    success: true, 
-    orderId: finalOrder.orderId,
-    whatsapp: whatsappResult.value || whatsappResult.reason?.message,
-    email: emailResult.value || emailResult.reason?.message,
-  });
 });
 
 // GET /api/orders/:query — track order by orderId / phone / UTR
