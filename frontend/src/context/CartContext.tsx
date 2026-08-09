@@ -18,6 +18,7 @@ export interface CartItem {
 export interface CustomerDetails {
   name: string;
   phone: string;
+  email: string;
   areaId: string;
   address: string;
 }
@@ -113,7 +114,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>(() => {
     const saved = localStorage.getItem('swagrooha_customer');
-    return saved ? JSON.parse(saved) : { name: '', phone: '', areaId: selectedArea.id, address: '' };
+    return saved ? JSON.parse(saved) : { name: '', phone: '', email: '', areaId: selectedArea.id, address: '' };
   });
 
   const [currentOrder, setCurrentOrder] = useState<PlacedOrder | null>(null);

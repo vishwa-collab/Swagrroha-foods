@@ -7,6 +7,7 @@ import {
   Calendar, 
   MapPin, 
   Phone, 
+  Mail,
   FileText, 
   ArrowRight,
   ShoppingBag,
@@ -108,44 +109,62 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
         </p>
       </div>
 
-      {/* WHATSAPP AUTOMATIC REDIRECTION CARD */}
-      <div className="bg-emerald-50 rounded-3xl p-6 sm:p-8 border-2 border-emerald-500 shadow-lg text-center space-y-5">
-        <div className="inline-flex items-center gap-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
-          <MessageCircle className="w-4 h-4" />
-          Order Receipt Sent to WhatsApp
+      {/* NOTIFICATIONS CONTAINER: GMAIL FOR CUSTOMER & WHATSAPP FOR OWNER */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* CUSTOMER GMAIL RECEIPT CARD */}
+        <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-400 shadow-lg text-center space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 bg-blue-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
+              <Mail className="w-4 h-4" />
+              Customer Gmail Receipt
+            </div>
+            <h2 className="text-lg font-black text-slate-900">
+              Receipt Sent to Customer Email
+            </h2>
+            <p className="text-xs text-slate-600">
+              Sent to: <strong className="text-blue-900 font-mono">{currentOrder.customer.email || 'customer@gmail.com'}</strong>
+            </p>
+          </div>
+
+          <a
+            href={`mailto:${currentOrder.customer.email || ''}?subject=${encodeURIComponent('PJR Swagrooha Foods - Order Receipt #' + currentOrder.orderId)}&body=${encodeURIComponent(formattedWhatsAppMessage)}`}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider no-underline"
+          >
+            <Mail className="w-4 h-4" />
+            <span>Open Customer Gmail Receipt</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
 
-        <div className="space-y-1">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            Order Confirmed & Payment Received! ✅
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-            Order #{currentOrder.orderId} is registered for fresh delivery on <strong className="text-slate-900">{currentOrder.deliveryDate.dayOfWeekName}</strong>.
-          </p>
-        </div>
+        {/* OWNER WHATSAPP NOTIFICATION CARD */}
+        <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-500 shadow-lg text-center space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
+              <MessageCircle className="w-4 h-4" />
+              Owner WhatsApp Notification
+            </div>
+            <h2 className="text-lg font-black text-slate-900">
+              Notification Sent to Owner
+            </h2>
+            <p className="text-xs text-slate-600">
+              Received at Owner Number: <strong className="text-emerald-950 font-bold">+91 8125154114</strong>
+            </p>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={openWhatsAppOrderMessage}
-            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all text-sm"
+            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
           >
-            <MessageCircle className="w-5 h-5" />
-            <span>Open WhatsApp Receipt</span>
-            <ExternalLink className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('track')}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all text-sm"
-          >
-            <PackageCheck className="w-4 h-4 text-amber-400" />
-            <span>Track Live Status</span>
+            <MessageCircle className="w-4 h-4" />
+            <span>Send to Owner WhatsApp</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
 
       </div>
 
-      {/* Order Receipt Card */}
+      {/* Order Receipt Summary Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-swiggy border border-slate-100 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
@@ -162,7 +181,8 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
           <div>
             <span className="text-slate-400 font-medium block">Customer Details</span>
             <p className="font-bold text-slate-900 text-sm mt-0.5">{currentOrder.customer.name}</p>
-            <p className="text-slate-600 font-medium">{currentOrder.customer.phone}</p>
+            <p className="text-slate-600 font-medium">📞 {currentOrder.customer.phone}</p>
+            <p className="text-blue-700 font-medium">✉️ {currentOrder.customer.email || 'N/A'}</p>
           </div>
           <div>
             <span className="text-slate-400 font-medium block">Delivery Route & Address</span>
@@ -176,12 +196,12 @@ Delivery Date: ${currentOrder.deliveryDate.dayOfWeekName} (${currentOrder.delive
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <span className="font-extrabold text-emerald-950 block">Payment Completed &amp; Verified ✅</span>
-              <span className="text-emerald-800 text-[11px]">Secured by: <strong>Razorpay</strong></span>
+              <span className="font-extrabold text-emerald-950 block">Payment Submitted &amp; UTR Logged ✅</span>
+              <span className="text-emerald-800 text-[11px]">UTR: <strong>{currentOrder.utrNumber}</strong></span>
             </div>
           </div>
           <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-            Paid ✅
+            Paid via UPI ✅
           </span>
         </div>
 

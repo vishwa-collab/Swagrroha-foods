@@ -4,6 +4,7 @@ import { DELIVERY_AREAS } from '../data/deliveryAreas';
 import { 
   User, 
   Phone, 
+  Mail,
   MapPin, 
   Home, 
   Calendar, 
@@ -29,7 +30,7 @@ export const CheckoutPage: React.FC = () => {
     showToast
   } = useCart();
 
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string; address?: string }>({});
 
   const handleInputChange = (field: keyof typeof customerDetails, value: string) => {
     setCustomerDetails(prev => ({ ...prev, [field]: value }));
@@ -40,13 +41,16 @@ export const CheckoutPage: React.FC = () => {
 
   const validateAndProceed = (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { name?: string; phone?: string; address?: string } = {};
+    const newErrors: { name?: string; phone?: string; email?: string; address?: string } = {};
 
     if (!customerDetails.name.trim()) {
       newErrors.name = 'Please enter your full name';
     }
     if (!customerDetails.phone.trim() || customerDetails.phone.trim().length < 10) {
       newErrors.phone = 'Please enter a valid 10-digit mobile number';
+    }
+    if (!customerDetails.email || !customerDetails.email.includes('@')) {
+      newErrors.email = 'Please enter a valid email address (e.g. gmail.com)';
     }
     if (!customerDetails.address.trim()) {
       newErrors.address = 'Please enter your complete house address & landmark';
@@ -140,6 +144,26 @@ export const CheckoutPage: React.FC = () => {
                 />
               </div>
               {errors.phone && <p className="text-[11px] text-red-500 font-semibold">{errors.phone}</p>}
+            </div>
+
+            {/* Email Address Input (Gmail for Receipt) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 block">
+                Customer Email Address (For Order Receipt) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="email"
+                  placeholder="e.g. customer@gmail.com"
+                  value={customerDetails.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl text-xs sm:text-sm font-semibold border ${
+                    errors.email ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-brand-500'
+                  } focus:outline-none focus:ring-2 focus:ring-brand-500/20`}
+                />
+              </div>
+              {errors.email && <p className="text-[11px] text-red-500 font-semibold">{errors.email}</p>}
             </div>
 
             {/* Area Dropdown */}
