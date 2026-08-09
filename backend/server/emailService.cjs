@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 /**
  * Generates clean HTML email receipt content for customer
