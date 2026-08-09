@@ -3,9 +3,7 @@ import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
-// In production (Vercel) VITE_API_BASE = your Render URL, e.g. https://pjr-swagrooha-api.onrender.com
-// In dev it is empty so the Vite proxy (/api → localhost:5000) kicks in.
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || '';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || (import.meta.env.PROD ? 'https://swagrroha-foods.onrender.com' : 'https://swagrroha-foods.onrender.com');
 
 export interface CartItem {
   cartItemId: string;

@@ -30,6 +30,7 @@ function formatOrderMessage(order) {
 *Order ID:* ${order.orderId}
 *Customer Name:* ${customer.name || 'Valued Customer'}
 *Phone Number:* ${customer.phone || 'N/A'}
+*Email:* ${customer.email || 'N/A'}
 *Delivery Area:* ${area.name || customer.areaId || 'Hyderabad'}
 *Delivery Date:* ${deliveryDate}
 *Delivery Address:* ${customer.address || 'N/A'}
@@ -47,39 +48,68 @@ _Thank you for ordering with PJR Swagrooha Foods!_`;
 }
 
 /**
- * Triggers WhatsApp notification to owner & customer.
- * Supported providers (via env WHATSAPP_PROVIDER):
- * - 'meta': WhatsApp Cloud API (Graph API)
- * - 'twilio': Twilio WhatsApp Messaging
- * - 'ultramsg': UltraMsg API
- * - 'webhook': Generic HTTP Webhook endpoint
- * If unconfigured, logs the notification message clearly.
+ * Sends WhatsApp notification to admin via CallMeBot (free).
+ *
+ * HOW TO SET UP CallMeBot (one-time, free):
+ * 1. Save +34 644 59 77 16 in your phone contacts as "CallMeBot"
+ * 2. Send this WhatsApp message to that number:
+ *    I allow callmebot to send me messages
+ * 3. You'll receive an API key (e.g. 123456)
+ * 4. Set env vars on Render:
+ *    CALLMEBOT_PHONE  = 918125154114   (admin phone with country code, no +)
+ *    CALLMEBOT_APIKEY = <your api key>
+ *
+ * Alternatively, you can still use Meta/Twilio/UltraMsg by setting their env vars.
  */
 async function sendWhatsAppNotification(order) {
   const message = formatOrderMessage(order);
-  const targetPhone = process.env.OWNER_WHATSAPP_NUMBER || process.env.WHATSAPP_RECIPIENT || '918125154114';
+
+  // ── Resolve admin phone & provider ──────────────────────────────────────
+  const targetPhone = (
+    process.env.OWNER_WHATSAPP_NUMBER ||
+    process.env.WHATSAPP_RECIPIENT ||
+    process.env.CALLMEBOT_PHONE ||
+    '918125154114'
+  ).replace(/\D/g, '');
+
   const provider = (process.env.WHATSAPP_PROVIDER || 'auto').toLowerCase();
 
   console.log('\n========================================');
   console.log('📲 TRIGGERING WHATSAPP ORDER NOTIFICATION');
-  console.log('Recipient:', targetPhone);
+  console.log('Recipient (Admin):', targetPhone);
   console.log('----------------------------------------');
   console.log(message);
   console.log('========================================\n');
 
   try {
-    // 1. Meta WhatsApp Cloud API
+    // ── 1. CallMeBot (Free — recommended) ───────────────────────────────
+    if (
+      provider === 'callmebot' ||
+      (provider === 'auto' && process.env.CALLMEBOT_APIKEY)
+    ) {
+      const apiKey = process.env.CALLMEBOT_APIKEY;
+      const phone  = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
+      const encodedMsg = encodeURIComponent(message);
+
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodedMsg}&apikey=${apiKey}`;
+
+      const response = await axios.get(url, { timeout: 10000 });
+      console.log('✅ WhatsApp sent via CallMeBot to admin:', phone, response.data);
+      return { success: true, provider: 'callmebot', data: response.data };
+    }
+
+    // ── 2. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (provider === 'meta' || (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)) {
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
-      const cleanPhone = targetPhone.replace(/\D/g, '');
+      const token   = process.env.WHATSAPP_ACCESS_TOKEN;
+      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
       const response = await axios.post(
         `https://graph.facebook.com/v18.0/${phoneId}/messages`,
         {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
-          to: cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`,
+          to: cleanPhone,
           type: 'text',
           text: { body: message }
         },
@@ -94,13 +124,13 @@ async function sendWhatsAppNotification(order) {
       return { success: true, provider: 'meta', data: response.data };
     }
 
-    // 2. Twilio WhatsApp API
+    // ── 3. Twilio WhatsApp API ───────────────────────────────────────────
     if (provider === 'twilio' || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
-      const sid = process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const sid        = process.env.TWILIO_ACCOUNT_SID;
+      const authToken  = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const cleanPhone = targetPhone.replace(/\D/g, '');
-      const toNumber = `whatsapp:+${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}`;
+      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : '91' + targetPhone;
+      const toNumber   = `whatsapp:+${cleanPhone}`;
 
       const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
       const params = new URLSearchParams();
@@ -122,40 +152,42 @@ async function sendWhatsAppNotification(order) {
       return { success: true, provider: 'twilio', data: response.data };
     }
 
-    // 3. UltraMsg API
+    // ── 4. UltraMsg API ─────────────────────────────────────────────────
     if (provider === 'ultramsg' || (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN)) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token = process.env.ULTRAMSG_TOKEN;
-      const cleanPhone = targetPhone.replace(/\D/g, '');
+      const token      = process.env.ULTRAMSG_TOKEN;
+      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
       const response = await axios.post(
         `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        {
-          token: token,
-          to: cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`,
-          body: message
-        }
+        { token, to: cleanPhone, body: message }
       );
       console.log('✅ WhatsApp sent via UltraMsg:', response.data);
       return { success: true, provider: 'ultramsg', data: response.data };
     }
 
-    // 4. Custom Webhook Endpoint
+    // ── 5. Custom Webhook Endpoint ───────────────────────────────────────
     if (process.env.WHATSAPP_WEBHOOK_URL) {
       const response = await axios.post(process.env.WHATSAPP_WEBHOOK_URL, {
         event: 'order_paid',
         recipient: targetPhone,
-        message: message,
-        order: order
+        message,
+        order
       });
       console.log('✅ WhatsApp notification posted to Webhook:', response.data);
       return { success: true, provider: 'webhook', data: response.data };
     }
 
-    console.log('ℹ️ WhatsApp API credentials not detected. Notification simulated & logged to server output.');
-    return { success: true, provider: 'simulated_log', message: 'Logged to server console' };
+    // ── No provider configured ───────────────────────────────────────────
+    console.log('⚠️  No WhatsApp API credentials detected.');
+    console.log('   To enable automatic admin WhatsApp alerts, set env vars on Render:');
+    console.log('   CALLMEBOT_PHONE  = 918125154114');
+    console.log('   CALLMEBOT_APIKEY = <your CallMeBot API key>');
+    console.log('   (Get your free API key at https://www.callmebot.com/blog/free-api-whatsapp-messages/)');
+    return { success: false, provider: 'none', message: 'No WhatsApp provider configured. Set CALLMEBOT_APIKEY on Render.' };
+
   } catch (err) {
-    console.error('❌ Error sending WhatsApp notification:', err.response ? err.response.data : err.message);
+    console.error('❌ Error sending WhatsApp notification:', err.response ? JSON.stringify(err.response.data) : err.message);
     return { success: false, error: err.message };
   }
 }

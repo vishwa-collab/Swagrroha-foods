@@ -104,28 +104,32 @@ async function sendCustomerEmailReceipt(order) {
 
   try {
     // If SMTP credentials configured in env vars, send real email via SMTP transport
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const user = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
+    const host = process.env.SMTP_HOST || (user ? 'smtp.gmail.com' : null);
+
+    if (host && user && pass) {
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
+        host: host,
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_SECURE === 'true',
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: user,
+          pass: pass,
         },
       });
 
       const info = await transporter.sendMail({
-        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${process.env.SMTP_USER}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user}>`,
         to: customerEmail,
         subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
         html: htmlBody,
       });
 
-      console.log('✅ Email receipt automatically sent via SMTP to:', customerEmail, info.messageId);
+      console.log('✅ Email receipt automatically sent via SMTP/Gmail to:', customerEmail, info.messageId);
       return { success: true, messageId: info.messageId };
     } else {
-      console.log('ℹ️ SMTP credentials not detected in env vars. Email receipt logged to server console.');
+      console.log('ℹ️ SMTP/Gmail credentials not detected in env vars (GMAIL_USER & GMAIL_PASS). Email receipt logged to server console.');
       return { success: true, simulated: true, recipient: customerEmail };
     }
   } catch (err) {
