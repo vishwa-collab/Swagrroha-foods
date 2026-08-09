@@ -72,7 +72,7 @@ export const PaymentPage: React.FC = () => {
 
       const orderData = await response.json();
 
-      // 2. Open Razorpay Checkout — directly show PhonePe, GPay, Paytm
+      // 2. Open Razorpay Checkout
       const options = {
         key: "rzp_test_TNGuNg9TsCrgxS",
         amount: orderData.amount,
@@ -80,31 +80,6 @@ export const PaymentPage: React.FC = () => {
         name: "PJR Swagrooha Foods",
         description: `Order ${orderId}`,
         order_id: orderData.orderId,
-        // ── Show UPI apps directly (PhonePe, Google Pay, Paytm)
-        config: {
-          display: {
-            blocks: {
-              upi_apps: {
-                name: 'Pay via UPI Apps',
-                instruments: [
-                  { method: 'upi', flows: ['intent'], apps: ['phonepe'] },
-                  { method: 'upi', flows: ['intent'], apps: ['google_pay'] },
-                  { method: 'upi', flows: ['intent'], apps: ['paytm'] },
-                ],
-              },
-              upi_other: {
-                name: 'Other UPI / QR',
-                instruments: [
-                  { method: 'upi', flows: ['collect', 'qr'] },
-                ],
-              },
-            },
-            sequence: ['block.upi_apps', 'block.upi_other'],
-            preferences: {
-              show_default_blocks: false,
-            },
-          },
-        },
         handler: async function (response: any) {
           try {
             showToast('Payment successful! Verifying signature...');
