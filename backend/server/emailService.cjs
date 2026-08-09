@@ -103,10 +103,53 @@ async function sendCustomerEmailReceipt(order) {
   console.log('========================================\n');
 
   try {
-    // If SMTP credentials configured in env vars, send real email via SMTP transport
+    // ── 1. Resend HTTPS API (Free 100 emails/day, bypasses all firewall blocks) ──
+    if (process.env.RESEND_API_KEY) {
+      const response = await axios.post(
+        'https://api.resend.com/emails',
+        {
+          from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
+          to: [customerEmail],
+          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          html: htmlBody,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+      console.log('✅ Email receipt sent via Resend API to:', customerEmail, response.data);
+      return { success: true, provider: 'resend', id: response.data.id };
+    }
+
+    // ── 2. Brevo (Sendinblue) HTTPS API (Free 300 emails/day) ──────────────────
+    if (process.env.BREVO_API_KEY) {
+      const response = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: process.env.GMAIL_USER || 'vishwa81251@gmail.com' },
+          to: [{ email: customerEmail }],
+          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          htmlContent: htmlBody,
+        },
+        {
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+      console.log('✅ Email receipt sent via Brevo API to:', customerEmail, response.data);
+      return { success: true, provider: 'brevo', messageId: response.data.messageId };
+    }
+
+    // ── 3. Gmail Nodemailer SMTP (SSL/TLS) ──────────────────────────────────
     const user = process.env.GMAIL_USER || process.env.SMTP_USER;
     const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
-    const host = process.env.SMTP_HOST || (user ? 'smtp.gmail.com' : null);
 
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, '');
@@ -136,12 +179,12 @@ async function sendCustomerEmailReceipt(order) {
       console.log('✅ Email receipt automatically sent via Gmail to:', customerEmail, info.messageId);
       return { success: true, messageId: info.messageId };
     } else {
-      console.log('ℹ️ GMAIL_USER / GMAIL_PASS missing in environment variables. Email logged to console.');
-      return { success: false, message: 'GMAIL_USER or GMAIL_PASS environment variable missing' };
+      console.log('ℹ️ Email credentials missing. Add RESEND_API_KEY, BREVO_API_KEY, or GMAIL_USER/PASS.');
+      return { success: false, message: 'No email provider credentials configured in environment variables' };
     }
   } catch (err) {
-    console.error('❌ Error sending customer email receipt:', err.message);
-    return { success: false, error: err.message };
+    console.error('❌ Error sending customer email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
+    return { success: false, error: err.response ? err.response.data : err.message };
   }
 }
 
