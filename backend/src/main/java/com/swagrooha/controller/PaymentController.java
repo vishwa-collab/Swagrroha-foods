@@ -44,6 +44,7 @@ public class PaymentController {
             response.put("orderId", order.get("id"));
             response.put("amount", order.get("amount"));
             response.put("currency", order.get("currency"));
+            response.put("keyId", keyId);
             
             return ResponseEntity.ok(response);
             

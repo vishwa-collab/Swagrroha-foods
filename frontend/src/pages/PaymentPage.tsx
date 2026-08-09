@@ -74,7 +74,7 @@ export const PaymentPage: React.FC = () => {
 
       // 2. Open Razorpay Checkout
       const options = {
-        key: "rzp_test_TNGuNg9TsCrgxS",
+        key: orderData.keyId || "rzp_test_TNGuNg9TsCrgxS",
         amount: orderData.amount,
         currency: orderData.currency,
         name: "PJR Swagrooha Foods",
