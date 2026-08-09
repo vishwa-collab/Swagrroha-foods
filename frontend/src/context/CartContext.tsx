@@ -229,7 +229,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCart([]);
   };
 
+  // UTR Duplicate Check (Prevents fraud & duplicate submissions)
+  const isUtrUsed = (utr: string): boolean => {
+    if (!utr) return false;
+    const clean = utr.trim().toLowerCase();
+    return allOrders.some(o => o.utrNumber && o.utrNumber.trim().toLowerCase() === clean);
+  };
+
   const addOrder = async (order: PlacedOrder): Promise<{ success: boolean; message?: string }> => {
+    if (order.utrNumber && isUtrUsed(order.utrNumber)) {
+      return { 
+        success: false, 
+        message: 'This UTR / Transaction ID has already been submitted for another order. Reusing UTR numbers is strictly prohibited.' 
+      };
+    }
+
     const fullOrder: PlacedOrder = {
       ...order,
       status: order.status || 'PLACED',
