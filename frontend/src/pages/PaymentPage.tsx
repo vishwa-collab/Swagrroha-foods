@@ -90,6 +90,25 @@ export const PaymentPage: React.FC = () => {
       return;
     }
 
+    // Build WhatsApp order text message & open WhatsApp directly
+    const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
+    const waText = 
+      `🚀 *New Order Received — PJR Swagrooha Foods*\n\n` +
+      `*Order ID:* ${orderId}\n` +
+      `*Customer Name:* ${customerDetails.name}\n` +
+      `*Phone Number:* ${customerDetails.phone}\n` +
+      `*Email:* ${customerDetails.email || 'N/A'}\n` +
+      `*Delivery Area:* ${selectedArea.name}\n` +
+      `*Delivery Address:* ${customerDetails.address}\n\n` +
+      `📦 *Order Items:*\n${itemsText}\n\n` +
+      `💵 *Subtotal:* ₹${subtotal}\n` +
+      `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
+      `💰 *Total Amount:* ₹${grandTotal}\n` +
+      `💳 *Payment Status:* Paid ✅ (UTR: ${cleanUtr})\n\n` +
+      `_Thank you for ordering with PJR Swagrooha Foods!_`;
+
+    window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
+
     clearCart();
     setIsSubmitting(false);
     setActiveTab('confirmation');
