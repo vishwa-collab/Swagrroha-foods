@@ -108,16 +108,20 @@ async function sendCustomerEmailReceipt(order) {
     const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
     const host = process.env.SMTP_HOST || (user ? 'smtp.gmail.com' : null);
 
-    if (host && user && pass) {
-      const transporter = nodemailer.createTransport({
-        host: host,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: user,
-          pass: pass,
-        },
-      });
+    if (user && pass) {
+      const transportOpts = (host && host.includes('gmail'))
+        ? {
+            service: 'gmail',
+            auth: { user, pass }
+          }
+        : {
+            host: host || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '465'),
+            secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true,
+            auth: { user, pass }
+          };
+
+      const transporter = nodemailer.createTransport(transportOpts);
 
       const info = await transporter.sendMail({
         from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user}>`,
