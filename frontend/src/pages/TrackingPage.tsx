@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
+
+// Always poll the live Render backend — never trust stale localStorage
+const API_BASE = 'https://swagrroha-foods.onrender.com';
 import { 
   Search, 
   PackageCheck, 
@@ -39,21 +42,40 @@ export const TrackingPage: React.FC = () => {
     }
   }, [allOrders, currentOrder, trackedOrder]);
 
-  // Live Auto-Poll every 2 seconds for immediate checkmark status updates when owner clicks buttons!
+  // Live Auto-Poll every 5s — fetch DIRECTLY from Render API to always get latest admin status
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
-    const targetQuery = activeOrder?.orderId || searchQuery;
-    if (!targetQuery) return;
+    const orderId = activeOrder?.orderId;
+    if (!orderId) return;
 
-    const interval = setInterval(() => {
-      fetchOrderForTracking(targetQuery).then(updated => {
-        if (updated) {
-          setActiveOrder(updated);
+    const pollLiveStatus = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}`, {
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        if (res.ok) {
+          const fresh: PlacedOrder = await res.json();
+          // Only update UI if something actually changed
+          setActiveOrder(prev => {
+            if (!prev || prev.status !== fresh.status || prev.paymentStatus !== fresh.paymentStatus) {
+              return fresh;
+            }
+            return prev;
+          });
         }
-      });
-    }, 2000);
+      } catch {
+        // Render may be sleeping — silently skip, next poll will retry
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [activeOrder, searchQuery]);
+    // Poll immediately, then every 5 seconds
+    pollLiveStatus();
+    pollingRef.current = setInterval(pollLiveStatus, 5000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [activeOrder?.orderId]);
 
   const handleSearch = async (showLoadingSpinner: boolean = true) => {
     if (!searchQuery.trim()) return;
