@@ -21,15 +21,24 @@ import {
   Eye,
   X,
   Hash,
-  Copy
+  Copy,
+  Trash2
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, clearAllOrders, showToast } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
   const [copiedUtrMap, setCopiedUtrMap] = useState<{ [key: string]: boolean }>({});
+
+  const handleClearAll = async () => {
+    if (window.confirm('⚠️ Are you sure you want to delete ALL order history and start fresh? This will wipe all test orders.')) {
+      await clearAllOrders();
+      setOrders([]);
+      showToast('🧹 All order history deleted! Store is reset and fresh.');
+    }
+  };
 
   useEffect(() => {
     if (adminToken) {
@@ -128,13 +137,22 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={fetchOrders}
             className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
             Refresh Now
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
+            title="Delete all previous test orders and start fresh"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear All Orders (Start Fresh)
           </button>
 
           <button

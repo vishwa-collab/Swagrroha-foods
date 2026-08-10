@@ -67,6 +67,7 @@ interface CartContextType {
   // All Orders Store (Shared between Customer & Owner)
   allOrders: PlacedOrder[];
   addOrder: (order: PlacedOrder) => Promise<{ success: boolean; message?: string }>;
+  clearAllOrders: () => Promise<void>;
 
   deliveryDateInfo: CalculatedDeliveryDate;
   
@@ -387,6 +388,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   };
 
+  const clearAllOrders = async (): Promise<void> => {
+    try {
+      await fetch(`${API_BASE}/api/admin/reset-orders`, { method: 'DELETE' });
+    } catch (e) {
+      console.log('Backend reset orders endpoint failed or offline');
+    }
+    setAllOrders([]);
+    setCurrentOrder(null);
+    setTrackedOrder(null);
+    localStorage.removeItem('swagrooha_all_orders');
+    localStorage.removeItem('swagrooha_cart');
+    localStorage.setItem('swagrooha_orders_version', 'v_' + Date.now());
+  };
+
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
   const deliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
   const grandTotal = subtotal + deliveryCharge;
@@ -411,6 +426,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentOrder,
       allOrders,
       addOrder,
+      clearAllOrders,
       deliveryDateInfo,
       adminToken,
       adminEmail,

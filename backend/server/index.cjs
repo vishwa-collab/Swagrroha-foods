@@ -324,6 +324,21 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
   res.json({ success: true, order: updatedOrder });
 });
 
+// DELETE /api/admin/reset-orders — owner resets all orders to start fresh
+app.delete('/api/admin/reset-orders', async (req, res) => {
+  try {
+    if (pool) {
+      await pool.query('TRUNCATE TABLE orders;');
+      console.log('🧹 PostgreSQL orders table truncated');
+    }
+    orders = [];
+    return res.json({ success: true, message: 'All order history has been deleted' });
+  } catch (e) {
+    console.error('Error clearing PostgreSQL orders:', e);
+    return res.status(500).json({ error: 'Failed to clear orders: ' + e.message });
+  }
+});
+
 // GET /api/admin/orders — owner fetches all orders
 app.get('/api/admin/orders', async (req, res) => {
   if (pool) {
