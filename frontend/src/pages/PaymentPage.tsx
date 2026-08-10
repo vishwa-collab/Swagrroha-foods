@@ -83,16 +83,9 @@ export const PaymentPage: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    const addRes = await addOrder(newOrder);
-    if (!addRes.success) {
-      setUtrError(addRes.message || 'Duplicate UTR / Transaction ID. This payment reference was already used.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Build WhatsApp order text message & open WhatsApp directly
+    // ── Build WhatsApp message BEFORE any await so the popup is not browser-blocked ──
     const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
-    const waText = 
+    const waText =
       `🚀 *New Order Received — PJR Swagrooha Foods*\n\n` +
       `*Order ID:* ${orderId}\n` +
       `*Customer Name:* ${customerDetails.name}\n` +
@@ -107,7 +100,18 @@ export const PaymentPage: React.FC = () => {
       `💳 *Payment Status:* Paid ✅ (UTR: ${cleanUtr})\n\n` +
       `_Thank you for ordering with PJR Swagrooha Foods!_`;
 
-    window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
+    // Open owner WhatsApp immediately (same user-gesture tick — before any await)
+    const waWindow = window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
+
+    // ── Save order to backend (async) ─────────────────────────────────────────
+    const addRes = await addOrder(newOrder);
+    if (!addRes.success) {
+      setUtrError(addRes.message || 'Duplicate UTR / Transaction ID. This payment reference was already used.');
+      setIsSubmitting(false);
+      // Close the WhatsApp tab if order failed
+      if (waWindow) waWindow.close();
+      return;
+    }
 
     clearCart();
     setIsSubmitting(false);

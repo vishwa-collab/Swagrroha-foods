@@ -82,41 +82,19 @@ export const ConfirmationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* OWNER WHATSAPP AUTO-NOTIFICATION & 1-CLICK BUTTON */}
+        {/* OWNER WHATSAPP AUTO-NOTIFICATION */}
         <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-300 shadow-md text-center space-y-3">
           <div className="w-12 h-12 bg-emerald-600/10 rounded-full flex items-center justify-center mx-auto">
             <MessageCircle className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ WhatsApp Alert
+              ✅ Auto-Sent
             </span>
             <h3 className="font-extrabold text-slate-900 text-sm">Order Sent to Owner (+91 8125154114)</h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed mb-3">
-              Order automatically logged for owner <strong>PJR Swagrooha Foods</strong>.
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Order receipt automatically logged and sent to owner <strong>PJR Swagrooha Foods</strong> via WhatsApp.
             </p>
-            <a
-              href={`https://wa.me/918125154114?text=${encodeURIComponent(
-                `🚀 *New Order Receipt — PJR Swagrooha Foods*\n\n` +
-                `*Order ID:* ${currentOrder.orderId}\n` +
-                `*Customer Name:* ${currentOrder.customer.name}\n` +
-                `*Phone:* ${currentOrder.customer.phone}\n` +
-                `*Email:* ${currentOrder.customer.email || 'N/A'}\n` +
-                `*Delivery Zone:* ${currentOrder.area.name}\n` +
-                `*Address:* ${currentOrder.customer.address}\n\n` +
-                `📦 *Items Ordered:*\n` +
-                currentOrder.items.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n') +
-                `\n\n💰 *Total Amount Paid:* ₹${currentOrder.totalAmount}\n` +
-                `💳 *UTR Ref:* ${currentOrder.utrNumber || 'N/A'}\n\n` +
-                `Thank you for ordering!`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all w-full"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Open & Send Order on WhatsApp (+91 8125154114)</span>
-            </a>
           </div>
         </div>
 

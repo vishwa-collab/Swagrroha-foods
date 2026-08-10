@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-const { sendWhatsAppNotification } = require('./whatsappService.cjs');
+const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt } = require('./emailService.cjs');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -77,7 +77,15 @@ app.get('/api/health', (req, res) => {
 
 // ── Test Email Endpoint
 app.get('/api/test-email', async (req, res) => {
-  const targetEmail = req.query.to || process.env.GMAIL_USER || 'vishwa81251@gmail.com';
+  const targetEmail = req.query.to;
+
+  // Require the ?to= parameter — never default to owner email
+  if (!targetEmail || !targetEmail.includes('@')) {
+    return res.status(400).json({
+      error: 'Missing or invalid ?to= query parameter. Provide the customer email to test. Example: /api/test-email?to=customer@gmail.com'
+    });
+  }
+
   const testOrder = {
     orderId: 'TEST-101',
     customer: { name: 'Test Customer', phone: '8125154114', email: targetEmail, address: 'Test Address, Hyderabad' },
@@ -224,16 +232,21 @@ app.post('/api/orders', async (req, res) => {
 
     await persistOrder(finalOrder);
     
-    // Fire both: WhatsApp to owner + Email receipt to customer — automatically
-    const [whatsappResult, emailResult] = await Promise.allSettled([
+    // Fire all three automatically in parallel:
+    //  1. WhatsApp notification to OWNER (via CallMeBot)
+    //  2. WhatsApp receipt to CUSTOMER (via UltraMsg / Meta / Twilio)
+    //  3. Email receipt to CUSTOMER (via Gmail SMTP / Resend / Brevo)
+    const [ownerWhatsappResult, customerWhatsappResult, emailResult] = await Promise.allSettled([
       sendWhatsAppNotification(finalOrder),
+      sendCustomerWhatsAppReceipt(finalOrder),
       sendCustomerEmailReceipt(finalOrder),
     ]);
 
     return res.status(201).json({ 
       success: true, 
       orderId: finalOrder.orderId,
-      whatsapp: whatsappResult.value || whatsappResult.reason?.message,
+      ownerWhatsapp: ownerWhatsappResult.value || ownerWhatsappResult.reason?.message,
+      customerWhatsapp: customerWhatsappResult.value || customerWhatsappResult.reason?.message,
       email: emailResult.value || emailResult.reason?.message,
     });
   } catch (err) {

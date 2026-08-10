@@ -1,5 +1,11 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
+const dns = require('dns');
+
+// Force IPv4 DNS resolution first (fixes ENETUNREACH errors on cloud hosts like Render)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 /**
  * Generates clean HTML email receipt content for customer
@@ -85,21 +91,30 @@ function generateReceiptHtml(order) {
 }
 
 /**
- * Automatically emails the customer order receipt to their Gmail
+ * Automatically emails the customer order receipt to their Gmail.
+ * The receipt is always sent to the CUSTOMER's email — never to the owner's email.
  */
 async function sendCustomerEmailReceipt(order) {
   const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
+  const ownerEmail = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim().toLowerCase();
 
   if (!customerEmail || !customerEmail.includes('@')) {
-    console.log('ℹ️ Customer email not provided or invalid. Skipping automatic email receipt.');
-    return { success: false, message: 'No valid customer email' };
+    console.log('ℹ️ Customer email not provided or invalid. Skipping email receipt.');
+    return { success: false, message: 'No valid customer email provided by customer' };
+  }
+
+  // Safety guard: never send receipt to owner's email — only to the customer
+  if (ownerEmail && customerEmail.toLowerCase() === ownerEmail) {
+    console.warn('⚠️ Receipt blocked: customer email matches owner email. Please ensure customer enters their own email.');
+    return { success: false, message: 'Customer email must not be the same as owner/sender email' };
   }
 
   const htmlBody = generateReceiptHtml(order);
 
   console.log('\n========================================');
-  console.log('📧 AUTOMATIC CUSTOMER GMAIL RECEIPT');
-  console.log('Recipient:', customerEmail);
+  console.log('📧 SENDING ORDER RECEIPT TO CUSTOMER EMAIL');
+  console.log('Customer Email (Recipient):', customerEmail);
+  console.log('Sender (Owner Gmail):', ownerEmail || 'Not configured');
   console.log('Order ID:', order.orderId);
   console.log('========================================\n');
 
@@ -110,32 +125,58 @@ async function sendCustomerEmailReceipt(order) {
     // ── 1. Gmail Nodemailer SMTP (Direct delivery to customer email) ──────────
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, '');
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        family: 4,
-        auth: {
-          user: user.trim(),
-          pass: cleanPass,
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-        tls: {
-          rejectUnauthorized: false
-        }
-      });
+      
+      // Try service: 'gmail' first (most reliable in Node.js)
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: user.trim(),
+            pass: cleanPass,
+          },
+          connectionTimeout: 10000,
+          socketTimeout: 10000,
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
 
-      const info = await transporter.sendMail({
-        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
-        to: customerEmail,
-        subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-        html: htmlBody,
-      });
+        const info = await transporter.sendMail({
+          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
+          to: customerEmail,
+          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          html: htmlBody,
+        });
 
-      console.log('✅ Email receipt automatically sent via Gmail to customer:', customerEmail, info.messageId);
-      return { success: true, provider: 'gmail_smtp', recipient: customerEmail, messageId: info.messageId };
+        console.log('✅ Email receipt automatically sent via Gmail to customer:', customerEmail, info.messageId);
+        return { success: true, provider: 'gmail_smtp', recipient: customerEmail, messageId: info.messageId };
+      } catch (gmailErr) {
+        console.warn('⚠️ Gmail service transport failed, trying direct SMTP port 587 fallback:', gmailErr.message);
+        
+        // Fallback: SMTP port 587 with STARTTLS
+        const fallbackTransporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // TLS via STARTTLS
+          auth: {
+            user: user.trim(),
+            pass: cleanPass,
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const info = await fallbackTransporter.sendMail({
+          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
+          to: customerEmail,
+          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          html: htmlBody,
+        });
+
+        console.log('✅ Email receipt sent via Gmail SMTP 587 fallback to customer:', customerEmail, info.messageId);
+        return { success: true, provider: 'gmail_smtp_587', recipient: customerEmail, messageId: info.messageId };
+      }
     }
 
     // ── 2. Resend HTTPS API Fallback ──────────────────────────────────────────
