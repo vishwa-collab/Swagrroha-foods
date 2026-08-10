@@ -129,7 +129,7 @@ export const AdminDashboard: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-wider mb-1">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            Authenticated Owner Admin Panel • vishwa81251@gmail.com
+            Authenticated Owner Admin Panel • PJR Swagrooha Foods
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white">Owner Order Dashboard</h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">

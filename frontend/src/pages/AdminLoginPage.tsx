@@ -5,7 +5,7 @@ import { Lock, Mail, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const { loginAdmin, setActiveTab } = useCart();
-  const [email, setEmail] = useState('vishwa81251@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ export const AdminLoginPage: React.FC = () => {
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input 
                 type="email"
-                placeholder="vishwa81251@gmail.com"
+                placeholder="owner@swagrooha.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
