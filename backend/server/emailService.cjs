@@ -122,11 +122,62 @@ async function sendCustomerEmailReceipt(order) {
     const user = process.env.GMAIL_USER || process.env.SMTP_USER;
     const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
 
-    // ── 1. Gmail Nodemailer SMTP (Direct delivery to customer email) ──────────
+    // ── 1. Resend HTTPS API (Recommended for Render — uses port 443) ─────────
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const response = await axios.post(
+          'https://api.resend.com/emails',
+          {
+            from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
+            to: [customerEmail],
+            subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            html: htmlBody,
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 8000,
+          }
+        );
+        console.log('✅ Email receipt sent via Resend HTTPS API to customer:', customerEmail, response.data);
+        return { success: true, provider: 'resend', recipient: customerEmail, id: response.data.id };
+      } catch (resendErr) {
+        console.error('❌ Resend API failed:', resendErr.response ? JSON.stringify(resendErr.response.data) : resendErr.message);
+      }
+    }
+
+    // ── 2. Brevo (Sendinblue) HTTPS API (Recommended for Render — uses port 443) ─
+    if (process.env.BREVO_API_KEY) {
+      try {
+        const response = await axios.post(
+          'https://api.brevo.com/v3/smtp/email',
+          {
+            sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: user || 'vishwa81251@gmail.com' },
+            to: [{ email: customerEmail }],
+            subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            htmlContent: htmlBody,
+          },
+          {
+            headers: {
+              'api-key': process.env.BREVO_API_KEY,
+              'Content-Type': 'application/json',
+            },
+            timeout: 8000,
+          }
+        );
+        console.log('✅ Email receipt sent via Brevo HTTPS API to customer:', customerEmail, response.data);
+        return { success: true, provider: 'brevo', recipient: customerEmail, messageId: response.data.messageId };
+      } catch (brevoErr) {
+        console.error('❌ Brevo API failed:', brevoErr.response ? JSON.stringify(brevoErr.response.data) : brevoErr.message);
+      }
+    }
+
+    // ── 3. Gmail Nodemailer SMTP (Note: Render blocks outgoing SMTP ports 465 & 587) ─
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, '');
       
-      // Try service: 'gmail' first (most reliable in Node.js)
       try {
         const transporter = nodemailer.createTransport({
           service: 'gmail',
@@ -134,8 +185,8 @@ async function sendCustomerEmailReceipt(order) {
             user: user.trim(),
             pass: cleanPass,
           },
-          connectionTimeout: 10000,
-          socketTimeout: 10000,
+          connectionTimeout: 3000, // Short 3s timeout to prevent hanging on cloud hosts
+          socketTimeout: 3000,
           tls: {
             rejectUnauthorized: false
           }
@@ -151,79 +202,17 @@ async function sendCustomerEmailReceipt(order) {
         console.log('✅ Email receipt automatically sent via Gmail to customer:', customerEmail, info.messageId);
         return { success: true, provider: 'gmail_smtp', recipient: customerEmail, messageId: info.messageId };
       } catch (gmailErr) {
-        console.warn('⚠️ Gmail service transport failed, trying direct SMTP port 587 fallback:', gmailErr.message);
-        
-        // Fallback: SMTP port 587 with STARTTLS
-        const fallbackTransporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // TLS via STARTTLS
-          auth: {
-            user: user.trim(),
-            pass: cleanPass,
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
-
-        const info = await fallbackTransporter.sendMail({
-          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
-          to: customerEmail,
-          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-          html: htmlBody,
-        });
-
-        console.log('✅ Email receipt sent via Gmail SMTP 587 fallback to customer:', customerEmail, info.messageId);
-        return { success: true, provider: 'gmail_smtp_587', recipient: customerEmail, messageId: info.messageId };
+        console.warn('⚠️ Gmail SMTP failed (Render blocks SMTP ports 465/587). Error:', gmailErr.message);
+        return { 
+          success: false, 
+          provider: 'gmail_smtp_blocked', 
+          error: 'Render host blocks SMTP ports 465/587. Please add RESEND_API_KEY or BREVO_API_KEY on Render for instant HTTPS email delivery.',
+          message: gmailErr.message
+        };
       }
     }
 
-    // ── 2. Resend HTTPS API Fallback ──────────────────────────────────────────
-    if (process.env.RESEND_API_KEY) {
-      const response = await axios.post(
-        'https://api.resend.com/emails',
-        {
-          from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
-          to: [customerEmail],
-          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-          html: htmlBody,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-      console.log('✅ Email receipt sent via Resend API to customer:', customerEmail, response.data);
-      return { success: true, provider: 'resend', recipient: customerEmail, id: response.data.id };
-    }
-
-    // ── 3. Brevo (Sendinblue) HTTPS API Fallback ─────────────────────────────
-    if (process.env.BREVO_API_KEY) {
-      const response = await axios.post(
-        'https://api.brevo.com/v3/smtp/email',
-        {
-          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: user || 'vishwa81251@gmail.com' },
-          to: [{ email: customerEmail }],
-          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-          htmlContent: htmlBody,
-        },
-        {
-          headers: {
-            'api-key': process.env.BREVO_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-      console.log('✅ Email receipt sent via Brevo API to customer:', customerEmail, response.data);
-      return { success: true, provider: 'brevo', recipient: customerEmail, messageId: response.data.messageId };
-    }
-
-    console.log('ℹ️ Email credentials missing in environment variables.');
+    console.log('ℹ️ No email provider credentials configured in environment variables.');
     return { success: false, message: 'No email provider credentials configured in environment variables' };
   } catch (err) {
     console.error('❌ Error sending customer email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
