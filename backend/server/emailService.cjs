@@ -96,30 +96,29 @@ function generateReceiptHtml(order) {
  */
 async function sendCustomerEmailReceipt(order) {
   const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
-  const ownerEmail = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim().toLowerCase();
+  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || 'vishwa81251@gmail.com').trim();
 
   if (!customerEmail || !customerEmail.includes('@')) {
     console.log('ℹ️ Customer email not provided or invalid. Skipping email receipt.');
-    return { success: false, message: 'No valid customer email provided by customer' };
+    return { success: false, message: 'No valid customer email provided' };
   }
 
-  // Safety guard: never send receipt to owner's email — only to the customer
-  if (ownerEmail && customerEmail.toLowerCase() === ownerEmail) {
-    console.warn('⚠️ Receipt blocked: customer email matches owner email. Please ensure customer enters their own email.');
-    return { success: false, message: 'Customer email must not be the same as owner/sender email' };
+  // Build recipient array: customer + owner (so owner automatically receives a copy!)
+  const recipients = [customerEmail];
+  if (ownerEmail && ownerEmail.includes('@') && !recipients.map(e => e.toLowerCase()).includes(ownerEmail.toLowerCase())) {
+    recipients.push(ownerEmail);
   }
 
   const htmlBody = generateReceiptHtml(order);
 
   console.log('\n========================================');
-  console.log('📧 SENDING ORDER RECEIPT TO CUSTOMER EMAIL');
-  console.log('Customer Email (Recipient):', customerEmail);
-  console.log('Sender (Owner Gmail):', ownerEmail || 'Not configured');
+  console.log('📧 AUTOMATIC DUAL ORDER RECEIPT DISPATCH');
+  console.log('Recipients:', recipients.join(', '));
   console.log('Order ID:', order.orderId);
   console.log('========================================\n');
 
   try {
-    const user = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const user = process.env.GMAIL_USER || process.env.SMTP_USER || ownerEmail;
     const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
 
     // ── 1. Resend HTTPS API (Recommended for Render — uses port 443) ─────────
@@ -129,8 +128,8 @@ async function sendCustomerEmailReceipt(order) {
           'https://api.resend.com/emails',
           {
             from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
-            to: [customerEmail],
-            subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            to: recipients,
+            subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
             html: htmlBody,
           },
           {
@@ -141,8 +140,8 @@ async function sendCustomerEmailReceipt(order) {
             timeout: 8000,
           }
         );
-        console.log('✅ Email receipt sent via Resend HTTPS API to customer:', customerEmail, response.data);
-        return { success: true, provider: 'resend', recipient: customerEmail, id: response.data.id };
+        console.log('✅ DUAL Email receipt sent via Resend to:', recipients.join(', '), response.data);
+        return { success: true, provider: 'resend', recipients, id: response.data.id };
       } catch (resendErr) {
         console.error('❌ Resend API failed:', resendErr.response ? JSON.stringify(resendErr.response.data) : resendErr.message);
       }
@@ -155,8 +154,8 @@ async function sendCustomerEmailReceipt(order) {
           'https://api.brevo.com/v3/smtp/email',
           {
             sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: user || 'vishwa81251@gmail.com' },
-            to: [{ email: customerEmail }],
-            subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            to: recipients.map(email => ({ email })),
+            subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
             htmlContent: htmlBody,
           },
           {
@@ -167,14 +166,14 @@ async function sendCustomerEmailReceipt(order) {
             timeout: 8000,
           }
         );
-        console.log('✅ Email receipt sent via Brevo HTTPS API to customer:', customerEmail, response.data);
-        return { success: true, provider: 'brevo', recipient: customerEmail, messageId: response.data.messageId };
+        console.log('✅ DUAL Email receipt sent via Brevo to:', recipients.join(', '), response.data);
+        return { success: true, provider: 'brevo', recipients, messageId: response.data.messageId };
       } catch (brevoErr) {
         console.error('❌ Brevo API failed:', brevoErr.response ? JSON.stringify(brevoErr.response.data) : brevoErr.message);
       }
     }
 
-    // ── 3. Gmail Nodemailer SMTP (Note: Render blocks outgoing SMTP ports 465 & 587) ─
+    // ── 3. Gmail Nodemailer SMTP ──────────────────────────────────────────────
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, '');
       
@@ -185,7 +184,7 @@ async function sendCustomerEmailReceipt(order) {
             user: user.trim(),
             pass: cleanPass,
           },
-          connectionTimeout: 3000, // Short 3s timeout to prevent hanging on cloud hosts
+          connectionTimeout: 3000,
           socketTimeout: 3000,
           tls: {
             rejectUnauthorized: false
@@ -194,19 +193,19 @@ async function sendCustomerEmailReceipt(order) {
 
         const info = await transporter.sendMail({
           from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
-          to: customerEmail,
-          subject: `Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          to: recipients.join(', '),
+          subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
           html: htmlBody,
         });
 
-        console.log('✅ Email receipt automatically sent via Gmail to customer:', customerEmail, info.messageId);
-        return { success: true, provider: 'gmail_smtp', recipient: customerEmail, messageId: info.messageId };
+        console.log('✅ DUAL Email receipt automatically sent via Gmail SMTP to:', recipients.join(', '), info.messageId);
+        return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
       } catch (gmailErr) {
-        console.warn('⚠️ Gmail SMTP failed (Render blocks SMTP ports 465/587). Error:', gmailErr.message);
+        console.warn('⚠️ Gmail SMTP failed. Error:', gmailErr.message);
         return { 
           success: false, 
           provider: 'gmail_smtp_blocked', 
-          error: 'Render host blocks SMTP ports 465/587. Please add RESEND_API_KEY or BREVO_API_KEY on Render for instant HTTPS email delivery.',
+          error: 'Gmail SMTP failed. Please add RESEND_API_KEY or BREVO_API_KEY on Render for instant HTTPS email delivery.',
           message: gmailErr.message
         };
       }
@@ -215,7 +214,7 @@ async function sendCustomerEmailReceipt(order) {
     console.log('ℹ️ No email provider credentials configured in environment variables.');
     return { success: false, message: 'No email provider credentials configured in environment variables' };
   } catch (err) {
-    console.error('❌ Error sending customer email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
+    console.error('❌ Error sending dual email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
     return { success: false, error: err.response ? err.response.data : err.message };
   }
 }
