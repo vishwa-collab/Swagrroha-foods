@@ -91,29 +91,23 @@ function generateReceiptHtml(order) {
 }
 
 /**
- * Automatically emails the customer order receipt to their Gmail.
- * The receipt is always sent to the CUSTOMER's email — never to the owner's email.
+ * Automatically emails the order receipt ONLY to the store owner's email address.
+ * Customer email auto-send is disabled as requested.
  */
 async function sendCustomerEmailReceipt(order) {
-  const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
   const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || 'vishwa81251@gmail.com').trim();
 
-  if (!customerEmail || !customerEmail.includes('@')) {
-    console.log('ℹ️ Customer email not provided or invalid. Skipping email receipt.');
-    return { success: false, message: 'No valid customer email provided' };
+  if (!ownerEmail || !ownerEmail.includes('@')) {
+    console.log('ℹ️ Owner email not configured. Skipping email receipt.');
+    return { success: false, message: 'No valid owner email configured' };
   }
 
-  // Build recipient array: customer + owner (so owner automatically receives a copy!)
-  const recipients = [customerEmail];
-  if (ownerEmail && ownerEmail.includes('@') && !recipients.map(e => e.toLowerCase()).includes(ownerEmail.toLowerCase())) {
-    recipients.push(ownerEmail);
-  }
-
+  const recipients = [ownerEmail];
   const htmlBody = generateReceiptHtml(order);
 
   console.log('\n========================================');
-  console.log('📧 AUTOMATIC DUAL ORDER RECEIPT DISPATCH');
-  console.log('Recipients:', recipients.join(', '));
+  console.log('📧 AUTOMATIC OWNER ORDER RECEIPT DISPATCH');
+  console.log('Owner Email (Recipient):', ownerEmail);
   console.log('Order ID:', order.orderId);
   console.log('========================================\n');
 
@@ -129,7 +123,7 @@ async function sendCustomerEmailReceipt(order) {
           {
             from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
             to: recipients,
-            subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
             html: htmlBody,
           },
           {
@@ -140,7 +134,7 @@ async function sendCustomerEmailReceipt(order) {
             timeout: 8000,
           }
         );
-        console.log('✅ DUAL Email receipt sent via Resend to:', recipients.join(', '), response.data);
+        console.log('✅ Owner Email receipt sent via Resend to:', ownerEmail, response.data);
         return { success: true, provider: 'resend', recipients, id: response.data.id };
       } catch (resendErr) {
         console.error('❌ Resend API failed:', resendErr.response ? JSON.stringify(resendErr.response.data) : resendErr.message);
@@ -155,7 +149,7 @@ async function sendCustomerEmailReceipt(order) {
           {
             sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: user || 'vishwa81251@gmail.com' },
             to: recipients.map(email => ({ email })),
-            subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+            subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
             htmlContent: htmlBody,
           },
           {
@@ -166,7 +160,7 @@ async function sendCustomerEmailReceipt(order) {
             timeout: 8000,
           }
         );
-        console.log('✅ DUAL Email receipt sent via Brevo to:', recipients.join(', '), response.data);
+        console.log('✅ Owner Email receipt sent via Brevo to:', ownerEmail, response.data);
         return { success: true, provider: 'brevo', recipients, messageId: response.data.messageId };
       } catch (brevoErr) {
         console.error('❌ Brevo API failed:', brevoErr.response ? JSON.stringify(brevoErr.response.data) : brevoErr.message);
@@ -194,11 +188,11 @@ async function sendCustomerEmailReceipt(order) {
         const info = await transporter.sendMail({
           from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
           to: recipients.join(', '),
-          subject: `New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
+          subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
           html: htmlBody,
         });
 
-        console.log('✅ DUAL Email receipt automatically sent via Gmail SMTP to:', recipients.join(', '), info.messageId);
+        console.log('✅ Owner Email receipt automatically sent via Gmail SMTP to:', ownerEmail, info.messageId);
         return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
       } catch (gmailErr) {
         console.warn('⚠️ Gmail SMTP failed. Error:', gmailErr.message);
@@ -214,7 +208,7 @@ async function sendCustomerEmailReceipt(order) {
     console.log('ℹ️ No email provider credentials configured in environment variables.');
     return { success: false, message: 'No email provider credentials configured in environment variables' };
   } catch (err) {
-    console.error('❌ Error sending dual email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
+    console.error('❌ Error sending owner email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
     return { success: false, error: err.response ? err.response.data : err.message };
   }
 }

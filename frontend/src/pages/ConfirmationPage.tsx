@@ -62,38 +62,37 @@ export const ConfirmationPage: React.FC = () => {
         </p>
       </div>
 
-      {/* AUTO-SENT: GMAIL TO CUSTOMER + WHATSAPP TO OWNER */}
+      {/* AUTO-DISPATCHED NOTIFICATIONS TO OWNER */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        {/* CUSTOMER GMAIL AUTO-RECEIPT */}
+        {/* ORDER CONFIRMED CARD */}
         <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-300 shadow-md text-center space-y-3">
           <div className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">
-            <Mail className="w-6 h-6 text-blue-600" />
+            <PackageCheck className="w-6 h-6 text-blue-600" />
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ Auto-Sent
+              ✅ Order Logged
             </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Order Receipt Sent to Your Email</h3>
+            <h3 className="font-extrabold text-slate-900 text-sm">Order Registered &amp; Verified</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              A detailed order receipt has been automatically sent to:<br/>
-              <strong className="text-blue-800 font-mono">{currentOrder.customer.email || 'your email'}</strong>
+              Your order payment has been logged. You can track your order status anytime using Order ID <strong className="text-blue-800 font-mono">{currentOrder.orderId}</strong>.
             </p>
           </div>
         </div>
 
-        {/* OWNER WHATSAPP AUTO-NOTIFICATION */}
+        {/* OWNER AUTO-NOTIFICATION CARD */}
         <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-300 shadow-md text-center space-y-3">
           <div className="w-12 h-12 bg-emerald-600/10 rounded-full flex items-center justify-center mx-auto">
             <MessageCircle className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ Auto-Sent
+              ✅ Auto-Dispatched
             </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Order Sent to Owner (+91 8125154114)</h3>
+            <h3 className="font-extrabold text-slate-900 text-sm">Owner Alerted (+91 8125154114)</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Order receipt automatically logged and sent to owner <strong>PJR Swagrooha Foods</strong> via WhatsApp.
+              Order receipt automatically sent to store management <strong>PJR Swagrooha Foods</strong> for processing.
             </p>
           </div>
         </div>
