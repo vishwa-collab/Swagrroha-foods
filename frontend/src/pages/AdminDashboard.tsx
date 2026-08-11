@@ -11,24 +11,70 @@ import {
   LogOut,
   ShieldCheck,
   PackageCheck,
-  Trash2,
 } from 'lucide-react';
 
-// Always talk directly to the Render backend — never rely on the Vite dev proxy
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
+// ── Normalize flat backend Order into the nested PlacedOrder shape ──
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeOrder(raw: any): PlacedOrder {
+  // If already in nested shape (from localStorage / context), return as-is
+  if (raw.customer && typeof raw.customer === 'object') return raw as PlacedOrder;
+
+  return {
+    orderId: raw.orderId,
+    customer: {
+      name: raw.customerName || '',
+      phone: raw.customerPhone || '',
+      email: raw.customerEmail || '',
+      areaId: raw.deliveryArea || '',
+      address: raw.customerAddress || '',
+    },
+    area: {
+      id: raw.deliveryArea || '',
+      name: raw.deliveryArea || '',
+      charge: raw.deliveryCharge || 0,
+    },
+    // Map OrderItem[] from backend → CartItem[] shape
+    items: (raw.items || []).map((it: any) => ({
+      cartItemId: String(it.id || it.productName),
+      product: {
+        id: String(it.id || it.productName),
+        name: it.productName || '',
+        basePrice: it.unitPrice || 0,
+        weightOptions: [{ label: it.weightLabel || '', multiplier: 1 }],
+        category: '',
+        image: '',
+        description: '',
+      },
+      selectedWeightLabel: it.weightLabel || '',
+      unitPrice: it.unitPrice || 0,
+      quantity: it.quantity || 1,
+    })),
+    subtotal: raw.subtotal || 0,
+    deliveryCharge: raw.deliveryCharge || 0,
+    totalAmount: raw.totalAmount || 0,
+    deliveryDate: raw.deliveryDate
+      ? { formattedDate: raw.deliveryDate, dayName: '', daysUntil: 0 }
+      : { formattedDate: '', dayName: '', daysUntil: 0 },
+    status: raw.status || 'PLACED',
+    paymentStatus: raw.paymentStatus || 'PENDING_VERIFICATION',
+    utrNumber: raw.utrNumber || '',
+    createdAt: raw.createdAt || new Date().toISOString(),
+  };
+}
+
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast, clearAllOrders } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
 
-
-  // ── Auto-poll every 5 s while logged in
+  // ── Auto-poll every 10 s while logged in
   useEffect(() => {
     if (!adminToken) return;
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000);
+    const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
   }, [adminToken]);
 
@@ -39,11 +85,11 @@ export const AdminDashboard: React.FC = () => {
         headers: { 'Cache-Control': 'no-cache' },
       });
       if (res.ok) {
-        const data: PlacedOrder[] = await res.json();
-        const sorted = data.sort(
+        const rawData: unknown[] = await res.json();
+        const normalized = rawData.map(normalizeOrder).sort(
           (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         );
-        setOrders(sorted);
+        setOrders(normalized);
         setLoading(false);
         return;
       }
@@ -79,16 +125,6 @@ export const AdminDashboard: React.FC = () => {
     );
   };
 
-  const handleResetOrders = async () => {
-    if (window.confirm('⚠️ Are you sure you want to PERMANENTLY DELETE all previous order history and start completely fresh? This will wipe all orders from database and local memory.')) {
-      setLoading(true);
-      await clearAllOrders();
-      setOrders([]);
-      setLoading(false);
-      showToast('🧹 All order history deleted! Ready to start with fresh orders.');
-    }
-  };
-
   // Filter orders by section
   const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
   const activeOrders  = orders.filter(o => ['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
@@ -110,35 +146,21 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Manage incoming orders, track live status, and coordinate deliveries.
           </p>
-
+          {loading && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+              <span className="text-xs text-slate-400 font-semibold">Syncing orders…</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={fetchOrders}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition-all"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
-            Refresh Now
-          </button>
-
-          <button
-            onClick={handleResetOrders}
-            className="flex items-center gap-1.5 bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-amber-500/50 shadow transition-all"
-            title="Wipe all orders from database & browser to start fresh"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-amber-200" />
-            Reset All Orders
-          </button>
-
-          <button
-            onClick={logoutAdmin}
-            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={logoutAdmin}
+          className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Logout
+        </button>
       </div>
 
       {/* ── Navigation Tabs ── */}
@@ -219,7 +241,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-100 shadow-sm">
               <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
               <p className="font-extrabold text-slate-700 text-base">No New Orders</p>
-              <p className="text-xs">All incoming orders have been accepted. Auto-refreshing every 5 s.</p>
+              <p className="text-xs">All incoming orders have been accepted. Auto-refreshing every 10 s.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
