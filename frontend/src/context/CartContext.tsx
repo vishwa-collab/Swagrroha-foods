@@ -338,7 +338,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -346,11 +346,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           paymentStatus: payStatus
         }),
       });
-      showToast(`Order ${orderId} verified & updated to ${newStatus}`);
+      if (!res.ok) {
+        console.error('Backend status update failed:', res.status, res.statusText);
+        return false;
+      }
       return true;
     } catch (e) {
-      console.log('Updated order status in local store');
-      return true;
+      console.error('Network error updating order status:', e);
+      return false;
     }
   };
 

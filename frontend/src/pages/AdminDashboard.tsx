@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 import { AdminLoginPage } from './AdminLoginPage';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
@@ -11,9 +11,11 @@ import {
   LogOut,
   ShieldCheck,
   PackageCheck,
+  AlertCircle,
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
+const POLL_INTERVAL_MS = 10000;
 
 // ── Normalize flat backend Order into the nested PlacedOrder shape ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,6 +38,7 @@ function normalizeOrder(raw: any): PlacedOrder {
       charge: raw.deliveryCharge || 0,
     },
     // Map OrderItem[] from backend → CartItem[] shape
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     items: (raw.items || []).map((it: any) => ({
       cartItemId: String(it.id || it.productName),
       product: {
@@ -69,16 +72,17 @@ export const AdminDashboard: React.FC = () => {
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(true);
+  // track which orders are currently being updated so we can show loading
+  const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
 
-  // ── Auto-poll every 10 s while logged in
-  useEffect(() => {
-    if (!adminToken) return;
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
-  }, [adminToken]);
+  // Use a ref to control polling — we pause it during status updates
+  const pollPausedRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    // Don't overwrite UI while a status update is in flight
+    if (pollPausedRef.current) return;
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/orders`, {
@@ -90,11 +94,14 @@ export const AdminDashboard: React.FC = () => {
           (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         );
         setOrders(normalized);
+        setBackendOnline(true);
         setLoading(false);
         return;
       }
+      setBackendOnline(false);
     } catch (e) {
       console.error('Backend unreachable — falling back to local store', e);
+      setBackendOnline(false);
     }
 
     // Fallback: use context/localStorage if Render is sleeping
@@ -108,22 +115,76 @@ export const AdminDashboard: React.FC = () => {
     );
     setOrders(merged);
     setLoading(false);
+  }, [allOrders]);
+
+  // ── Auto-poll every 10 s while logged in
+  useEffect(() => {
+    if (!adminToken) return;
+    fetchOrders();
+    intervalRef.current = setInterval(fetchOrders, POLL_INTERVAL_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [adminToken, fetchOrders]);
+
+  // ── Generic status updater with optimistic UI + pause/resume polling ──
+  const applyStatusChange = async (
+    orderId: string,
+    newStatus: OrderStageStatus,
+    newPaymentStatus?: 'VERIFIED_PAID' | undefined
+  ) => {
+    // 1. Mark order as updating
+    setUpdatingOrders(prev => new Set(prev).add(orderId));
+
+    // 2. Pause polling so the next tick doesn't overwrite our optimistic update
+    pollPausedRef.current = true;
+
+    // 3. Optimistically update local state immediately
+    setOrders(prev =>
+      prev.map(o =>
+        o.orderId === orderId
+          ? { ...o, status: newStatus, ...(newPaymentStatus ? { paymentStatus: newPaymentStatus } : {}) }
+          : o
+      )
+    );
+
+    // 4. Call backend
+    const success = await updateOrderStatus(
+      orderId,
+      newStatus,
+      newPaymentStatus
+    );
+
+    // 5. Unmark updating
+    setUpdatingOrders(prev => {
+      const next = new Set(prev);
+      next.delete(orderId);
+      return next;
+    });
+
+    if (success) {
+      showToast(`✅ Order ${orderId} → ${newStatus.replace(/_/g, ' ')}`);
+    } else {
+      // Revert optimistic update if backend failed
+      showToast(`❌ Failed to update order ${orderId}. Please try again.`);
+      // Re-fetch fresh data to restore correct state
+      pollPausedRef.current = false;
+      await fetchOrders();
+      return;
+    }
+
+    // 6. Resume polling after 3 seconds (gives backend time to persist)
+    setTimeout(() => {
+      pollPausedRef.current = false;
+      fetchOrders();
+    }, 3000);
   };
 
-  const handleVerifyAndConfirm = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'CONFIRMED', 'VERIFIED_PAID');
-    setOrders(prev =>
-      prev.map(o => o.orderId === orderId ? { ...o, status: 'CONFIRMED', paymentStatus: 'VERIFIED_PAID' } : o)
-    );
-    showToast(`✅ Order ${orderId} confirmed!`);
-  };
+  const handleVerifyAndConfirm = (orderId: string) =>
+    applyStatusChange(orderId, 'CONFIRMED', 'VERIFIED_PAID');
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStageStatus) => {
-    await updateOrderStatus(orderId, newStatus);
-    setOrders(prev =>
-      prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o)
-    );
-  };
+  const handleStatusChange = (orderId: string, newStatus: OrderStageStatus) =>
+    applyStatusChange(orderId, newStatus);
 
   // Filter orders by section
   const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
@@ -146,12 +207,20 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Manage incoming orders, track live status, and coordinate deliveries.
           </p>
-          {loading && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              <span className="text-xs text-slate-400 font-semibold">Syncing orders…</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3 mt-2">
+            {loading && (
+              <div className="flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                <span className="text-xs text-slate-400 font-semibold">Syncing…</span>
+              </div>
+            )}
+            {!backendOnline && (
+              <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Offline mode — showing local orders
+              </div>
+            )}
+          </div>
         </div>
 
         <button
@@ -174,7 +243,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>📦 1. New Orders</span>
+          <span>📦 New Orders</span>
           {newOrders.length > 0 && (
             <span className="bg-amber-400 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black animate-pulse">
               {newOrders.length} NEW
@@ -190,7 +259,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>🔄 2. Active Orders</span>
+          <span>🔄 Active Orders</span>
           {activeOrders.length > 0 && (
             <span className="bg-emerald-400 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black">
               {activeOrders.length}
@@ -206,7 +275,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>📜 3. Order History ({historyOrders.length})</span>
+          <span>📜 History ({historyOrders.length})</span>
         </button>
 
         <button
@@ -217,7 +286,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>🗺️ Route &amp; Batch Planning</span>
+          <span>🗺️ Route Planning</span>
         </button>
 
       </div>
@@ -241,79 +310,85 @@ export const AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-100 shadow-sm">
               <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
               <p className="font-extrabold text-slate-700 text-base">No New Orders</p>
-              <p className="text-xs">All incoming orders have been accepted. Auto-refreshing every 10 s.</p>
+              <p className="text-xs">All incoming orders accepted. Auto-refreshing every 10 s.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {newOrders.map(order => (
-                <div key={order.orderId} className="bg-white rounded-3xl p-6 shadow-swiggy border-2 border-brand-500/40 space-y-4">
+              {newOrders.map(order => {
+                const isUpdating = updatingOrders.has(order.orderId);
+                return (
+                  <div key={order.orderId} className={`bg-white rounded-3xl p-6 shadow-swiggy border-2 border-brand-500/40 space-y-4 transition-opacity ${isUpdating ? 'opacity-60' : ''}`}>
 
-                  {/* Order Header */}
-                  <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                    <div>
-                      <span className="bg-brand-100 text-brand-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded">
-                        NEW ORDER #{order.orderId}
-                      </span>
-                      <h3 className="font-extrabold text-slate-900 text-lg mt-1">{order.customer.name}</h3>
-                      <p className="text-xs text-slate-500 font-semibold">📞 {order.customer.phone}</p>
+                    {/* Order Header */}
+                    <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                      <div>
+                        <span className="bg-brand-100 text-brand-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded">
+                          NEW ORDER #{order.orderId}
+                        </span>
+                        <h3 className="font-extrabold text-slate-900 text-lg mt-1">{order.customer.name}</h3>
+                        <p className="text-xs text-slate-500 font-semibold">📞 {order.customer.phone}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-brand-600">₹{order.totalAmount}</span>
+                        <span className="text-[10px] text-slate-400 block font-bold">{order.area?.name || 'Standard'} Zone</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black text-brand-600">₹{order.totalAmount}</span>
-                      <span className="text-[10px] text-slate-400 block font-bold">{order.area?.name || 'Standard'} Zone</span>
+
+                    {/* Delivery Address */}
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs space-y-1">
+                      <span className="text-slate-400 font-medium block">Delivery Address:</span>
+                      <p className="font-bold text-slate-800 leading-snug">{order.customer.address}</p>
                     </div>
-                  </div>
 
-                  {/* Delivery Address */}
-                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs space-y-1">
-                    <span className="text-slate-400 font-medium block">Delivery Address:</span>
-                    <p className="font-bold text-slate-800 leading-snug">{order.customer.address}</p>
-                  </div>
-
-                  {/* Items List */}
-                  <div className="space-y-1 text-xs">
-                    <span className="font-extrabold text-slate-400 uppercase tracking-wider text-[10px]">Items Ordered:</span>
-                    <ul className="divide-y divide-slate-100">
-                      {order.items.map((item, idx) => (
-                        <li key={item.cartItemId || idx} className="py-1.5 flex justify-between font-bold text-slate-800">
-                          <span>• {item.product.name} ({item.selectedWeightLabel})</span>
-                          <span>x{item.quantity}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Payment Info */}
-                  <div className="bg-emerald-900 text-white p-4 rounded-2xl border border-emerald-800 space-y-3 shadow-md">
-                    <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
-                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Auto-Verified
-                      </span>
-                      <span className="text-emerald-300 bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                        SECURE
-                      </span>
+                    {/* Items List */}
+                    <div className="space-y-1 text-xs">
+                      <span className="font-extrabold text-slate-400 uppercase tracking-wider text-[10px]">Items Ordered:</span>
+                      <ul className="divide-y divide-slate-100">
+                        {order.items.map((item, idx) => (
+                          <li key={item.cartItemId || idx} className="py-1.5 flex justify-between font-bold text-slate-800">
+                            <span>• {item.product.name} ({item.selectedWeightLabel})</span>
+                            <span>x{item.quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="flex items-center justify-between gap-3 bg-emerald-950 p-2.5 rounded-xl border border-emerald-800">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-emerald-400 font-bold">Razorpay Payment ID:</span>
-                        <span className="font-mono font-black text-sm text-white tracking-wider">
-                          {order.utrNumber || 'N/A'}
+
+                    {/* Payment Info */}
+                    <div className="bg-emerald-900 text-white p-4 rounded-2xl border border-emerald-800 space-y-3 shadow-md">
+                      <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
+                        <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Auto-Verified
+                        </span>
+                        <span className="text-emerald-300 bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
+                          SECURE
                         </span>
                       </div>
-                      <span className="text-emerald-400 font-black text-lg">₹{order.totalAmount}</span>
+                      <div className="flex items-center justify-between gap-3 bg-emerald-950 p-2.5 rounded-xl border border-emerald-800">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-emerald-400 font-bold">Razorpay Payment ID:</span>
+                          <span className="font-mono font-black text-sm text-white tracking-wider">
+                            {order.utrNumber || 'N/A'}
+                          </span>
+                        </div>
+                        <span className="text-emerald-400 font-black text-lg">₹{order.totalAmount}</span>
+                      </div>
                     </div>
+
+                    {/* Accept Button */}
+                    <button
+                      onClick={() => handleVerifyAndConfirm(order.orderId)}
+                      disabled={isUpdating}
+                      className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-400 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
+                    >
+                      {isUpdating
+                        ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Saving…</span></>
+                        : <><CheckCircle2 className="w-4 h-4" /><span>Accept Order &amp; Start Preparing</span></>
+                      }
+                    </button>
+
                   </div>
-
-                  {/* Accept Button */}
-                  <button
-                    onClick={() => handleVerifyAndConfirm(order.orderId)}
-                    className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Accept Order &amp; Start Preparing</span>
-                  </button>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -333,98 +408,89 @@ export const AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-100 shadow-sm">
               <ChefHat className="w-12 h-12 mx-auto text-slate-300" />
               <p className="font-extrabold text-slate-700 text-base">No Active Orders in Progress</p>
+              <p className="text-xs">Accept a new order to see it here.</p>
             </div>
           ) : (
             <div className="space-y-6">
-              {activeOrders.map(order => (
-                <div key={order.orderId} className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-5">
+              {activeOrders.map(order => {
+                const isUpdating = updatingOrders.has(order.orderId);
+                return (
+                  <div key={order.orderId} className={`bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-5 transition-opacity ${isUpdating ? 'opacity-60' : ''}`}>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-900 text-lg">#{order.orderId}</span>
-                        <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
-                          Payment Verified • ID: {order.utrNumber}
-                        </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-black text-slate-900 text-lg">#{order.orderId}</span>
+                          <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
+                            {order.status.replace(/_/g, ' ')}
+                          </span>
+                          {order.utrNumber && (
+                            <span className="bg-slate-100 text-slate-600 font-bold text-xs px-2 py-0.5 rounded-full">
+                              ID: {order.utrNumber}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 font-bold mt-1">
+                          Customer: <strong className="text-slate-900">{order.customer.name}</strong> •
+                          📞 {order.customer.phone} •
+                          📍 Zone: <strong className="text-brand-600">{order.area?.name || 'Standard'}</strong>
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-600 font-bold mt-1">
-                        Customer: <strong className="text-slate-900">{order.customer.name}</strong> •
-                        📞 {order.customer.phone} •
-                        📍 Zone: <strong className="text-brand-600">{order.area?.name || 'Standard'}</strong>
-                      </p>
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-slate-900">₹{order.totalAmount}</span>
+                        <span className="text-xs text-slate-400 font-semibold block">Saturday Batch</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black text-slate-900">₹{order.totalAmount}</span>
-                      <span className="text-xs text-slate-400 font-semibold block">Saturday Batch</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                        <span className="text-slate-400 font-medium block">Address:</span>
+                        <p className="font-bold text-slate-800 leading-snug">{order.customer.address}</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                        <span className="text-slate-400 font-medium block">Items:</span>
+                        <p className="font-bold text-slate-800">
+                          {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel}) x${i.quantity}`).join(', ')}
+                        </p>
+                      </div>
                     </div>
+
+                    <div className="space-y-2 pt-2">
+                      <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
+                        Update Live Customer Tracking Stage:
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        {(
+                          [
+                            { status: 'PREPARING',        label: 'Preparing',       icon: <ChefHat className="w-4 h-4" />,      activeClass: 'bg-amber-500 text-slate-950 border-amber-600' },
+                            { status: 'READY',            label: 'Ready & Packed',  icon: <Package className="w-4 h-4" />,      activeClass: 'bg-blue-600 text-white border-blue-700' },
+                            { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery',icon: <Truck className="w-4 h-4" />,        activeClass: 'bg-purple-600 text-white border-purple-700' },
+                            { status: 'DELIVERED',        label: 'Mark Delivered',  icon: <CheckCircle2 className="w-4 h-4" />, activeClass: 'bg-emerald-600 text-white border-emerald-700' },
+                          ] as { status: OrderStageStatus; label: string; icon: React.ReactNode; activeClass: string }[]
+                        ).map(({ status, label, icon, activeClass }) => (
+                          <button
+                            key={status}
+                            onClick={() => handleStatusChange(order.orderId, status)}
+                            disabled={isUpdating}
+                            className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
+                              order.status === status
+                                ? `${activeClass} shadow-md scale-105`
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 disabled:opacity-50'
+                            }`}
+                          >
+                            {isUpdating && order.status !== status
+                              ? <RefreshCw className="w-4 h-4 animate-spin" />
+                              : icon
+                            }
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
-                      <span className="text-slate-400 font-medium block">Address:</span>
-                      <p className="font-bold text-slate-800 leading-snug">{order.customer.address}</p>
-                    </div>
-                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
-                      <span className="text-slate-400 font-medium block">Items:</span>
-                      <p className="font-bold text-slate-800">
-                        {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel}) x${i.quantity}`).join(', ')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 pt-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
-                      Update Live Customer Tracking Stage:
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                      <button
-                        onClick={() => handleStatusChange(order.orderId, 'PREPARING')}
-                        className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
-                          order.status === 'PREPARING'
-                            ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-md scale-105'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <ChefHat className="w-4 h-4" /> Preparing
-                      </button>
-
-                      <button
-                        onClick={() => handleStatusChange(order.orderId, 'READY')}
-                        className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
-                          order.status === 'READY'
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-md scale-105'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <Package className="w-4 h-4" /> Ready &amp; Packed
-                      </button>
-
-                      <button
-                        onClick={() => handleStatusChange(order.orderId, 'OUT_FOR_DELIVERY')}
-                        className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
-                          order.status === 'OUT_FOR_DELIVERY'
-                            ? 'bg-purple-600 text-white border-purple-700 shadow-md scale-105'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <Truck className="w-4 h-4" /> Out for Delivery
-                      </button>
-
-                      <button
-                        onClick={() => handleStatusChange(order.orderId, 'DELIVERED')}
-                        className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
-                          order.status === 'DELIVERED'
-                            ? 'bg-emerald-600 text-white border-emerald-700 shadow-md scale-105'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-4 h-4" /> Mark Delivered
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
