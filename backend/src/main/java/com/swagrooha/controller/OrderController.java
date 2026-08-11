@@ -65,6 +65,7 @@ public class OrderController {
                     .status(status)
                     .paymentStatus((String) payload.getOrDefault("paymentStatus", "PAID_PENDING_VERIFICATION"))
                     .utrNumber((String) payload.get("utrNumber"))
+                    .paymentProof((String) payload.get("paymentProof"))
                     .build();
 
             Order saved = orderRepository.save(newOrder);

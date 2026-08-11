@@ -12,6 +12,10 @@ import {
   ShieldCheck,
   PackageCheck,
   AlertCircle,
+  Eye,
+  X,
+  FileCheck,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
@@ -35,7 +39,9 @@ function normalizeOrder(raw: any): PlacedOrder {
     area: {
       id: raw.deliveryArea || '',
       name: raw.deliveryArea || '',
+      tier: 'Near',
       charge: raw.deliveryCharge || 0,
+      estimatedDeliveryText: '',
     },
     // Map OrderItem[] from backend → CartItem[] shape
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,11 +64,14 @@ function normalizeOrder(raw: any): PlacedOrder {
     deliveryCharge: raw.deliveryCharge || 0,
     totalAmount: raw.totalAmount || 0,
     deliveryDate: raw.deliveryDate
-      ? { formattedDate: raw.deliveryDate, dayName: '', daysUntil: 0 }
-      : { formattedDate: '', dayName: '', daysUntil: 0 },
+      ? (typeof raw.deliveryDate === 'string'
+          ? { formattedDate: raw.deliveryDate, dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' }
+          : raw.deliveryDate)
+      : { formattedDate: '', dayName: '', daysUntil: 0, dayOfWeekName: '', isSameWeekend: false, orderDayName: '' },
     status: raw.status || 'PLACED',
     paymentStatus: raw.paymentStatus || 'PENDING_VERIFICATION',
     utrNumber: raw.utrNumber || '',
+    paymentProof: raw.paymentProof || '',
     createdAt: raw.createdAt || new Date().toISOString(),
   };
 }
@@ -73,8 +82,12 @@ export const AdminDashboard: React.FC = () => {
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
-  // track which orders are currently being updated so we can show loading
+  
+  // Track which orders are currently being updated so we can show loading
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
+
+  // Screenshot Lightbox Modal State
+  const [activeScreenshot, setActiveScreenshot] = useState<{ orderId: string; proofUrl: string } | null>(null);
 
   // Use a ref to control polling — we pause it during status updates
   const pollPausedRef = useRef(false);
@@ -127,7 +140,7 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [adminToken, fetchOrders]);
 
-  // ── Generic status updater with optimistic UI + pause/resume polling ──
+  // ── Status Updater with optimistic UI + pause/resume polling ──
   const applyStatusChange = async (
     orderId: string,
     newStatus: OrderStageStatus,
@@ -167,13 +180,12 @@ export const AdminDashboard: React.FC = () => {
     } else {
       // Revert optimistic update if backend failed
       showToast(`❌ Failed to update order ${orderId}. Please try again.`);
-      // Re-fetch fresh data to restore correct state
       pollPausedRef.current = false;
       await fetchOrders();
       return;
     }
 
-    // 6. Resume polling after 3 seconds (gives backend time to persist)
+    // 6. Resume polling after 3 seconds
     setTimeout(() => {
       pollPausedRef.current = false;
       fetchOrders();
@@ -186,15 +198,45 @@ export const AdminDashboard: React.FC = () => {
   const handleStatusChange = (orderId: string, newStatus: OrderStageStatus) =>
     applyStatusChange(orderId, newStatus);
 
-  // Filter orders by section
+  // Filter orders strictly by status
   const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
-  const activeOrders  = orders.filter(o => ['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
+  const activeOrders  = orders.filter(o => ['CONFIRMED', 'PAYMENT_VERIFIED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
   const historyOrders = orders.filter(o => o.status === 'DELIVERED');
 
   if (!adminToken) return <AdminLoginPage />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+      {/* ── Screenshot Lightbox Modal ── */}
+      {activeScreenshot && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+                <FileCheck className="w-4 h-4 text-emerald-600" />
+                Payment Screenshot Proof — Order #{activeScreenshot.orderId}
+              </span>
+              <button
+                onClick={() => setActiveScreenshot(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="bg-slate-100 rounded-2xl overflow-hidden max-h-[70vh] flex items-center justify-center border border-slate-200">
+              <img
+                src={activeScreenshot.proofUrl}
+                alt="Payment Screenshot Proof"
+                className="object-contain max-h-[70vh] w-full"
+              />
+            </div>
+            <p className="text-xs text-slate-500 text-center font-medium">
+              Verify payment in PhonePe / GPay / Bank Account before accepting.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Owner Header ── */}
       <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
@@ -205,7 +247,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white">Owner Order Dashboard</h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Manage incoming orders, track live status, and coordinate deliveries.
+            Manage incoming orders, verify PhonePe/GPay screenshots, and update live tracking.
           </p>
           <div className="flex items-center gap-3 mt-2">
             {loading && (
@@ -275,7 +317,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>📜 History ({historyOrders.length})</span>
+          <span>📜 History / Completed ({historyOrders.length})</span>
         </button>
 
         <button
@@ -353,25 +395,39 @@ export const AdminDashboard: React.FC = () => {
                       </ul>
                     </div>
 
-                    {/* Payment Info */}
+                    {/* Payment Details & Screenshot Proof Button */}
                     <div className="bg-emerald-900 text-white p-4 rounded-2xl border border-emerald-800 space-y-3 shadow-md">
                       <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
                         <span className="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Auto-Verified
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Submitted
                         </span>
                         <span className="text-emerald-300 bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                          SECURE
+                          {order.paymentProof ? 'SCREENSHOT UPLOADED' : 'UTR VERIFIED'}
                         </span>
                       </div>
+
                       <div className="flex items-center justify-between gap-3 bg-emerald-950 p-2.5 rounded-xl border border-emerald-800">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-emerald-400 font-bold">Razorpay Payment ID:</span>
+                          <span className="text-[10px] text-emerald-400 font-bold">UTR / Payment Ref:</span>
                           <span className="font-mono font-black text-sm text-white tracking-wider">
                             {order.utrNumber || 'N/A'}
                           </span>
                         </div>
                         <span className="text-emerald-400 font-black text-lg">₹{order.totalAmount}</span>
                       </div>
+
+                      {/* View Screenshot Proof Button (Option 2) */}
+                      {order.paymentProof && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveScreenshot({ orderId: order.orderId, proofUrl: order.paymentProof! })}
+                          className="w-full flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold py-2 px-3 rounded-xl transition-all text-xs border border-emerald-500 shadow"
+                        >
+                          <ImageIcon className="w-4 h-4 text-amber-300" />
+                          <span>View Uploaded Payment Screenshot</span>
+                          <Eye className="w-3.5 h-3.5 text-emerald-300" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Accept Button */}
@@ -429,6 +485,15 @@ export const AdminDashboard: React.FC = () => {
                               ID: {order.utrNumber}
                             </span>
                           )}
+                          {order.paymentProof && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveScreenshot({ orderId: order.orderId, proofUrl: order.paymentProof! })}
+                              className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1"
+                            >
+                              <ImageIcon className="w-3 h-3 text-emerald-600" /> View Screenshot
+                            </button>
+                          )}
                         </div>
                         <p className="text-xs text-slate-600 font-bold mt-1">
                           Customer: <strong className="text-slate-900">{order.customer.name}</strong> •
@@ -438,7 +503,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <span className="text-2xl font-black text-slate-900">₹{order.totalAmount}</span>
-                        <span className="text-xs text-slate-400 font-semibold block">Saturday Batch</span>
+                        <span className="text-xs text-slate-400 font-semibold block">Scheduled Delivery</span>
                       </div>
                     </div>
 
@@ -496,27 +561,57 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ── SECTION 3: ORDER HISTORY ── */}
+      {/* ── SECTION 3: COMPLETED ORDER HISTORY (DELIVERED TERMINAL STATUS) ── */}
       {activeTabSection === 'history' && (
         <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
-          <h2 className="text-xl font-black text-slate-900">📜 Completed Order History</h2>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">📜 Completed Order History</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Delivered orders are permanently archived here. Status is terminal and cannot be moved backward.
+              </p>
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-3 py-1 rounded-full">
+              {historyOrders.length} Delivered
+            </span>
+          </div>
+
           {historyOrders.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-4">No completed orders archived yet.</p>
+            <p className="text-xs text-slate-400 italic py-8 text-center">No completed orders archived yet.</p>
           ) : (
             <div className="divide-y divide-slate-100 text-xs">
               {historyOrders.map(order => (
-                <div key={order.orderId} className="py-4 flex justify-between items-center">
-                  <div>
-                    <span className="font-extrabold text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
-                    <span className="text-slate-500 ml-2 font-medium">(Payment ID: {order.utrNumber})</span>
-                    <p className="text-slate-400 text-[11px] mt-0.5">
-                      {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel})`).join(', ')}
+                <div key={order.orderId} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
+                      <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
+                      {order.utrNumber && (
+                        <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
+                          UTR: {order.utrNumber}
+                        </span>
+                      )}
+                      {order.paymentProof && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveScreenshot({ orderId: order.orderId, proofUrl: order.paymentProof! })}
+                          className="text-emerald-700 hover:text-emerald-900 underline text-[11px] font-bold flex items-center gap-0.5"
+                        >
+                          <ImageIcon className="w-3 h-3" /> Screenshot Proof
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-slate-600 text-xs font-medium">
+                      Address: {order.customer.address}
+                    </p>
+                    <p className="text-slate-400 text-[11px]">
+                      Items: {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel})`).join(', ')}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span className="font-black text-emerald-600 text-base">₹{order.totalAmount}</span>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded block mt-0.5">
-                      DELIVERED
+                  <div className="text-right shrink-0">
+                    <span className="font-black text-emerald-600 text-lg block">₹{order.totalAmount}</span>
+                    <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full inline-block mt-1 uppercase tracking-wider">
+                      ✅ DELIVERED (COMPLETED)
                     </span>
                   </div>
                 </div>
@@ -546,8 +641,11 @@ export const AdminDashboard: React.FC = () => {
                   ) : (
                     <div className="space-y-2 text-xs">
                       {areaOrders.map(o => (
-                        <div key={o.orderId} className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex justify-between">
-                          <span className="font-bold text-slate-800">{o.customer.name} (ID: {o.utrNumber})</span>
+                        <div key={o.orderId} className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex justify-between items-center">
+                          <div>
+                            <span className="font-bold text-slate-800 block">{o.customer.name} (#{o.orderId})</span>
+                            <span className="text-[10px] text-slate-500 font-semibold">{o.status}</span>
+                          </div>
                           <span className="text-brand-600 font-bold">₹{o.totalAmount}</span>
                         </div>
                       ))}

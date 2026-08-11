@@ -36,6 +36,7 @@ export interface PlacedOrder {
   status: OrderStageStatus;
   paymentStatus: PaymentVerificationStatus;
   utrNumber?: string;
+  paymentProof?: string;
   paymentMethod?: string;
   paidAt?: string;
   createdAt: string;
@@ -311,16 +312,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ): Promise<boolean> => {
     const payStatus = newPaymentStatus || (newStatus === 'CONFIRMED' ? 'VERIFIED_PAID' : undefined);
 
-    setAllOrders(prev => prev.map(o => {
-      if (o.orderId === orderId) {
-        return {
-          ...o,
-          status: newStatus,
-          paymentStatus: payStatus || o.paymentStatus
-        };
+    setAllOrders(prev => {
+      const updated = prev.map(o => {
+        if (o.orderId === orderId) {
+          return {
+            ...o,
+            status: newStatus,
+            paymentStatus: payStatus || o.paymentStatus
+          };
+        }
+        return o;
+      });
+      try {
+        localStorage.setItem('swagrooha_all_orders', JSON.stringify(updated));
+      } catch (err) {
+        console.error('LocalStorage write error', err);
       }
-      return o;
-    }));
+      return updated;
+    });
 
     if (currentOrder && currentOrder.orderId === orderId) {
       setCurrentOrder(prev => prev ? { 
