@@ -253,13 +253,13 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ error: 'Invalid order data received' });
     }
 
-    // Validate UTR: must be 12–22 digits, numbers only
+    // Validate UTR only if paymentProof is NOT uploaded and utrNumber is provided
     const utrPattern = /^\d{12,22}$/;
-    if (order.utrNumber && !utrPattern.test(order.utrNumber.trim())) {
+    if (!order.paymentProof && order.utrNumber && !['SCREENSHOT_PROVED', 'DIRECT_UPI_PAYMENT'].includes(order.utrNumber) && !utrPattern.test(order.utrNumber.trim())) {
       return res.status(400).json({ error: 'UTR must contain only numbers and be 12 to 22 digits long.' });
     }
-    // Check for duplicate UTR (excluding current order)
-    if (order.utrNumber) {
+    // Check for duplicate UTR (excluding current order and non-numeric placeholders)
+    if (order.utrNumber && utrPattern.test(order.utrNumber.trim())) {
       const duplicate = await isUtrDuplicate(order.utrNumber, order.orderId);
       if (duplicate) {
         return res.status(400).json({ error: 'Duplicate UTR / Transaction ID detected. Each UTR must be unique.' });
@@ -296,6 +296,20 @@ app.post('/api/orders', async (req, res) => {
     console.error('❌ Error processing /api/orders:', err);
     return res.status(500).json({ error: 'Failed to process order on server: ' + err.message });
   }
+});
+
+// GET /api/orders — fetch all orders for admin dashboard
+app.get('/api/orders', async (req, res) => {
+  if (pool) {
+    try {
+      const result = await pool.query('SELECT data FROM orders ORDER BY created_at DESC');
+      const pgOrders = result.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+      return res.json(pgOrders);
+    } catch (e) {
+      console.error('Error fetching orders from PostgreSQL:', e);
+    }
+  }
+  return res.json(orders);
 });
 
 // GET /api/orders/:query — track order by orderId / phone / UTR
