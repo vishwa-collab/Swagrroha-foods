@@ -110,6 +110,36 @@ app.get('/api/test-email', async (req, res) => {
 // ── Fallback in-memory orders store
 let orders = [];
 
+// Helper function to check if UTR was already used for another order
+async function isUtrDuplicate(utr, currentOrderId) {
+  if (!utr) return false;
+  const cleanUtr = utr.trim().toLowerCase();
+
+  // Check PostgreSQL DB if active
+  if (pool) {
+    try {
+      const result = await pool.query(
+        `SELECT order_id FROM orders 
+         WHERE LOWER(utr) = $1 AND LOWER(order_id) != $2 
+         LIMIT 1`,
+        [cleanUtr, (currentOrderId || '').toLowerCase()]
+      );
+      if (result.rows.length > 0) {
+        return true;
+      }
+    } catch (e) {
+      console.error('Error checking duplicate UTR in PostgreSQL:', e);
+    }
+  }
+
+  // Check in-memory store
+  return orders.some(
+    o => o.utrNumber && 
+         o.utrNumber.trim().toLowerCase() === cleanUtr && 
+         o.orderId !== currentOrderId
+  );
+}
+
 // Helper function to insert/update order in PostgreSQL & Memory
 async function persistOrder(order) {
   if (pool) {
@@ -221,6 +251,19 @@ app.post('/api/orders', async (req, res) => {
     const order = req.body;
     if (!order || !order.orderId) {
       return res.status(400).json({ error: 'Invalid order data received' });
+    }
+
+    // Validate UTR: must be 12–22 digits, numbers only
+    const utrPattern = /^\d{12,22}$/;
+    if (order.utrNumber && !utrPattern.test(order.utrNumber.trim())) {
+      return res.status(400).json({ error: 'UTR must contain only numbers and be 12 to 22 digits long.' });
+    }
+    // Check for duplicate UTR (excluding current order)
+    if (order.utrNumber) {
+      const duplicate = await isUtrDuplicate(order.utrNumber, order.orderId);
+      if (duplicate) {
+        return res.status(400).json({ error: 'Duplicate UTR / Transaction ID detected. Each UTR must be unique.' });
+      }
     }
 
     const finalOrder = {

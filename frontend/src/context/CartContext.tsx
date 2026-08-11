@@ -119,9 +119,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentOrder, setCurrentOrder] = useState<PlacedOrder | null>(null);
 
   // Persistent Store for All Placed Orders
-  // v2 key used so old demo orders are wiped once; new real orders persist normally
+  // Bump version to v6 so old order history is completely purged and app starts fresh
   const [allOrders, setAllOrders] = useState<PlacedOrder[]>(() => {
-    const VERSION = 'v5';
+    const VERSION = 'v6';
     const versionKey = 'swagrooha_orders_version';
     if (localStorage.getItem(versionKey) !== VERSION) {
       // Wipe old cached orders and save new version tag

@@ -54,13 +54,14 @@ export const PaymentPage: React.FC = () => {
     e.preventDefault();
 
     const cleanUtr = utrNumber.trim();
+    // Validate UTR: must be 12‑22 digits, numbers only
+    const utrPattern = /^\d{12,22}$/;
     if (!cleanUtr) {
-      setUtrError('Please enter your 12-digit UTR / Transaction ID from PhonePe, GPay, or Paytm.');
+      setUtrError('Please enter your 12‑digit UTR / Transaction ID from PhonePe, GPay, or Paytm.');
       return;
     }
-
-    if (cleanUtr.length < 8) {
-      setUtrError('Please enter a valid Transaction ID / UTR number (at least 8–12 characters).');
+    if (!utrPattern.test(cleanUtr)) {
+      setUtrError('UTR must contain only numbers and be 12 to 22 digits long.');
       return;
     }
 

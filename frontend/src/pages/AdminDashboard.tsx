@@ -11,17 +11,18 @@ import {
   LogOut,
   ShieldCheck,
   PackageCheck,
+  Trash2,
 } from 'lucide-react';
 
 // Always talk directly to the Render backend — never rely on the Vite dev proxy
-const API_BASE = 'https://swagrroha-foods.onrender.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast, clearAllOrders } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
-  const [lastFetched, setLastFetched] = useState<string>('');
+
 
   // ── Auto-poll every 5 s while logged in
   useEffect(() => {
@@ -34,7 +35,7 @@ export const AdminDashboard: React.FC = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/orders`, {
+      const res = await fetch(`${API_BASE}/api/orders`, {
         headers: { 'Cache-Control': 'no-cache' },
       });
       if (res.ok) {
@@ -43,7 +44,6 @@ export const AdminDashboard: React.FC = () => {
           (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         );
         setOrders(sorted);
-        setLastFetched(new Date().toLocaleTimeString('en-IN'));
         setLoading(false);
         return;
       }
@@ -61,7 +61,6 @@ export const AdminDashboard: React.FC = () => {
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
     setOrders(merged);
-    setLastFetched('local cache');
     setLoading(false);
   };
 
@@ -78,6 +77,16 @@ export const AdminDashboard: React.FC = () => {
     setOrders(prev =>
       prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o)
     );
+  };
+
+  const handleResetOrders = async () => {
+    if (window.confirm('⚠️ Are you sure you want to PERMANENTLY DELETE all previous order history and start completely fresh? This will wipe all orders from database and local memory.')) {
+      setLoading(true);
+      await clearAllOrders();
+      setOrders([]);
+      setLoading(false);
+      showToast('🧹 All order history deleted! Ready to start with fresh orders.');
+    }
   };
 
   // Filter orders by section
@@ -101,11 +110,7 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Manage incoming orders, track live status, and coordinate deliveries.
           </p>
-          {lastFetched && (
-            <p className="text-[11px] text-emerald-400 mt-1">
-              🟢 Last synced from Render: {lastFetched}
-            </p>
-          )}
+
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -115,6 +120,15 @@ export const AdminDashboard: React.FC = () => {
           >
             <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
             Refresh Now
+          </button>
+
+          <button
+            onClick={handleResetOrders}
+            className="flex items-center gap-1.5 bg-amber-600/90 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-amber-500/50 shadow transition-all"
+            title="Wipe all orders from database & browser to start fresh"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-amber-200" />
+            Reset All Orders
           </button>
 
           <button

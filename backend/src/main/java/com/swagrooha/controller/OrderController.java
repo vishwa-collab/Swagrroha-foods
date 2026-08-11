@@ -77,10 +77,14 @@ public class OrderController {
     @PutMapping("/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(@PathVariable String orderId, @RequestBody Map<String, String> body) {
         String newStatus = body.get("status");
+        String newPaymentStatus = body.get("paymentStatus");
         Optional<Order> optionalOrder = orderRepository.findById(orderId);
         if (optionalOrder.isPresent()) {
             Order order = optionalOrder.get();
             order.setStatus(newStatus);
+            if (newPaymentStatus != null && !newPaymentStatus.isEmpty()) {
+                order.setPaymentStatus(newPaymentStatus);
+            }
             Order updated = orderRepository.save(order);
             return ResponseEntity.ok(updated);
         }
