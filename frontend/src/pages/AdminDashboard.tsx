@@ -18,8 +18,9 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
 const POLL_INTERVAL_MS = 10000;
+
 
 // ── Normalize flat backend Order into the nested PlacedOrder shape ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

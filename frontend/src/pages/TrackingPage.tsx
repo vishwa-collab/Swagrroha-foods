@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 
-// Always poll the live Render backend — never trust stale localStorage
-const API_BASE = 'https://swagrroha-foods.onrender.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+
 import { 
   Search, 
   PackageCheck, 

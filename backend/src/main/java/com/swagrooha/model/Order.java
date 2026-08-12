@@ -3,6 +3,7 @@ package com.swagrooha.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -23,6 +24,8 @@ public class Order {
     @Column(nullable = false)
     private String customerPhone;
 
+    private String customerEmail;
+
     @Column(nullable = false)
     private String deliveryArea;
 
@@ -41,36 +44,49 @@ public class Order {
     @Column(nullable = false)
     private String deliveryDate;
 
-    // Status Stages: PLACED, CONFIRMED, PREPARING, READY, OUT_FOR_DELIVERY, DELIVERED
+    // Status Stages: PLACED, PAYMENT_VERIFIED, PREPARING, READY, OUT_FOR_DELIVERY, DELIVERED
     @Column(nullable = false)
     private String status;
 
+    // Payment Statuses: PENDING_VERIFICATION, VERIFIED_PAID, REJECTED
     @Column(nullable = false)
     private String paymentStatus;
 
+    private String paymentMethod;
+
     // Payment Screenshot Base64 Image URL / proof
     @Lob
-    @Column(length = 5000000)
+    @Column(columnDefinition = "TEXT")
     private String paymentProof;
 
     private String utrNumber;
 
     private LocalDateTime createdAt;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private LocalDateTime updatedAt;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
-    private List<OrderItem> items;
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
 
     @PrePersist
     public void onPrePersist() {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
-        if (this.status == null) {
+        this.updatedAt = LocalDateTime.now();
+        if (this.status == null || this.status.trim().isEmpty()) {
             this.status = "PLACED";
         }
-        if (this.paymentStatus == null) {
-            this.paymentStatus = "PAID";
+        if (this.paymentStatus == null || this.paymentStatus.trim().isEmpty()) {
+            this.paymentStatus = "PENDING_VERIFICATION";
         }
     }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
+

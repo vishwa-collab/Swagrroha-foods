@@ -4,15 +4,20 @@ CREATE TABLE IF NOT EXISTS orders (
     order_id VARCHAR(50) PRIMARY KEY,
     customer_name VARCHAR(100) NOT NULL,
     customer_phone VARCHAR(20) NOT NULL,
+    customer_email VARCHAR(150),
     delivery_area VARCHAR(100) NOT NULL,
     customer_address TEXT NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     delivery_charge DECIMAL(10, 2) NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
     delivery_date VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL,
     payment_status VARCHAR(50) NOT NULL,
+    payment_method VARCHAR(100),
     utr_number VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    payment_proof TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -24,3 +29,4 @@ CREATE TABLE IF NOT EXISTS order_items (
     quantity INT NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
+

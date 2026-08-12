@@ -3,7 +3,7 @@ import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || (import.meta.env.PROD ? 'https://swagrroha-foods.onrender.com' : 'https://swagrroha-foods.onrender.com');
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
 
 export interface CartItem {
   cartItemId: string;
@@ -251,13 +251,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       paymentStatus: order.paymentStatus || 'PENDING_VERIFICATION'
     };
 
-    setCurrentOrder(fullOrder);
-
-    setAllOrders(prev => {
-      const filtered = prev.filter(o => o.orderId !== fullOrder.orderId);
-      return [fullOrder, ...filtered];
-    });
-
     try {
       const res = await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
@@ -267,19 +260,35 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        // Revert local state additions since backend rejected
-        setAllOrders(prev => prev.filter(o => o.orderId !== fullOrder.orderId));
-        if (currentOrder?.orderId === fullOrder.orderId) {
-          setCurrentOrder(null);
-        }
-        return { success: false, message: errData.error || 'Failed to verify and place order on the server.' };
+        return {
+          success: false,
+          message: errData.error || 'Unable to place your order. Please try again.'
+        };
       }
-    } catch (e) {
-      console.log('Order saved in local state store (network error)');
-    }
 
-    return { success: true };
+      // Backend confirmed order saved to DB successfully
+      const savedBackendOrder = await res.json().catch(() => null);
+      const finalSavedOrder = savedBackendOrder && savedBackendOrder.orderId ? {
+        ...fullOrder,
+        orderId: savedBackendOrder.orderId
+      } : fullOrder;
+
+      setCurrentOrder(finalSavedOrder);
+      setAllOrders(prev => {
+        const filtered = prev.filter(o => o.orderId !== finalSavedOrder.orderId);
+        return [finalSavedOrder, ...filtered];
+      });
+
+      return { success: true };
+    } catch (e) {
+      console.error('Backend order save failed:', e);
+      return {
+        success: false,
+        message: 'Unable to place your order. Unable to connect to server. Please try again.'
+      };
+    }
   };
+
 
 
 

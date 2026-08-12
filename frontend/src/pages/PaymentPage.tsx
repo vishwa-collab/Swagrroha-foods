@@ -189,9 +189,13 @@ export const PaymentPage: React.FC = () => {
     // ── Save order to backend ──
     const addRes = await addOrder(newOrder);
     if (!addRes.success) {
-      const err = addRes.message || 'Payment reference already used. Please check details.';
-      if (paymentOption === 'utr') setUtrError(err);
-      else setScreenshotError(err);
+      const err = addRes.message || 'Unable to place your order. Please try again.';
+      if (paymentOption === 'utr') {
+        setUtrError(err);
+      } else {
+        setScreenshotError(err);
+      }
+      showToast(err);
       setIsSubmitting(false);
       if (waWindow) waWindow.close();
       return;
@@ -201,6 +205,7 @@ export const PaymentPage: React.FC = () => {
     setIsSubmitting(false);
     setActiveTab('confirmation');
   };
+
 
   if (cart.length === 0) {
     setActiveTab('cart');

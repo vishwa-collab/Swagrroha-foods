@@ -17,11 +17,12 @@ import java.util.HashMap;
 @CrossOrigin(origins = "*")
 public class PaymentController {
 
-    @Value("${razorpay.key.id}")
+    @Value("${razorpay.key.id:}")
     private String keyId;
 
-    @Value("${razorpay.key.secret}")
+    @Value("${razorpay.key.secret:}")
     private String keySecret;
+
 
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> data) {
