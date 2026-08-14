@@ -3,7 +3,7 @@ import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
 export interface CartItem {
   cartItemId: string;
@@ -40,6 +40,10 @@ export interface PlacedOrder {
   paymentMethod?: string;
   paidAt?: string;
   createdAt: string;
+  receiptEmailSent?: boolean;
+  receiptEmailSentAt?: string | null;
+  receiptEmailStatus?: string | null;
+  receiptEmailError?: string | null;
 }
 
 interface CartContextType {
@@ -79,6 +83,8 @@ interface CartContextType {
   logoutAdmin: () => void;
   updateOrderStatus: (orderId: string, newStatus: OrderStageStatus, newPaymentStatus?: PaymentVerificationStatus) => Promise<boolean>;
   
+  resendReceiptEmail: (orderId: string) => Promise<{ success: boolean; message: string }>;
+
   // Live Tracking Lookup
   trackedOrder: PlacedOrder | null;
   fetchOrderForTracking: (query: string) => Promise<PlacedOrder | null>;
@@ -369,10 +375,46 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Backend status update failed:', res.status, res.statusText);
         return false;
       }
+      // If the backend returned receipt email status in the response, update local state
+      const respData = await res.json().catch(() => null);
+      if (respData && newStatus === 'DELIVERED') {
+        setAllOrders(prev => prev.map(o => o.orderId === orderId ? {
+          ...o,
+          receiptEmailSent: respData.receiptEmailSent ?? o.receiptEmailSent,
+          receiptEmailSentAt: respData.receiptEmailSentAt ?? o.receiptEmailSentAt,
+          receiptEmailStatus: respData.receiptEmailStatus ?? o.receiptEmailStatus,
+          receiptEmailError: respData.receiptEmailError ?? o.receiptEmailError,
+        } : o));
+      }
       return true;
     } catch (e) {
       console.error('Network error updating order status:', e);
       return false;
+    }
+  };
+
+  // Admin manually retries sending receipt email for a DELIVERED order
+  const resendReceiptEmail = async (orderId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}/resend-receipt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setAllOrders(prev => prev.map(o => o.orderId === orderId ? {
+          ...o,
+          receiptEmailSent: true,
+          receiptEmailSentAt: data.receiptEmailSentAt || new Date().toISOString(),
+          receiptEmailStatus: 'SENT',
+          receiptEmailError: null,
+        } : o));
+        return { success: true, message: data.message || 'Receipt email sent successfully' };
+      }
+      return { success: false, message: data.error || 'Failed to resend receipt email' };
+    } catch (e) {
+      console.error('Network error resending receipt email:', e);
+      return { success: false, message: 'Network error. Please check your connection and try again.' };
     }
   };
 
@@ -454,6 +496,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginAdmin,
       logoutAdmin,
       updateOrderStatus,
+      resendReceiptEmail,
       trackedOrder,
       fetchOrderForTracking,
       toastMessage,

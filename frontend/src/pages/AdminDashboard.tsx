@@ -15,10 +15,12 @@ import {
   Eye,
   X,
   FileCheck,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Mail,
+  RotateCcw
 } from 'lucide-react';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 const POLL_INTERVAL_MS = 10000;
 
 
@@ -74,11 +76,15 @@ function normalizeOrder(raw: any): PlacedOrder {
     utrNumber: raw.utrNumber || '',
     paymentProof: raw.paymentProof || '',
     createdAt: raw.createdAt || new Date().toISOString(),
+    receiptEmailSent: raw.receiptEmailSent ?? false,
+    receiptEmailSentAt: raw.receiptEmailSentAt ?? null,
+    receiptEmailStatus: raw.receiptEmailStatus ?? null,
+    receiptEmailError: raw.receiptEmailError ?? null,
   };
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, allOrders, showToast } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
   const [loading, setLoading] = useState(false);
@@ -86,6 +92,9 @@ export const AdminDashboard: React.FC = () => {
   
   // Track which orders are currently being updated so we can show loading
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
+
+  // Track which orders have receipt email retry in progress
+  const [resendingReceipt, setResendingReceipt] = useState<Set<string>>(new Set());
 
   // Screenshot Lightbox Modal State
   const [activeScreenshot, setActiveScreenshot] = useState<{ orderId: string; proofUrl: string } | null>(null);
@@ -198,6 +207,27 @@ export const AdminDashboard: React.FC = () => {
 
   const handleStatusChange = (orderId: string, newStatus: OrderStageStatus) =>
     applyStatusChange(orderId, newStatus);
+
+  // ── Receipt Email Retry Handler ──
+  const handleResendReceipt = async (orderId: string) => {
+    setResendingReceipt(prev => new Set(prev).add(orderId));
+    const result = await resendReceiptEmail(orderId);
+    setResendingReceipt(prev => { const s = new Set(prev); s.delete(orderId); return s; });
+    if (result.success) {
+      showToast(`📧 Receipt email resent successfully for Order ${orderId}!`);
+      // Update local orders state to reflect new email status
+      setOrders(prev => prev.map(o => o.orderId === orderId
+        ? { ...o, receiptEmailSent: true, receiptEmailStatus: 'SENT', receiptEmailError: null, receiptEmailSentAt: new Date().toISOString() }
+        : o
+      ));
+    } else {
+      showToast(`❌ Retry failed: ${result.message}`);
+      setOrders(prev => prev.map(o => o.orderId === orderId
+        ? { ...o, receiptEmailSent: false, receiptEmailStatus: 'FAILED', receiptEmailError: result.message }
+        : o
+      ));
+    }
+  };
 
   // Filter orders strictly by status
   const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
@@ -581,42 +611,115 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-xs text-slate-400 italic py-8 text-center">No completed orders archived yet.</p>
           ) : (
             <div className="divide-y divide-slate-100 text-xs">
-              {historyOrders.map(order => (
-                <div key={order.orderId} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
-                      <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
-                      {order.utrNumber && (
-                        <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
-                          UTR: {order.utrNumber}
+              {historyOrders.map(order => {
+                const isResending = resendingReceipt.has(order.orderId);
+                const emailSent = order.receiptEmailSent === true || order.receiptEmailStatus === 'SENT';
+                const emailFailed = order.receiptEmailStatus === 'FAILED';
+
+                return (
+                  <div key={order.orderId} className="py-4 flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
+                          <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
+                          {order.utrNumber && (
+                            <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
+                              UTR: {order.utrNumber}
+                            </span>
+                          )}
+                          {order.paymentProof && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveScreenshot({ orderId: order.orderId, proofUrl: order.paymentProof! })}
+                              className="text-emerald-700 hover:text-emerald-900 underline text-[11px] font-bold flex items-center gap-0.5"
+                            >
+                              <ImageIcon className="w-3 h-3" /> Screenshot Proof
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-slate-600 text-xs font-medium">
+                          Address: {order.customer.address}
+                        </p>
+                        <p className="text-slate-400 text-[11px]">
+                          Items: {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel})`).join(', ')}
+                        </p>
+                        {order.customer.email && (
+                          <p className="text-slate-400 text-[11px] flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {order.customer.email}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="text-right shrink-0 space-y-2">
+                        <span className="font-black text-emerald-600 text-lg block">₹{order.totalAmount}</span>
+                        <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full inline-block uppercase tracking-wider">
+                          ✅ DELIVERED
                         </span>
-                      )}
-                      {order.paymentProof && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveScreenshot({ orderId: order.orderId, proofUrl: order.paymentProof! })}
-                          className="text-emerald-700 hover:text-emerald-900 underline text-[11px] font-bold flex items-center gap-0.5"
-                        >
-                          <ImageIcon className="w-3 h-3" /> Screenshot Proof
-                        </button>
+                      </div>
+                    </div>
+
+                    {/* ── Receipt Email Status Badge ── */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {emailSent ? (
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full">
+                          <Mail className="w-3 h-3" />
+                          📧 Receipt Sent
+                          {order.receiptEmailSentAt && (
+                            <span className="text-emerald-500 font-normal ml-0.5">
+                              · {new Date(order.receiptEmailSentAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
+                          )}
+                        </span>
+                      ) : emailFailed ? (
+                        <>
+                          <span className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold px-3 py-1 rounded-full">
+                            <AlertCircle className="w-3 h-3" />
+                            📧 Receipt Failed
+                            {order.receiptEmailError && (
+                              <span className="text-red-400 font-normal ml-0.5 max-w-[180px] truncate" title={order.receiptEmailError}>
+                                · {order.receiptEmailError}
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            onClick={() => handleResendReceipt(order.orderId)}
+                            disabled={isResending}
+                            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-[11px] font-bold px-3 py-1 rounded-full transition-all"
+                          >
+                            {isResending
+                              ? <RefreshCw className="w-3 h-3 animate-spin" />
+                              : <RotateCcw className="w-3 h-3" />
+                            }
+                            {isResending ? 'Sending…' : '🔄 Retry Receipt'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-500 text-[11px] font-semibold px-3 py-1 rounded-full">
+                            <Mail className="w-3 h-3" />
+                            Receipt Not Sent
+                          </span>
+                          {order.customer.email && (
+                            <button
+                              onClick={() => handleResendReceipt(order.orderId)}
+                              disabled={isResending}
+                              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-[11px] font-bold px-3 py-1 rounded-full transition-all"
+                            >
+                              {isResending
+                                ? <RefreshCw className="w-3 h-3 animate-spin" />
+                                : <Mail className="w-3 h-3" />
+                              }
+                              {isResending ? 'Sending…' : '📧 Send Receipt'}
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
-                    <p className="text-slate-600 text-xs font-medium">
-                      Address: {order.customer.address}
-                    </p>
-                    <p className="text-slate-400 text-[11px]">
-                      Items: {order.items.map(i => `${i.product.name} (${i.selectedWeightLabel})`).join(', ')}
-                    </p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-black text-emerald-600 text-lg block">₹{order.totalAmount}</span>
-                    <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full inline-block mt-1 uppercase tracking-wider">
-                      ✅ DELIVERED (COMPLETED)
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

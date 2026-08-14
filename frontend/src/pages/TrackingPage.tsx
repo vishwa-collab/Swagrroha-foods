@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
 import { 
   Search, 

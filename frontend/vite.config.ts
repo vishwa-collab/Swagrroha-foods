@@ -25,7 +25,7 @@ export default defineConfig({
   // This env var is set automatically by Vercel from your project settings
   define: {
     'import.meta.env.VITE_API_BASE': JSON.stringify(
-      process.env.VITE_API_BASE || ''
+      process.env.VITE_API_BASE || 'https://swagrroha-foods.onrender.com'
     ),
   },
 });
