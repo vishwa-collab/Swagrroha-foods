@@ -8,212 +8,291 @@ if (dns.setDefaultResultOrder) {
 }
 
 /**
- * Generates clean HTML email receipt content for customer
+ * Generates a professional HTML email receipt for the customer.
+ * Includes all order details: ID, customer info, items, totals, payment info, status, and delivery date.
  */
-function generateReceiptHtml(order) {
+function generateReceiptHtml(order, isDelivered) {
   const customer = order.customer || {};
   const area = order.area || {};
   const items = order.items || [];
-  const deliveryDate = order.deliveryDate ? `${order.deliveryDate.dayOfWeekName || order.deliveryDate.dayOfWeek || 'Saturday'} (${order.deliveryDate.formattedDate || ''})` : 'Upcoming Saturday';
 
-  let itemsTableRows = items.map(item => {
-    const pName = item.product ? item.product.name : (item.name || 'Item');
-    const weight = item.selectedWeightLabel ? ` (${item.selectedWeightLabel})` : '';
-    const qty = item.quantity || 1;
-    const price = item.unitPrice ? item.unitPrice * qty : 0;
+  // Delivery date display
+  let deliveryDateStr = 'Upcoming Saturday';
+  if (order.deliveryDate) {
+    if (typeof order.deliveryDate === 'object' && order.deliveryDate.formattedDate) {
+      deliveryDateStr = `${order.deliveryDate.dayOfWeekName || ''} (${order.deliveryDate.formattedDate})`;
+    } else if (typeof order.deliveryDate === 'string') {
+      deliveryDateStr = order.deliveryDate;
+    }
+  }
+
+  const deliveredAt = isDelivered ? new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : null;
+  const orderedAt = order.createdAt ? new Date(order.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+  const paymentMethod = order.paymentMethod || (order.utrNumber ? 'UPI Scanner / PhonePe / GPay' : 'Online');
+  const paymentStatus = order.paymentStatus || 'PAID';
+  const orderStatus   = order.status || (isDelivered ? 'DELIVERED' : 'PLACED');
+  const utrDisplay    = order.utrNumber && !['SCREENSHOT_PROVED', 'DIRECT_UPI_PAYMENT'].includes((order.utrNumber||'').toUpperCase())
+                        ? order.utrNumber : 'Screenshot / Online Verified';
+
+  const itemsTableRows = items.map(item => {
+    const pName  = item.product ? item.product.name : (item.productName || item.name || 'Item');
+    const weight = (item.selectedWeightLabel || item.weightLabel) ? ` (${item.selectedWeightLabel || item.weightLabel})` : '';
+    const qty    = item.quantity || 1;
+    const price  = (item.unitPrice || 0) * qty;
     return `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">${pName}${weight}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: center;">x${qty}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right; font-weight: bold;">₹${price}</td>
-      </tr>
-    `;
+        <td style="padding:11px 10px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:600;">${pName}<span style="color:#64748b;font-weight:normal;font-size:12px;">${weight}</span></td>
+        <td style="padding:11px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:14px;color:#475569;">${qty}</td>
+        <td style="padding:11px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:14px;color:#334155;">&#8377;${(item.unitPrice||0).toFixed(2)}</td>
+        <td style="padding:11px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:14px;color:#059669;font-weight:700;">&#8377;${price.toFixed(2)}</td>
+      </tr>`;
   }).join('');
 
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
-      <div style="background-color: #059669; padding: 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 24px;">PJR Swagrooha Foods</h1>
-        <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">Official Homemade Order Receipt</p>
-      </div>
-      
-      <div style="padding: 24px;">
-        <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-          <h2 style="margin: 0 0 8px 0; font-size: 16px; color: #0f172a;">Order #${order.orderId}</h2>
-          <p style="margin: 4px 0; font-size: 13px; color: #475569;"><strong>Customer Name:</strong> ${customer.name || 'Customer'}</p>
-          <p style="margin: 4px 0; font-size: 13px; color: #475569;"><strong>Phone Number:</strong> ${customer.phone || 'N/A'}</p>
-          <p style="margin: 4px 0; font-size: 13px; color: #475569;"><strong>Delivery Zone:</strong> ${area.name || 'Hyderabad'}</p>
-          <p style="margin: 4px 0; font-size: 13px; color: #475569;"><strong>Delivery Address:</strong> ${customer.address || 'N/A'}</p>
-          <p style="margin: 4px 0; font-size: 13px; color: #059669; font-weight: bold;"><strong>Scheduled Delivery:</strong> ${deliveryDate}</p>
-          <p style="margin: 4px 0; font-size: 13px; color: #475569;"><strong>Transaction ID (UTR):</strong> ${order.utrNumber || 'N/A'}</p>
-        </div>
+  const statusBannerBg   = isDelivered ? '#ecfdf5' : '#eff6ff';
+  const statusBannerBdr  = isDelivered ? '#a7f3d0' : '#bfdbfe';
+  const statusBannerTxt  = isDelivered ? '#065f46' : '#1d4ed8';
+  const statusBannerSub  = isDelivered ? '#047857' : '#1e40af';
+  const statusIcon       = isDelivered ? '&#10003;' : '&#128222;';
+  const statusTitle      = isDelivered ? 'Your Order Has Been Delivered!' : 'Order Received & Confirmed!';
+  const statusSubtitle   = isDelivered
+    ? 'Thank you for choosing PJR Swagrooha Foods! We hope you enjoy your authentic homemade food.'
+    : 'We have received your order. Our team will verify your payment and begin preparing your order shortly.';
 
-        <h3 style="font-size: 15px; color: #0f172a; border-bottom: 2px solid #059669; padding-bottom: 6px; margin-bottom: 12px;">Items Ordered</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 20px;">
-          <thead>
-            <tr style="background-color: #f1f5f9; text-align: left;">
-              <th style="padding: 10px;">Item</th>
-              <th style="padding: 10px; text-align: center;">Qty</th>
-              <th style="padding: 10px; text-align: right;">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsTableRows}
-          </tbody>
-        </table>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PJR Swagrooha Foods - Order Receipt</title></head>
+<body style="margin:0;padding:20px;background-color:#f1f5f9;font-family:Segoe UI,Arial,sans-serif;">
+<div style="max-width:650px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.10);border:1px solid #e2e8f0;">
 
-        <div style="border-top: 2px dashed #cbd5e1; padding-top: 12px; font-size: 14px; color: #0f172a;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span>Subtotal:</span>
-            <span>₹${order.subtotal || 0}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span>Delivery Charge:</span>
-            <span>₹${order.deliveryCharge || 0}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #059669; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-            <span>Total Amount Paid:</span>
-            <span>₹${order.totalAmount || 0}</span>
-          </div>
-        </div>
+  <div style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:32px 24px;text-align:center;">
+    <div style="display:inline-block;background:#d97706;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:10px;">Authentic Homemade Delicacies</div>
+    <h1 style="margin:0;font-size:28px;font-weight:900;color:#f59e0b;">PJR Swagrooha Foods</h1>
+    <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Official Order Receipt</p>
+  </div>
 
-        <div style="margin-top: 24px; padding: 12px; background-color: #f0fdf4; border-radius: 8px; text-align: center; color: #166534; font-size: 12px; font-weight: bold;">
-          ✅ Payment Status: PAID & VERIFIED VIA UPI
-        </div>
-      </div>
-
-      <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0;">Thank you for ordering with PJR Swagrooha Foods!</p>
-        <p style="margin: 4px 0 0 0;">For support / queries, contact owner at +91 8125154114</p>
-      </div>
+  <div style="padding:24px;">
+    <div style="background:${statusBannerBg};border:1px solid ${statusBannerBdr};border-radius:12px;padding:16px;text-align:center;margin-bottom:22px;">
+      <span style="font-size:22px;">${statusIcon}</span>
+      <span style="font-size:16px;font-weight:800;color:${statusBannerTxt};margin-left:8px;">${statusTitle}</span>
+      <p style="margin:4px 0 0;font-size:13px;color:${statusBannerSub};">${statusSubtitle}</p>
     </div>
-  `;
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:22px;">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:10px;margin-bottom:12px;">
+        <span style="font-size:15px;font-weight:900;color:#0f172a;">Order ID: #${order.orderId}</span>
+        <span style="font-size:12px;color:#64748b;">Placed: ${orderedAt}</span>
+      </div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;width:150px;">Customer Name:</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${customer.name || 'Valued Customer'}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Phone Number:</td><td style="padding:4px 0;color:#0f172a;">${customer.phone || 'N/A'}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Email Address:</td><td style="padding:4px 0;color:#0f172a;">${customer.email || 'N/A'}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Delivery Zone:</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${area.name || customer.areaId || 'Hyderabad Area'}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Delivery Address:</td><td style="padding:4px 0;color:#0f172a;">${customer.address || 'N/A'}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Scheduled Delivery:</td><td style="padding:4px 0;color:#059669;font-weight:700;">${deliveryDateStr}</td></tr>
+        ${isDelivered ? `<tr><td style="padding:4px 0;color:#475569;font-weight:700;">Delivered On:</td><td style="padding:4px 0;color:#0f172a;">${deliveredAt}</td></tr>` : ''}
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Payment Method:</td><td style="padding:4px 0;color:#0f172a;">${paymentMethod}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">UTR / Txn ID:</td><td style="padding:4px 0;color:#0f172a;font-family:monospace;">${utrDisplay}</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-weight:700;">Order Status:</td><td style="padding:4px 0;"><span style="background:${isDelivered?'#ecfdf5':'#eff6ff'};color:${isDelivered?'#065f46':'#1d4ed8'};font-size:12px;font-weight:800;padding:3px 10px;border-radius:10px;">${orderStatus}</span></td></tr>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;font-weight:800;color:#0f172a;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #d97706;">Ordered Items</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
+      <thead><tr style="background:#f1f5f9;text-align:left;font-size:12px;color:#475569;font-weight:700;text-transform:uppercase;">
+        <th style="padding:10px;">Item</th>
+        <th style="padding:10px;text-align:center;">Qty</th>
+        <th style="padding:10px;text-align:right;">Unit Price</th>
+        <th style="padding:10px;text-align:right;">Total</th>
+      </tr></thead>
+      <tbody>${itemsTableRows}</tbody>
+    </table>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:22px;font-size:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:#64748b;">Item Subtotal:</span><span style="font-weight:600;">&#8377;${(order.subtotal||0).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px dashed #cbd5e1;margin-bottom:10px;"><span style="color:#64748b;">Delivery Charge:</span><span style="font-weight:600;">&#8377;${(order.deliveryCharge||0).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;color:#059669;"><span>Grand Total Paid:</span><span>&#8377;${(order.totalAmount||0).toFixed(2)}</span></div>
+    </div>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;text-align:center;color:#166534;font-size:13px;font-weight:800;">
+      &#128274; Payment Status: ${paymentStatus} (VERIFIED &amp; CONFIRMED)
+    </div>
+  </div>
+
+  <div style="background:#f8fafc;padding:20px 24px;text-align:center;font-size:13px;color:#64748b;border-top:1px solid #e2e8f0;">
+    <p style="margin:0;font-weight:700;color:#334155;">PJR Swagrooha Foods &#8212; Pure Homemade Goodness</p>
+    <p style="margin:4px 0 0;">Questions? Call / WhatsApp: <strong>+91 8125154114</strong></p>
+    <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">This is an automated system-generated receipt. Please do not reply to this email.</p>
+  </div>
+</div>
+</body></html>`;
 }
 
 /**
- * Automatically emails the order receipt ONLY to the store owner's email address.
- * Customer email auto-send is disabled as requested.
+ * Sends an automatic order confirmation/placement receipt email to the customer.
+ * Called when a new order is placed (POST /api/orders).
  */
 async function sendCustomerEmailReceipt(order) {
-  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || 'vishwa81251@gmail.com').trim();
+  const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
+  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || '').trim();
 
-  if (!ownerEmail || !ownerEmail.includes('@')) {
-    console.log('ℹ️ Owner email not configured. Skipping email receipt.');
-    return { success: false, message: 'No valid owner email configured' };
+  // Always send to owner as CC/BCC for record
+  const recipients = [];
+  if (customerEmail && customerEmail.includes('@')) {
+    recipients.push(customerEmail);
+  }
+  if (ownerEmail && ownerEmail.includes('@') && ownerEmail !== customerEmail) {
+    recipients.push(ownerEmail);
   }
 
-  const recipients = [ownerEmail];
-  const htmlBody = generateReceiptHtml(order);
+  if (recipients.length === 0) {
+    console.log('ℹ️ No valid recipients found. Skipping email receipt.');
+    return { success: false, message: 'No valid recipient email configured' };
+  }
+
+  const htmlBody = generateReceiptHtml(order, false);
+  const subject = `Order Received #${order.orderId} - PJR Swagrooha Foods`;
 
   console.log('\n========================================');
-  console.log('📧 AUTOMATIC OWNER ORDER RECEIPT DISPATCH');
-  console.log('Owner Email (Recipient):', ownerEmail);
+  console.log('📧 ORDER CONFIRMATION EMAIL DISPATCH');
+  console.log('Recipients:', recipients.join(', '));
   console.log('Order ID:', order.orderId);
   console.log('========================================\n');
 
-  try {
-    const user = process.env.GMAIL_USER || process.env.SMTP_USER || ownerEmail;
-    const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
+  return _dispatchEmail(recipients, subject, htmlBody);
+}
 
-    // ── 1. Resend HTTPS API (Recommended for Render — uses port 443) ─────────
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const response = await axios.post(
-          'https://api.resend.com/emails',
-          {
-            from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
-            to: recipients,
-            subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-            html: htmlBody,
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            timeout: 8000,
-          }
-        );
-        console.log('✅ Owner Email receipt sent via Resend to:', ownerEmail, response.data);
-        return { success: true, provider: 'resend', recipients, id: response.data.id };
-      } catch (resendErr) {
-        console.error('❌ Resend API failed:', resendErr.response ? JSON.stringify(resendErr.response.data) : resendErr.message);
-      }
-    }
-
-    // ── 2. Brevo (Sendinblue) HTTPS API (Recommended for Render — uses port 443) ─
-    if (process.env.BREVO_API_KEY) {
-      try {
-        const response = await axios.post(
-          'https://api.brevo.com/v3/smtp/email',
-          {
-            sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: user || 'vishwa81251@gmail.com' },
-            to: recipients.map(email => ({ email })),
-            subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-            htmlContent: htmlBody,
-          },
-          {
-            headers: {
-              'api-key': process.env.BREVO_API_KEY,
-              'Content-Type': 'application/json',
-            },
-            timeout: 8000,
-          }
-        );
-        console.log('✅ Owner Email receipt sent via Brevo to:', ownerEmail, response.data);
-        return { success: true, provider: 'brevo', recipients, messageId: response.data.messageId };
-      } catch (brevoErr) {
-        console.error('❌ Brevo API failed:', brevoErr.response ? JSON.stringify(brevoErr.response.data) : brevoErr.message);
-      }
-    }
-
-    // ── 3. Gmail Nodemailer SMTP ──────────────────────────────────────────────
-    if (user && pass) {
-      const cleanPass = pass.replace(/\s+/g, '');
-      
-      try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: user.trim(),
-            pass: cleanPass,
-          },
-          connectionTimeout: 3000,
-          socketTimeout: 3000,
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
-
-        const info = await transporter.sendMail({
-          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
-          to: recipients.join(', '),
-          subject: `🚀 New Order Receipt #${order.orderId} - PJR Swagrooha Foods`,
-          html: htmlBody,
-        });
-
-        console.log('✅ Owner Email receipt automatically sent via Gmail SMTP to:', ownerEmail, info.messageId);
-        return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
-      } catch (gmailErr) {
-        console.warn('⚠️ Gmail SMTP failed. Error:', gmailErr.message);
-        return { 
-          success: false, 
-          provider: 'gmail_smtp_blocked', 
-          error: 'Gmail SMTP failed. Please add RESEND_API_KEY or BREVO_API_KEY on Render for instant HTTPS email delivery.',
-          message: gmailErr.message
-        };
-      }
-    }
-
-    console.log('ℹ️ No email provider credentials configured in environment variables.');
-    return { success: false, message: 'No email provider credentials configured in environment variables' };
-  } catch (err) {
-    console.error('❌ Error sending owner email receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
-    return { success: false, error: err.response ? err.response.data : err.message };
+/**
+ * Sends a delivery confirmation receipt email to the customer.
+ * Called when the admin marks an order as DELIVERED.
+ */
+async function sendDeliveredReceiptEmail(order) {
+  const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
+  if (!customerEmail || !customerEmail.includes('@')) {
+    console.log('ℹ️ Customer email not available for delivered receipt. Order ID:', order.orderId);
+    return { success: false, message: 'Customer email not available', receiptEmailStatus: 'FAILED' };
   }
+
+  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || '').trim();
+  const recipients = [customerEmail];
+  if (ownerEmail && ownerEmail.includes('@') && ownerEmail !== customerEmail) {
+    recipients.push(ownerEmail);
+  }
+
+  const htmlBody = generateReceiptHtml(order, true);
+  const subject = `Your Order #${order.orderId} Has Been Delivered! - PJR Swagrooha Foods`;
+
+  console.log('\n========================================');
+  console.log('📧 DELIVERY RECEIPT EMAIL DISPATCH');
+  console.log('Customer Email:', customerEmail);
+  console.log('Order ID:', order.orderId);
+  console.log('========================================\n');
+
+  const result = await _dispatchEmail(recipients, subject, htmlBody);
+  result.receiptEmailStatus = result.success ? 'SENT' : 'FAILED';
+  return result;
+}
+
+/**
+ * Internal dispatcher — tries Resend → Brevo → Gmail SMTP in order.
+ * Never exposes credentials in response.
+ */
+async function _dispatchEmail(recipients, subject, htmlBody) {
+  const user = process.env.GMAIL_USER || process.env.SMTP_USER || '';
+  const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS || '';
+
+  // ── 1. Resend HTTPS API ──────────────────────────────────────────────────────
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const response = await axios.post(
+        'https://api.resend.com/emails',
+        {
+          from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
+          to: recipients,
+          subject,
+          html: htmlBody,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+      console.log('✅ Email sent via Resend to:', recipients.join(', '), response.data);
+      return { success: true, provider: 'resend', recipients, id: response.data.id };
+    } catch (resendErr) {
+      console.error('❌ Resend API failed:', resendErr.response ? JSON.stringify(resendErr.response.data) : resendErr.message);
+    }
+  }
+
+  // ── 2. Brevo (Sendinblue) HTTPS API ─────────────────────────────────────────
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const senderEmail = user || 'vishwa81251@gmail.com';
+      const response = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: senderEmail },
+          to: recipients.map(email => ({ email })),
+          subject,
+          htmlContent: htmlBody,
+        },
+        {
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+      console.log('✅ Email sent via Brevo to:', recipients.join(', '), response.data);
+      return { success: true, provider: 'brevo', recipients, messageId: response.data.messageId };
+    } catch (brevoErr) {
+      console.error('❌ Brevo API failed:', brevoErr.response ? JSON.stringify(brevoErr.response.data) : brevoErr.message);
+    }
+  }
+
+  // ── 3. Gmail SMTP (Nodemailer) ───────────────────────────────────────────────
+  if (user && pass) {
+    const cleanPass = pass.replace(/\s+/g, '');
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: { user: user.trim(), pass: cleanPass },
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+        family: 4,
+        tls: { rejectUnauthorized: false },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
+        to: recipients.join(', '),
+        subject,
+        html: htmlBody,
+      });
+
+      console.log('✅ Email sent via Gmail SMTP to:', recipients.join(', '), info.messageId);
+      return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
+    } catch (gmailErr) {
+      console.warn('⚠️ Gmail SMTP failed:', gmailErr.message);
+      return {
+        success: false,
+        provider: 'gmail_smtp_failed',
+        error: gmailErr.message,
+        message: 'Gmail SMTP failed. Configure RESEND_API_KEY or BREVO_API_KEY for reliable HTTPS delivery.',
+      };
+    }
+  }
+
+  console.log('ℹ️ No email provider credentials configured.');
+  return { success: false, message: 'No email provider credentials configured in environment variables' };
 }
 
 module.exports = {
   sendCustomerEmailReceipt,
+  sendDeliveredReceiptEmail,
   generateReceiptHtml
 };
