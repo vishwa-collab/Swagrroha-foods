@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
+import { OrderPipeline } from '../components/OrderPipeline';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
@@ -199,61 +200,21 @@ export const TrackingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* SWIGGY-STYLE STAGE TIMELINE WITH CORRECT CHECKMARKS */}
+          {/* SWIGGY-STYLE STAGE PIPELINE WITH CONNECTED PROGRESS LINE */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-swiggy border border-slate-100 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-extrabold text-slate-900 text-base">Live Order Stage Tracker</h3>
-                <p className="text-xs text-slate-400">Updates live when PJR Swagrooha owner updates status</p>
+                <p className="text-xs text-slate-400">Updates live in real time as your order progresses</p>
               </div>
               <span className="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
                 Step {currentStageIndex + 1} of 6
               </span>
             </div>
 
-            {/* STAGE TIMELINE STEPS WITH CHECKMARKS */}
-            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 text-center pt-2">
-              
-              {STAGES.map((stage, idx) => {
-                const Icon = stage.icon;
-                const isCompleted = idx <= currentStageIndex;
-                const isCurrent = idx === currentStageIndex;
-
-                return (
-                  <div key={stage.key} className="flex sm:flex-col items-center gap-3 sm:gap-2 relative">
-                    
-                    {/* Circle Indicator with Green Checkmark */}
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold transition-all shadow-md shrink-0 ${
-                      isCurrent
-                        ? 'bg-brand-500 text-white ring-4 ring-brand-500/30 scale-110'
-                        : isCompleted
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-100 text-slate-400 border border-slate-200'
-                    }`}>
-                      {isCompleted ? (
-                        <Check className="w-6 h-6 stroke-[3]" />
-                      ) : (
-                        <Icon className="w-5 h-5" />
-                      )}
-                    </div>
-
-                    {/* Label & Description */}
-                    <div className="text-left sm:text-center space-y-0.5">
-                      <p className={`text-xs font-extrabold flex items-center gap-1 ${
-                        isCurrent ? 'text-brand-600' : isCompleted ? 'text-slate-900' : 'text-slate-400'
-                      }`}>
-                        {stage.label}
-                        {isCompleted && <span className="text-emerald-600 text-[10px]">✓</span>}
-                      </p>
-                      <p className="text-[10px] text-slate-400 leading-tight hidden sm:block max-w-[100px] mx-auto">
-                        {stage.desc}
-                      </p>
-                    </div>
-
-                  </div>
-                );
-              })}
-
+            {/* CONNECTED ORDER PIPELINE */}
+            <div className="pt-2 pb-1">
+              <OrderPipeline currentStatus={activeOrder.status || 'PLACED'} />
             </div>
           </div>
 
