@@ -552,26 +552,15 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* VISUAL ORDER STAGE PIPELINE */}
-                    <div className="bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200/80 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-black uppercase tracking-wider text-slate-500 block flex items-center gap-1.5">
-                          <span>🚀 Live Order Pipeline Tracker</span>
-                          <span className="text-[10px] text-brand-600 bg-brand-50 border border-brand-200 font-extrabold px-2 py-0.5 rounded-full">
-                            Click node or button to advance
-                          </span>
-                        </label>
-                      </div>
-                      
-                      <div className="pt-2 pb-1">
-                        <OrderPipeline 
-                          currentStatus={order.status}
-                          interactive={true}
-                          disabled={isUpdating}
-                          compact={true}
-                          onSelectStage={(newStatus) => handleStatusChange(order.orderId, newStatus)}
-                        />
-                      </div>
+                    {/* SIMPLE CENTERED ORDER PIPELINE */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                      <OrderPipeline 
+                        currentStatus={order.status}
+                        interactive={true}
+                        disabled={isUpdating}
+                        compact={true}
+                        onSelectStage={(newStatus) => handleStatusChange(order.orderId, newStatus)}
+                      />
                     </div>
 
                     <div className="space-y-2 pt-1">
