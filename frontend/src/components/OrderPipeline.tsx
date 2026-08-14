@@ -16,15 +16,86 @@ export interface PipelineStageConfig {
   shortLabel: string;
   stepNumber: number;
   icon: React.ComponentType<{ className?: string }>;
+  color: string;       // Background color for circle when active/completed
+  textColor: string;   // Text color for label
+  ringColor: string;   // Ring glow color
+  badgeBg: string;     // Badge background
+  badgeText: string;   // Badge text
 }
 
 export const PIPELINE_STAGES: PipelineStageConfig[] = [
-  { key: 'PLACED',           label: 'Order Placed',    shortLabel: 'Placed',    stepNumber: 1, icon: PackageCheck },
-  { key: 'CONFIRMED',        label: 'Order Confirmed', shortLabel: 'Confirmed', stepNumber: 2, icon: CheckCircle2 },
-  { key: 'PREPARING',        label: 'Preparing Food',  shortLabel: 'Preparing', stepNumber: 3, icon: ChefHat },
-  { key: 'READY',            label: 'Ready & Packed',  shortLabel: 'Packed',    stepNumber: 4, icon: Package },
-  { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery',shortLabel: 'On Route',  stepNumber: 5, icon: Truck },
-  { key: 'DELIVERED',        label: 'Delivered',       shortLabel: 'Delivered', stepNumber: 6, icon: Home },
+  { 
+    key: 'PLACED',           
+    label: 'Order Placed',    
+    shortLabel: 'Placed',    
+    stepNumber: 1, 
+    icon: PackageCheck,
+    color: 'bg-amber-500',
+    textColor: 'text-amber-700',
+    ringColor: 'ring-amber-200',
+    badgeBg: 'bg-amber-50',
+    badgeText: 'text-amber-700 border-amber-200',
+  },
+  { 
+    key: 'CONFIRMED',        
+    label: 'Order Confirmed', 
+    shortLabel: 'Confirmed', 
+    stepNumber: 2, 
+    icon: CheckCircle2,
+    color: 'bg-sky-500',
+    textColor: 'text-sky-700',
+    ringColor: 'ring-sky-200',
+    badgeBg: 'bg-sky-50',
+    badgeText: 'text-sky-700 border-sky-200',
+  },
+  { 
+    key: 'PREPARING',        
+    label: 'Preparing Food',  
+    shortLabel: 'Preparing', 
+    stepNumber: 3, 
+    icon: ChefHat,
+    color: 'bg-purple-600',
+    textColor: 'text-purple-700',
+    ringColor: 'ring-purple-200',
+    badgeBg: 'bg-purple-50',
+    badgeText: 'text-purple-700 border-purple-200',
+  },
+  { 
+    key: 'READY',            
+    label: 'Ready & Packed',  
+    shortLabel: 'Packed',    
+    stepNumber: 4, 
+    icon: Package,
+    color: 'bg-pink-500',
+    textColor: 'text-pink-700',
+    ringColor: 'ring-pink-200',
+    badgeBg: 'bg-pink-50',
+    badgeText: 'text-pink-700 border-pink-200',
+  },
+  { 
+    key: 'OUT_FOR_DELIVERY', 
+    label: 'Out for Delivery',
+    shortLabel: 'On Route',  
+    stepNumber: 5, 
+    icon: Truck,
+    color: 'bg-orange-500',
+    textColor: 'text-orange-700',
+    ringColor: 'ring-orange-200',
+    badgeBg: 'bg-orange-50',
+    badgeText: 'text-orange-700 border-orange-200',
+  },
+  { 
+    key: 'DELIVERED',        
+    label: 'Delivered',       
+    shortLabel: 'Delivered', 
+    stepNumber: 6, 
+    icon: Home,
+    color: 'bg-emerald-600',
+    textColor: 'text-emerald-700',
+    ringColor: 'ring-emerald-200',
+    badgeBg: 'bg-emerald-50',
+    badgeText: 'text-emerald-700 border-emerald-200',
+  },
 ];
 
 interface OrderPipelineProps {
@@ -53,11 +124,11 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
         <div className="relative">
           
           {/* Track Line — EXACTLY through the vertical center of the 40px circles (top: 20px) */}
-          <div className="absolute left-5 right-5 top-5 -translate-y-1/2 h-1 bg-slate-200 rounded-full z-0" />
+          <div className="absolute left-5 right-5 top-5 -translate-y-1/2 h-1.5 bg-slate-200 rounded-full z-0" />
           
-          {/* Active Progress Line Fill */}
+          {/* Active Gradient Filled Progress Line */}
           <div 
-            className="absolute left-5 top-5 -translate-y-1/2 h-1 bg-emerald-600 rounded-full z-0 transition-all duration-500 ease-in-out"
+            className="absolute left-5 top-5 -translate-y-1/2 h-1.5 bg-gradient-to-r from-amber-500 via-purple-500 to-emerald-500 rounded-full z-0 transition-all duration-500 ease-in-out shadow-sm"
             style={{ width: `calc((100% - 40px) * ${activeIdx / (PIPELINE_STAGES.length - 1)})` }}
           />
 
@@ -73,25 +144,25 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
                 <div 
                   key={stage.key}
                   className="flex flex-col items-center cursor-default group"
-                  style={{ width: '80px' }}
+                  style={{ width: '82px' }}
                   onClick={() => {
                     if (canClick && onSelectStage) {
                       onSelectStage(stage.key);
                     }
                   }}
                 >
-                  {/* Circle Node (40px x 40px) — centered perfectly with top-5 track */}
+                  {/* Circle Node (40px x 40px) with Distinctive Stage Color */}
                   <button
                     type="button"
                     disabled={!canClick}
                     className={`
-                      w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200
+                      w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 shadow-sm
                       ${canClick ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default'}
                       ${
-                        isCompleted
-                          ? 'bg-emerald-600 text-white shadow-sm ring-4 ring-white'
-                          : isCurrent
-                          ? 'bg-brand-500 text-white shadow-md ring-4 ring-brand-100 scale-105'
+                        isCurrent
+                          ? `${stage.color} text-white ring-4 ${stage.ringColor} scale-110 shadow-md`
+                          : isCompleted
+                          ? `${stage.color} text-white ring-4 ring-white hover:opacity-90`
                           : 'bg-white text-slate-400 border-2 border-slate-300 ring-4 ring-white'
                       }
                     `}
@@ -104,14 +175,14 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
                     )}
                   </button>
 
-                  {/* Stage Label Below Circle */}
+                  {/* Stage Label with Individual Accent Color */}
                   <div className="mt-2.5 text-center">
                     <p className={`text-xs leading-tight font-bold ${
                       isCurrent 
-                        ? 'text-brand-600 font-extrabold' 
+                        ? `${stage.textColor} font-black` 
                         : isCompleted 
-                        ? 'text-slate-800' 
-                        : 'text-slate-400'
+                        ? 'text-slate-800 font-semibold' 
+                        : 'text-slate-400 font-medium'
                     }`}>
                       {compact ? stage.shortLabel : stage.label}
                     </p>
@@ -129,9 +200,9 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
         <div className="relative pl-6 space-y-4">
           
           {/* Vertical Track Line — centered at x: 16px (middle of 32px circle) */}
-          <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-200 -translate-x-1/2 z-0" />
+          <div className="absolute left-[27px] top-4 bottom-4 w-1 bg-slate-200 -translate-x-1/2 z-0 rounded-full" />
           <div 
-            className="absolute left-[27px] top-4 w-0.5 bg-emerald-600 -translate-x-1/2 z-0 transition-all duration-500"
+            className="absolute left-[27px] top-4 w-1 bg-gradient-to-b from-amber-500 via-purple-500 to-emerald-500 -translate-x-1/2 z-0 rounded-full transition-all duration-500"
             style={{ height: `${progressPercent}%` }}
           />
 
@@ -159,10 +230,10 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
                   className={`
                     w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs transition-all shadow-sm ring-4 ring-white
                     ${
-                      isCompleted
-                        ? 'bg-emerald-600 text-white'
-                        : isCurrent
-                        ? 'bg-brand-500 text-white ring-brand-100 scale-105'
+                      isCurrent
+                        ? `${stage.color} text-white ring-4 ${stage.ringColor} scale-105`
+                        : isCompleted
+                        ? `${stage.color} text-white`
                         : 'bg-white text-slate-400 border-2 border-slate-300'
                     }
                   `}
@@ -177,12 +248,12 @@ export const OrderPipeline: React.FC<OrderPipelineProps> = ({
                 {/* Text Label */}
                 <div className="flex-1 flex items-center justify-between min-w-0">
                   <span className={`text-xs font-bold ${
-                    isCurrent ? 'text-brand-600 font-extrabold' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                    isCurrent ? `${stage.textColor} font-extrabold` : isCompleted ? 'text-slate-800' : 'text-slate-400'
                   }`}>
                     {stage.label}
                   </span>
                   {isCurrent && (
-                    <span className="text-[10px] font-bold text-brand-600 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-full">
+                    <span className={`text-[10px] font-bold ${stage.badgeBg} border ${stage.badgeText} px-2 py-0.5 rounded-full`}>
                       Active
                     </span>
                   )}
