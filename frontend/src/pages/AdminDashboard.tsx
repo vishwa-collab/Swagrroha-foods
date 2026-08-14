@@ -108,7 +108,7 @@ export const AdminDashboard: React.FC = () => {
     if (pollPausedRef.current) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/orders`, {
+      const res = await fetch(`${API_BASE}/api/admin/orders`, {
         headers: { 'Cache-Control': 'no-cache' },
       });
       if (res.ok) {
