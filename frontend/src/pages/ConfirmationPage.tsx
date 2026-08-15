@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import confetti from 'canvas-confetti';
+import { jsPDF } from 'jspdf';
 import { 
   MessageCircle, 
   CheckCircle2, 
@@ -17,7 +18,8 @@ import {
   Clock,
   Copy,
   Check,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 
 export const ConfirmationPage: React.FC = () => {
@@ -31,6 +33,160 @@ export const ConfirmationPage: React.FC = () => {
       origin: { y: 0.6 }
     });
   }, []);
+
+  const handleDownloadInvoice = () => {
+    if (!currentOrder) return;
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 18;
+
+    const centerText = (text: string, size: number, bold = false) => {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.text(text, pageW / 2, y, { align: 'center' });
+      y += size * 0.45 + 2;
+    };
+
+    const leftText = (text: string, size: number, bold = false, x = 16) => {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.text(text, x, y);
+    };
+
+    const rightText = (text: string, size: number, bold = false) => {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.text(text, pageW - 16, y, { align: 'right' });
+    };
+
+    const lineRow = (label: string, value: string, sz = 10) => {
+      leftText(label, sz, false);
+      rightText(value, sz, true);
+      y += sz * 0.42 + 2.5;
+    };
+
+    // Header
+    doc.setFillColor(234, 88, 12); // orange-600
+    doc.rect(0, 0, pageW, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PJR Swagrooha Foods', pageW / 2, 12, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Authentic Homemade Telugu Food | Hayathnagar → Ibrahimpatnam', pageW / 2, 20, { align: 'center' });
+    y = 36;
+
+    // Invoice Title
+    doc.setTextColor(15, 23, 42);
+    centerText('ORDER INVOICE / RECEIPT', 15, true);
+    y += 2;
+
+    // Order & date row
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Order ID: ${currentOrder.orderId}`, 16, y);
+    doc.text(`Date: ${new Date(currentOrder.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, pageW - 16, y, { align: 'right' });
+    y += 8;
+
+    // Divider
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.line(16, y, pageW - 16, y);
+    y += 6;
+
+    // Customer Details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('BILL TO', 16, y);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    doc.text(currentOrder.customer.name, 16, y); y += 4.5;
+    doc.text(`Phone: ${currentOrder.customer.phone}`, 16, y); y += 4.5;
+    if (currentOrder.customer.email) {
+      doc.text(`Email: ${currentOrder.customer.email}`, 16, y); y += 4.5;
+    }
+    doc.text(`Area: ${currentOrder.area.name}`, 16, y); y += 4.5;
+    doc.text(`Address: ${currentOrder.customer.address}`, 16, y); y += 4.5;
+    doc.text(`Delivery: ${currentOrder.deliveryDate.dayOfWeekName} — ${currentOrder.deliveryDate.formattedDate}`, 16, y); y += 7;
+
+    // Divider
+    doc.setDrawColor(226, 232, 240);
+    doc.line(16, y, pageW - 16, y);
+    y += 6;
+
+    // Items Table Header
+    doc.setFillColor(248, 250, 252);
+    doc.rect(16, y - 2, pageW - 32, 7, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text('ITEM', 18, y + 3);
+    doc.text('QTY', pageW / 2 - 10, y + 3, { align: 'center' });
+    doc.text('UNIT PRICE', pageW - 60, y + 3);
+    doc.text('AMOUNT', pageW - 16, y + 3, { align: 'right' });
+    y += 9;
+
+    // Items
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(15, 23, 42);
+    currentOrder.items.forEach(item => {
+      doc.setFontSize(9);
+      doc.text(`${item.product.name} (${item.selectedWeightLabel})`, 18, y);
+      doc.text(`${item.quantity}`, pageW / 2 - 10, y, { align: 'center' });
+      doc.text(`\u20B9${item.unitPrice}`, pageW - 60, y);
+      doc.text(`\u20B9${item.unitPrice * item.quantity}`, pageW - 16, y, { align: 'right' });
+      y += 6;
+    });
+
+    // Divider
+    y += 2;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(16, y, pageW - 16, y);
+    y += 6;
+
+    // Totals
+    lineRow('Items Subtotal', `\u20B9${currentOrder.subtotal}`);
+    lineRow(`Delivery Charge (${currentOrder.area.name})`, `\u20B9${currentOrder.deliveryCharge}`);
+    y += 1;
+    doc.setDrawColor(15, 23, 42);
+    doc.line(16, y, pageW - 16, y);
+    y += 4;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(234, 88, 12);
+    doc.text('TOTAL AMOUNT PAID', 16, y);
+    doc.text(`\u20B9${currentOrder.totalAmount}`, pageW - 16, y, { align: 'right' });
+    y += 8;
+
+    // Payment Info
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    doc.text(`Payment Method: ${currentOrder.paymentMethod || 'UPI'}`, 16, y); y += 4.5;
+    if (currentOrder.utrNumber && currentOrder.utrNumber !== 'SCREENSHOT_PROVED') {
+      doc.text(`UTR / Transaction ID: ${currentOrder.utrNumber}`, 16, y); y += 4.5;
+    }
+    y += 4;
+
+    // Footer
+    doc.setFillColor(248, 250, 252);
+    doc.rect(16, y, pageW - 32, 16, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(234, 88, 12);
+    doc.text('Thank you for ordering from PJR Swagrooha Foods!', pageW / 2, y + 5, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Fresh Homemade · No Preservatives · Weekend Delivery | WhatsApp: +91 8125154114', pageW / 2, y + 11, { align: 'center' });
+
+    doc.save(`PJR-Swagrooha-Invoice-${currentOrder.orderId}.pdf`);
+  };
 
   if (!currentOrder) {
     return (
@@ -60,6 +216,14 @@ export const ConfirmationPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
         </p>
+        {/* PDF Download Button inside banner */}
+        <button
+          onClick={handleDownloadInvoice}
+          className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all mx-auto mt-2"
+        >
+          <Download className="w-4 h-4" />
+          Download Invoice PDF
+        </button>
       </div>
 
       {/* AUTO-DISPATCHED NOTIFICATIONS TO OWNER */}
@@ -74,9 +238,9 @@ export const ConfirmationPage: React.FC = () => {
             <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
               ✅ Order Logged
             </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Order Registered &amp; Verified</h3>
+            <h3 className="font-extrabold text-slate-900 text-sm">Order Registered & Verified</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Your order payment has been logged. You can track your order status anytime using Order ID <strong className="text-blue-800 font-mono">{currentOrder.orderId}</strong>.
+              Your order has been logged. Track anytime using Order ID <strong className="text-blue-800 font-mono">{currentOrder.orderId}</strong>.
             </p>
           </div>
         </div>
@@ -92,7 +256,7 @@ export const ConfirmationPage: React.FC = () => {
             </span>
             <h3 className="font-extrabold text-slate-900 text-sm">Owner Alerted (+91 8125154114)</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Order receipt automatically sent to store management <strong>PJR Swagrooha Foods</strong> for processing.
+              Order receipt automatically sent to <strong>PJR Swagrooha Foods</strong> for processing.
             </p>
           </div>
         </div>
@@ -123,6 +287,9 @@ export const ConfirmationPage: React.FC = () => {
             <span className="text-slate-400 font-medium block">Delivery Route & Address</span>
             <p className="font-bold text-brand-600 text-xs mt-0.5">{currentOrder.area.name} Zone</p>
             <p className="text-slate-700 leading-relaxed font-medium">{currentOrder.customer.address}</p>
+            <p className="text-amber-700 font-bold text-xs mt-1">
+              📅 {currentOrder.deliveryDate.formattedDate}
+            </p>
           </div>
         </div>
 
@@ -131,7 +298,7 @@ export const ConfirmationPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <span className="font-extrabold text-emerald-950 block">Payment Submitted &amp; UTR Logged ✅</span>
+              <span className="font-extrabold text-emerald-950 block">Payment Submitted & UTR Logged ✅</span>
               <span className="text-emerald-800 text-[11px]">UTR: <strong>{currentOrder.utrNumber}</strong></span>
             </div>
           </div>
@@ -172,7 +339,14 @@ export const ConfirmationPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-2 text-center">
+        <div className="pt-2 flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <button
+            onClick={handleDownloadInvoice}
+            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"
+          >
+            <Download className="w-4 h-4" />
+            Download Invoice PDF
+          </button>
           <button
             onClick={() => setActiveTab('products')}
             className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-5 py-2.5 rounded-xl transition-all"

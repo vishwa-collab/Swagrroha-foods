@@ -44,6 +44,7 @@ export interface PlacedOrder {
   receiptEmailSentAt?: string | null;
   receiptEmailStatus?: string | null;
   receiptEmailError?: string | null;
+  review?: { rating: number; comment?: string; submittedAt?: string };
 }
 
 interface CartContextType {
@@ -84,6 +85,8 @@ interface CartContextType {
   updateOrderStatus: (orderId: string, newStatus: OrderStageStatus, newPaymentStatus?: PaymentVerificationStatus) => Promise<boolean>;
   
   resendReceiptEmail: (orderId: string) => Promise<{ success: boolean; message: string }>;
+  submitReview: (orderId: string, rating: number, comment?: string) => Promise<{ success: boolean; message: string }>;
+  fetchLiveRating: () => Promise<{ averageRating: number; count: number; hasRealData: boolean }>;
 
   // Live Tracking Lookup
   trackedOrder: PlacedOrder | null;
@@ -300,14 +303,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Owner Auth Functions
   const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
-    if (email.trim().toLowerCase() === 'vishwa81251@gmail.com' && pass === '81251') {
-      const token = 'jwt_owner_session_' + Date.now();
-      setAdminToken(token);
-      setAdminEmail('vishwa81251@gmail.com');
-      localStorage.setItem('swagrooha_admin_token', token);
-      localStorage.setItem('swagrooha_admin_email', 'vishwa81251@gmail.com');
-      showToast('Welcome back Owner Vishwa!');
-      return true;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, pass }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        const token = data.token || 'jwt_owner_session_' + Date.now();
+        setAdminToken(token);
+        setAdminEmail(data.email || email);
+        localStorage.setItem('swagrooha_admin_token', token);
+        localStorage.setItem('swagrooha_admin_email', data.email || email);
+        showToast('Welcome back Owner Vishwa!');
+        return true;
+      }
+    } catch (e) {
+      console.error('Admin login error:', e);
     }
     return false;
   };
@@ -418,6 +431,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Customer submits a star rating + comment for a DELIVERED order
+  const submitReview = async (orderId: string, rating: number, comment?: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        const review = data.review;
+        setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, review } : o));
+        if (currentOrder?.orderId === orderId) setCurrentOrder(prev => prev ? { ...prev, review } : null);
+        if (trackedOrder?.orderId === orderId) setTrackedOrder(prev => prev ? { ...prev, review } : null);
+        return { success: true, message: 'Thank you for your review!' };
+      }
+      return { success: false, message: data.error || 'Failed to submit review.' };
+    } catch (e) {
+      console.error('Error submitting review:', e);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
+  // Fetch live average rating from backend
+  const fetchLiveRating = async (): Promise<{ averageRating: number; count: number; hasRealData: boolean }> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/stats/rating`);
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.log('Rating fetch failed, using default');
+    }
+    return { averageRating: 4.9, count: 500, hasRealData: false };
+  };
+
   const fetchOrderForTracking = async (query: string): Promise<PlacedOrder | null> => {
     const q = query.trim().toLowerCase();
     
@@ -497,6 +544,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logoutAdmin,
       updateOrderStatus,
       resendReceiptEmail,
+      submitReview,
+      fetchLiveRating,
       trackedOrder,
       fetchOrderForTracking,
       toastMessage,

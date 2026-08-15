@@ -33,6 +33,10 @@ export const PaymentPage: React.FC = () => {
     showToast
   } = useCart();
 
+  // Use the delivery slot the customer chose on CheckoutPage
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chosenDeliveryDate = (customerDetails as any)._deliveryDate || deliveryDateInfo;
+
   const [paymentOption, setPaymentOption] = useState<'utr' | 'screenshot'>('utr');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -157,7 +161,7 @@ export const PaymentPage: React.FC = () => {
       subtotal,
       deliveryCharge,
       totalAmount: grandTotal,
-      deliveryDate: deliveryDateInfo,
+      deliveryDate: chosenDeliveryDate,
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
       paymentMethod: paymentOption === 'utr' ? 'UPI UTR Verification' : 'Payment Screenshot Proof',
@@ -180,6 +184,7 @@ export const PaymentPage: React.FC = () => {
       `💵 *Subtotal:* ₹${subtotal}\n` +
       `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
       `💰 *Total Amount:* ₹${grandTotal}\n` +
+      `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
       `💳 *Payment Method:* ${paymentOption === 'utr' ? `Paid ✅ (UTR: ${finalUtr})` : 'Paid ✅ (Screenshot Uploaded)'}\n\n` +
       `_Thank you for ordering with PJR Swagrooha Foods!_`;
 

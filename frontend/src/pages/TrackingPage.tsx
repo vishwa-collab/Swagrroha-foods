@@ -17,11 +17,13 @@ import {
   Phone,
   RefreshCw,
   ShoppingBag,
-  Check
+  Check,
+  Star,
+  Send
 } from 'lucide-react';
 
 export const TrackingPage: React.FC = () => {
-  const { currentOrder, trackedOrder, allOrders, fetchOrderForTracking, setActiveTab } = useCart();
+  const { currentOrder, trackedOrder, allOrders, fetchOrderForTracking, setActiveTab, submitReview } = useCart();
   
   // Pick active order: trackedOrder || currentOrder || most recent placed order in allOrders
   const initialOrder = trackedOrder || currentOrder || (allOrders.length > 0 ? allOrders[0] : null);
@@ -30,6 +32,13 @@ export const TrackingPage: React.FC = () => {
   const [activeOrder, setActiveOrder] = useState<PlacedOrder | null>(initialOrder);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Rating state
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [selectedStar, setSelectedStar] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   // Synchronize when active order changes
   useEffect(() => {
@@ -42,6 +51,14 @@ export const TrackingPage: React.FC = () => {
       }
     }
   }, [allOrders, currentOrder, trackedOrder]);
+
+  // Reset review state when active order changes
+  useEffect(() => {
+    setSelectedStar(0);
+    setHoveredStar(0);
+    setReviewComment('');
+    setReviewSubmitted(!!activeOrder?.review);
+  }, [activeOrder?.orderId]);
 
   // Live Auto-Poll every 5s — fetch DIRECTLY from Render API to always get latest admin status
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -90,6 +107,17 @@ export const TrackingPage: React.FC = () => {
       setErrorMsg('No order found with this ID or Mobile Number. Please check and try again.');
     }
     if (showLoadingSpinner) setLoading(false);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!activeOrder || selectedStar === 0) return;
+    setReviewSubmitting(true);
+    const result = await submitReview(activeOrder.orderId, selectedStar, reviewComment);
+    setReviewSubmitting(false);
+    if (result.success) {
+      setReviewSubmitted(true);
+      setActiveOrder(prev => prev ? { ...prev, review: { rating: selectedStar, comment: reviewComment } } : null);
+    }
   };
 
   const STAGES: { key: OrderStageStatus; label: string; icon: any; desc: string }[] = [
@@ -265,6 +293,92 @@ export const TrackingPage: React.FC = () => {
             </div>
 
           </div>
+
+          {/* ⭐ RATING WIDGET — shown only when DELIVERED */}
+          {activeOrder.status === 'DELIVERED' && (
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 sm:p-8 border-2 border-amber-200 shadow-md">
+              {reviewSubmitted || activeOrder.review ? (
+                <div className="text-center space-y-3">
+                  <div className="flex justify-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star
+                        key={s}
+                        className={`w-7 h-7 ${
+                          s <= (activeOrder.review?.rating || selectedStar)
+                            ? 'text-amber-400 fill-amber-400'
+                            : 'text-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="font-black text-slate-900 text-lg">Thank you for your review! 🙏</p>
+                  <p className="text-sm text-slate-500">
+                    You rated us <strong className="text-amber-600">{activeOrder.review?.rating || selectedStar} out of 5 stars</strong>.
+                    {activeOrder.review?.comment && (
+                      <span className="block mt-1 italic text-slate-400">"{activeOrder.review.comment}"</span>
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <span className="text-2xl">🎉</span>
+                    <h3 className="font-black text-slate-900 text-lg mt-1">Your Order Was Delivered!</h3>
+                    <p className="text-xs text-slate-500 mt-1">How was your experience with PJR Swagrooha Foods?</p>
+                  </div>
+
+                  {/* Star Picker */}
+                  <div className="flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setHoveredStar(star)}
+                        onMouseLeave={() => setHoveredStar(0)}
+                        onClick={() => setSelectedStar(star)}
+                        className="transition-transform hover:scale-125 active:scale-95"
+                      >
+                        <Star
+                          className={`w-10 h-10 transition-colors ${
+                            star <= (hoveredStar || selectedStar)
+                              ? 'text-amber-400 fill-amber-400'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  {selectedStar > 0 && (
+                    <>
+                      <div className="text-center text-sm font-bold text-amber-700">
+                        {['', '😞 Poor', '😐 Fair', '😊 Good', '😄 Great', '🤩 Excellent!'][selectedStar]}
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder="Write a short comment (optional)…"
+                        value={reviewComment}
+                        onChange={e => setReviewComment(e.target.value)}
+                        className="w-full px-4 py-3 text-sm rounded-2xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                      <button
+                        onClick={handleSubmitReview}
+                        disabled={reviewSubmitting}
+                        className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-black py-3.5 rounded-2xl shadow-md shadow-amber-400/30 transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {reviewSubmitting ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        {reviewSubmitting ? 'Submitting...' : 'Submit My Review'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       ) : (

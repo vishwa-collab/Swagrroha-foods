@@ -18,7 +18,14 @@ import {
   FileCheck,
   Image as ImageIcon,
   Mail,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  BarChart3,
+  Star,
+  DollarSign,
+  ShoppingBag,
+  Award,
+  MessageSquare
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
@@ -81,13 +88,14 @@ function normalizeOrder(raw: any): PlacedOrder {
     receiptEmailSentAt: raw.receiptEmailSentAt ?? null,
     receiptEmailStatus: raw.receiptEmailStatus ?? null,
     receiptEmailError: raw.receiptEmailError ?? null,
+    review: raw.review ? (typeof raw.review === 'string' ? JSON.parse(raw.review) : raw.review) : undefined,
   };
 }
 
 export const AdminDashboard: React.FC = () => {
   const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
-  const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping'>('new');
+  const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics'>('new');
   const [loading, setLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   
@@ -361,6 +369,17 @@ export const AdminDashboard: React.FC = () => {
           }`}
         >
           <span>🗺️ Route Planning</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTabSection('analytics')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
+            activeTabSection === 'analytics'
+              ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <span>📊 Analytics &amp; Reviews</span>
         </button>
 
       </div>
@@ -773,6 +792,209 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ── SECTION 5: ANALYTICS & REVIEWS ── */}
+      {activeTabSection === 'analytics' && (() => {
+        const deliveredOrders = orders.filter(o => o.status === 'DELIVERED');
+        const totalDeliveredRevenue = deliveredOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+        const totalGrossOrdersValue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+        // Product leaderboard
+        const productStats: Record<string, { qty: number; revenue: number }> = {};
+        orders.forEach(o => {
+          (o.items || []).forEach(it => {
+            const name = it.product?.name || 'Item';
+            if (!productStats[name]) productStats[name] = { qty: 0, revenue: 0 };
+            productStats[name].qty += it.quantity || 1;
+            productStats[name].revenue += (it.unitPrice || 0) * (it.quantity || 1);
+          });
+        });
+        const topProducts = Object.entries(productStats)
+          .sort((a, b) => b[1].qty - a[1].qty)
+          .slice(0, 6);
+
+        // Area distribution
+        const areaStats: Record<string, number> = {};
+        orders.forEach(o => {
+          const a = o.area?.name || 'Unknown';
+          areaStats[a] = (areaStats[a] || 0) + 1;
+        });
+        const sortedAreas = Object.entries(areaStats).sort((a, b) => b[1] - a[1]);
+
+        // Customer Reviews
+        const reviews = orders
+          .filter(o => o.review && o.review.rating)
+          .map(o => ({
+            orderId: o.orderId,
+            customerName: o.customer.name,
+            rating: o.review!.rating,
+            comment: o.review!.comment,
+            date: o.review!.submittedAt || o.createdAt,
+          }));
+
+        const avgRating = reviews.length > 0
+          ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+          : '4.9';
+
+        return (
+          <div className="space-y-8">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-brand-500" />
+              <span>Business Performance &amp; Customer Ratings</span>
+            </h2>
+
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl p-5 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Delivered Revenue</span>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-950">₹{totalDeliveredRevenue}</p>
+                <p className="text-[11px] text-emerald-700 font-medium">From {deliveredOrders.length} completed orders</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-3xl p-5 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block">Total Orders</span>
+                <p className="text-2xl sm:text-3xl font-black text-orange-950">{orders.length}</p>
+                <p className="text-[11px] text-orange-700 font-medium">₹{totalGrossOrdersValue} total pipeline</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-3xl p-5 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">Active Pipeline</span>
+                <p className="text-2xl sm:text-3xl font-black text-blue-950">{newOrders.length + activeOrders.length}</p>
+                <p className="text-[11px] text-blue-700 font-medium">{newOrders.length} new · {activeOrders.length} in cooking</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-3xl p-5 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Customer Satisfaction</span>
+                <div className="flex items-center gap-1.5 py-0.5">
+                  <p className="text-2xl sm:text-3xl font-black text-amber-950">{avgRating}</p>
+                  <Star className="w-6 h-6 text-amber-500 fill-amber-400" />
+                </div>
+                <p className="text-[11px] text-amber-700 font-medium">{reviews.length} customer review{reviews.length === 1 ? '' : 's'}</p>
+              </div>
+            </div>
+
+            {/* Middle Section: Top Products & Area Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Top Products */}
+              <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
+                <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  Top Best-Selling Products
+                </h3>
+                {topProducts.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No product sales data yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {topProducts.map(([name, data], idx) => (
+                      <div key={name} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs ${
+                            idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : 'bg-orange-100 text-orange-900'
+                          }`}>
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <span className="font-bold text-slate-900 text-sm block">{name}</span>
+                            <span className="text-[10px] text-slate-500">{data.qty} units sold</span>
+                          </div>
+                        </div>
+                        <span className="font-black text-emerald-700 text-sm">₹{data.revenue}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Area Distribution */}
+              <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
+                <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <TrendingUp className="w-4 h-4 text-brand-500" />
+                  Delivery Volume by Area
+                </h3>
+                {sortedAreas.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No area data yet.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {sortedAreas.map(([area, count]) => {
+                      const pct = Math.round((count / orders.length) * 100);
+                      return (
+                        <div key={area} className="space-y-1">
+                          <div className="flex justify-between text-xs font-bold">
+                            <span className="text-slate-800">{area}</span>
+                            <span className="text-brand-600">{count} orders ({pct}%)</span>
+                          </div>
+                          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="bg-brand-500 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Customer Reviews Section */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-swiggy border border-slate-100 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-amber-500" />
+                    Customer Reviews &amp; Star Ratings
+                  </h3>
+                  <p className="text-xs text-slate-400">Ratings submitted by customers after order delivery</p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-2xl">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+                  <span className="font-black text-amber-900 text-sm">{avgRating} / 5.0</span>
+                </div>
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 space-y-2">
+                  <Star className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="font-bold text-slate-700 text-sm">No Customer Reviews Yet</p>
+                  <p className="text-xs text-slate-400">
+                    When customers receive their DELIVERED orders, they can submit star ratings on the tracking page.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {reviews.map(r => (
+                    <div key={r.orderId} className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">{r.customerName}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">#{r.orderId}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star
+                            key={s}
+                            className={`w-4 h-4 ${
+                              s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {r.comment && (
+                        <p className="text-xs text-slate-700 italic bg-white/70 p-2.5 rounded-xl border border-amber-100">
+                          "{r.comment}"
+                        </p>
+                      )}
+                      <p className="text-[10px] text-slate-400">
+                        {new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        );
+      })()}
 
     </div>
   );

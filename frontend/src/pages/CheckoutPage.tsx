@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
+import { getDeliverySlotOptions } from '../utils/deliveryCalculator';
 import { 
   User, 
   Phone, 
@@ -12,7 +13,7 @@ import {
   ArrowRight, 
   ArrowLeft,
   Clock,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
@@ -26,9 +27,12 @@ export const CheckoutPage: React.FC = () => {
     setActiveTab, 
     customerDetails, 
     setCustomerDetails,
-    deliveryDateInfo,
     showToast
   } = useCart();
+
+  const slotOptions = getDeliverySlotOptions();
+  const [selectedSlot, setSelectedSlot] = useState<'saturday' | 'sunday'>('saturday');
+  const deliveryDateInfo = slotOptions[selectedSlot];
 
   const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string; address?: string }>({});
 
@@ -62,6 +66,8 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
+    // Store selected delivery date in customerDetails for PaymentPage to pick up
+    setCustomerDetails(prev => ({ ...prev, _deliveryDate: deliveryDateInfo as any }));
     setActiveTab('payment');
   };
 
@@ -146,7 +152,7 @@ export const CheckoutPage: React.FC = () => {
               {errors.phone && <p className="text-[11px] text-red-500 font-semibold">{errors.phone}</p>}
             </div>
 
-            {/* Email Address Input (Gmail for Receipt) */}
+            {/* Email Address Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 block">
                 Customer Email Address (For Order Receipt) <span className="text-red-500">*</span>
@@ -221,30 +227,76 @@ export const CheckoutPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Right Column: AUTO DISPLAY DELIVERY DATE & SUMMARY */}
+        {/* Right Column: DELIVERY SLOT SELECTOR + SUMMARY */}
         <div className="md:col-span-5 space-y-6">
-          
-          {/* AUTO DISPLAYED DELIVERY DATE CARD */}
+
+          {/* DELIVERY SLOT SELECTOR */}
           <div className="bg-gradient-to-br from-slate-900 to-brand-950 text-white rounded-3xl p-6 shadow-xl border border-brand-500/30 space-y-4">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-wider">
               <Calendar className="w-4 h-4 text-amber-400" />
-              Auto Scheduled Delivery Date
+              Choose Your Delivery Day
+            </div>
+
+            <p className="text-xs text-slate-300 font-medium">Select your preferred delivery slot:</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Saturday Slot */}
+              <button
+                type="button"
+                onClick={() => setSelectedSlot('saturday')}
+                className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                  selectedSlot === 'saturday'
+                    ? 'border-amber-400 bg-amber-400/10'
+                    : 'border-white/10 bg-white/5 hover:border-white/30'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-amber-300">Saturday</span>
+                  {selectedSlot === 'saturday' && (
+                    <CheckCircle className="w-4 h-4 text-amber-400" />
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
+                  {slotOptions.saturday.formattedDate.replace('Saturday, ', '')}
+                </p>
+              </button>
+
+              {/* Sunday Slot */}
+              <button
+                type="button"
+                onClick={() => setSelectedSlot('sunday')}
+                className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                  selectedSlot === 'sunday'
+                    ? 'border-emerald-400 bg-emerald-400/10'
+                    : 'border-white/10 bg-white/5 hover:border-white/30'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-emerald-300">Sunday</span>
+                  {selectedSlot === 'sunday' && (
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
+                  {slotOptions.sunday.formattedDate.replace('Sunday, ', '')}
+                </p>
+              </button>
             </div>
 
             <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 space-y-1">
-              <p className="text-xs text-slate-300 font-medium">Your order will be delivered on:</p>
-              <p className="text-xl font-black text-amber-300">{deliveryDateInfo.formattedDate}</p>
+              <p className="text-xs text-slate-300 font-medium">Selected Delivery Date:</p>
+              <p className="text-lg font-black text-amber-300">{deliveryDateInfo.formattedDate}</p>
             </div>
 
             <div className="space-y-2 text-xs text-slate-300">
               <p className="font-bold text-white flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                Delivery Business Logic:
+                Delivery Schedule:
               </p>
               <ul className="space-y-1 text-[11px] text-slate-300 pl-4 list-disc">
-                <li><strong className="text-emerald-300">Mon–Wed orders</strong> ➔ Delivered same weekend (Saturday)</li>
-                <li><strong className="text-amber-300">Thu–Sun orders</strong> ➔ Delivered next weekend (Saturday)</li>
-                <li>Maintains fresh 4–5 day preparation gap</li>
+                <li><strong className="text-emerald-300">Mon–Wed orders</strong> → Same weekend</li>
+                <li><strong className="text-amber-300">Thu–Sun orders</strong> → Next weekend</li>
+                <li>Fresh 4–5 day preparation gap</li>
               </ul>
             </div>
           </div>

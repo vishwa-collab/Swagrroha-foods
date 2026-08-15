@@ -8,9 +8,16 @@ import {
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { setActiveTab, addToCart } = useCart();
+  const { setActiveTab, addToCart, fetchLiveRating } = useCart();
   const [addedId, setAddedId] = useState<string | null>(null);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [liveRating, setLiveRating] = useState<{ avg: number; count: number }>({ avg: 4.9, count: 500 });
+
+  useEffect(() => {
+    fetchLiveRating().then(data => {
+      setLiveRating({ avg: data.averageRating, count: data.count });
+    });
+  }, []);
 
   const bestsellers = PRODUCTS.filter(p => p.isBestseller).slice(0, 4);
 
@@ -82,7 +89,7 @@ export const HomePage: React.FC = () => {
               {[
                 { val: '500+', label: 'Happy Customers' },
                 { val: '12+', label: 'Varieties' },
-                { val: '4.9 ★', label: 'Rating' },
+                { val: `${liveRating.avg} ★`, label: 'Customer Rating' },
               ].map(s => (
                 <div key={s.label}>
                   <p className="text-slate-900 font-black text-xl">{s.val}</p>
