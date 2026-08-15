@@ -53,8 +53,9 @@ export const CheckoutPage: React.FC = () => {
     if (!customerDetails.phone.trim() || customerDetails.phone.trim().length < 10) {
       newErrors.phone = 'Please enter a valid 10-digit mobile number';
     }
-    if (!customerDetails.email || !customerDetails.email.includes('@')) {
-      newErrors.email = 'Please enter a valid email address (e.g. gmail.com)';
+    const emailVal = customerDetails.email ? customerDetails.email.trim() : '';
+    if (!emailVal || !emailVal.includes('@') || !emailVal.includes('.')) {
+      newErrors.email = 'Please enter a valid email address (e.g. yourname@gmail.com)';
     }
     if (!customerDetails.address.trim()) {
       newErrors.address = 'Please enter your complete house address & landmark';

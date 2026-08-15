@@ -71,11 +71,22 @@ app.get('/', (req, res) => {
   });
 });
 
+// ── Admin credentials (from env)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vishwa81251@gmail.com';
+const ADMIN_PASS = process.env.ADMIN_PASS || '81251';
+
 // ── POST /api/admin/login — Secure admin authentication
 app.post('/api/admin/login', (req, res) => {
   const { email, pass } = req.body;
+  const inputEmail = (email || '').trim().toLowerCase();
+  const validEmails = [
+    ADMIN_EMAIL.trim().toLowerCase(),
+    'owner@swagrooha.com',
+    'vishwa81251@gmail.com'
+  ];
   if (
-    email && email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase() &&
+    inputEmail &&
+    validEmails.includes(inputEmail) &&
     pass === ADMIN_PASS
   ) {
     const token = 'jwt_owner_session_' + Date.now();
@@ -193,10 +204,6 @@ async function persistOrder(order) {
 // ── Razorpay credentials
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
-
-// ── Admin credentials (from env — NOT hardcoded)
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vishwa81251@gmail.com';
-const ADMIN_PASS = process.env.ADMIN_PASS || '81251';
 
 // ── POST /api/payment/create-order — Create Razorpay order
 app.post('/api/payment/create-order', async (req, res) => {
