@@ -79,14 +79,9 @@ const ADMIN_PASS = process.env.ADMIN_PASS || '81251';
 app.post('/api/admin/login', (req, res) => {
   const { email, pass } = req.body;
   const inputEmail = (email || '').trim().toLowerCase();
-  const validEmails = [
-    ADMIN_EMAIL.trim().toLowerCase(),
-    'owner@swagrooha.com',
-    'vishwa81251@gmail.com'
-  ];
   if (
     inputEmail &&
-    validEmails.includes(inputEmail) &&
+    inputEmail === ADMIN_EMAIL.trim().toLowerCase() &&
     pass === ADMIN_PASS
   ) {
     const token = 'jwt_owner_session_' + Date.now();
