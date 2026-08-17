@@ -482,11 +482,34 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchOrderForTracking = async (query: string): Promise<PlacedOrder | null> => {
     const q = query.trim().toLowerCase();
-    
-    // Check in-memory/localStorage orders first
+    if (!q) return null;
+
+    // 1. Try fetching freshest live order from MongoDB backend first
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(query)}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.orderId) {
+          setTrackedOrder(data);
+          // Sync with local allOrders
+          setAllOrders(prev => {
+            const filtered = prev.filter(o => o.orderId !== data.orderId);
+            return [data, ...filtered];
+          });
+          return data;
+        }
+      }
+    } catch (e) {
+      console.log('Live backend tracking search failed, checking local store:', e);
+    }
+
+    // 2. Fallback to local / cached orders
     const foundLocal = allOrders.find(o => 
-      o.orderId.toLowerCase() === q || 
-      o.customer.phone === q ||
+      (o.orderId && o.orderId.toLowerCase() === q) || 
+      (o.customer && o.customer.phone && o.customer.phone.toLowerCase() === q) ||
+      ((o as any).phone && String((o as any).phone).toLowerCase() === q) ||
       (o.utrNumber && o.utrNumber.toLowerCase() === q)
     );
 
@@ -495,18 +518,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return foundLocal;
     }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(query)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setTrackedOrder(data);
-        return data;
-      }
-    } catch (e) {
-      console.log('Local tracking search');
-    }
-
-    if (currentOrder && (currentOrder.orderId.toLowerCase() === q || currentOrder.customer.phone === q)) {
+    if (currentOrder && (
+      (currentOrder.orderId && currentOrder.orderId.toLowerCase() === q) || 
+      (currentOrder.customer && currentOrder.customer.phone && currentOrder.customer.phone.toLowerCase() === q)
+    )) {
       setTrackedOrder(currentOrder);
       return currentOrder;
     }

@@ -35,42 +35,45 @@ const POLL_INTERVAL_MS = 10000;
 // ── Normalize flat backend Order into the nested PlacedOrder shape ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeOrder(raw: any): PlacedOrder {
-  // If already in nested shape (from localStorage / context), return as-is
-  if (raw.customer && typeof raw.customer === 'object') return raw as PlacedOrder;
+  const normItems = (raw.items || []).map((it: any) => {
+    const pName = it.product?.name || it.productName || it.name || 'Food Item';
+    const wLabel = it.selectedWeightLabel || it.weightLabel || (it.product?.weightOptions?.[0]?.label) || 'Standard';
+    return {
+      cartItemId: String(it.cartItemId || it.id || pName),
+      product: {
+        id: String(it.product?.id || it.id || pName),
+        name: pName,
+        basePrice: it.product?.basePrice || it.unitPrice || 0,
+        weightOptions: it.product?.weightOptions || [{ label: wLabel, multiplier: 1 }],
+        category: it.product?.category || '',
+        image: it.product?.image || '',
+        description: it.product?.description || '',
+      },
+      selectedWeightLabel: wLabel,
+      unitPrice: it.unitPrice || it.product?.basePrice || 0,
+      quantity: it.quantity || 1,
+    };
+  });
+
+  const cust = typeof raw.customer === 'object' && raw.customer !== null ? raw.customer : {};
 
   return {
-    orderId: raw.orderId,
+    orderId: raw.orderId || '',
     customer: {
-      name: raw.customerName || '',
-      phone: raw.customerPhone || '',
-      email: raw.customerEmail || '',
-      areaId: raw.deliveryArea || '',
-      address: raw.customerAddress || '',
+      name: cust.name || raw.customerName || 'Customer',
+      phone: cust.phone || raw.customerPhone || raw.phone || '',
+      email: cust.email || raw.customerEmail || '',
+      areaId: cust.areaId || raw.deliveryArea || '',
+      address: cust.address || raw.customerAddress || '',
     },
-    area: {
+    area: typeof raw.area === 'object' && raw.area !== null ? raw.area : {
       id: raw.deliveryArea || '',
-      name: raw.deliveryArea || '',
+      name: raw.deliveryArea || 'Standard Area',
       tier: 'Near',
       charge: raw.deliveryCharge || 0,
       estimatedDeliveryText: '',
     },
-    // Map OrderItem[] from backend → CartItem[] shape
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    items: (raw.items || []).map((it: any) => ({
-      cartItemId: String(it.id || it.productName),
-      product: {
-        id: String(it.id || it.productName),
-        name: it.productName || '',
-        basePrice: it.unitPrice || 0,
-        weightOptions: [{ label: it.weightLabel || '', multiplier: 1 }],
-        category: '',
-        image: '',
-        description: '',
-      },
-      selectedWeightLabel: it.weightLabel || '',
-      unitPrice: it.unitPrice || 0,
-      quantity: it.quantity || 1,
-    })),
+    items: normItems,
     subtotal: raw.subtotal || 0,
     deliveryCharge: raw.deliveryCharge || 0,
     totalAmount: raw.totalAmount || 0,
@@ -78,7 +81,7 @@ function normalizeOrder(raw: any): PlacedOrder {
       ? (typeof raw.deliveryDate === 'string'
           ? { formattedDate: raw.deliveryDate, dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' }
           : raw.deliveryDate)
-      : { formattedDate: '', dayName: '', daysUntil: 0, dayOfWeekName: '', isSameWeekend: false, orderDayName: '' },
+      : { formattedDate: 'Upcoming Saturday', dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' },
     status: raw.status || 'PLACED',
     paymentStatus: raw.paymentStatus || 'PENDING_VERIFICATION',
     utrNumber: raw.utrNumber || '',

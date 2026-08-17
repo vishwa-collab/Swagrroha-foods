@@ -206,7 +206,7 @@ export const TrackingPage: React.FC = () => {
                 </span>
               </h2>
               <p className="text-xs text-slate-300 mt-2">
-                Scheduled Delivery: <strong className="text-amber-300">{activeOrder.deliveryDate.dayOfWeekName} ({activeOrder.deliveryDate.formattedDate})</strong>
+                Scheduled Delivery: <strong className="text-amber-300">{activeOrder.deliveryDate?.dayOfWeekName || (typeof activeOrder.deliveryDate === 'string' ? activeOrder.deliveryDate : 'Upcoming Saturday')} ({activeOrder.deliveryDate?.formattedDate || ''})</strong>
               </p>
             </div>
 
@@ -253,15 +253,22 @@ export const TrackingPage: React.FC = () => {
             <div className="md:col-span-7 bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
               <h4 className="font-extrabold text-slate-900 text-sm border-b border-slate-100 pb-2">Ordered Food Items</h4>
               <div className="divide-y divide-slate-100 text-xs">
-                {activeOrder.items.map(item => (
-                  <div key={item.cartItemId} className="py-2.5 flex justify-between items-center">
-                    <div>
-                      <span className="font-bold text-slate-900">{item.product.name}</span>
-                      <span className="text-slate-500 ml-2 font-medium">({item.selectedWeightLabel}) × {item.quantity}</span>
+                {(activeOrder.items || []).map((item, idx) => {
+                  const pName = item.product?.name || (item as any).name || (item as any).productName || 'Food Item';
+                  const wLabel = item.selectedWeightLabel || (item as any).weightLabel || '';
+                  const price = item.unitPrice || (item.product?.basePrice) || 0;
+                  const qty = item.quantity || 1;
+                  return (
+                    <div key={item.cartItemId || String(idx)} className="py-2.5 flex justify-between items-center">
+                      <div>
+                        <span className="font-bold text-slate-900">{pName}</span>
+                        {wLabel && <span className="text-slate-500 ml-2 font-medium">({wLabel}) × {qty}</span>}
+                        {!wLabel && <span className="text-slate-500 ml-2 font-medium">× {qty}</span>}
+                      </div>
+                      <span className="font-bold text-slate-900">₹{price * qty}</span>
                     </div>
-                    <span className="font-bold text-slate-900">₹{item.unitPrice * item.quantity}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="pt-2 border-t border-slate-200 flex justify-between font-black text-sm text-slate-900">
                 <span>Total Amount Paid</span>
@@ -275,19 +282,19 @@ export const TrackingPage: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <span className="text-slate-400 font-medium block">Customer Name</span>
-                  <span className="font-bold text-slate-900">{activeOrder.customer.name}</span>
+                  <span className="font-bold text-slate-900">{activeOrder.customer?.name || 'Customer'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block">Mobile Number</span>
-                  <span className="font-bold text-slate-900">{activeOrder.customer.phone}</span>
+                  <span className="font-bold text-slate-900">{activeOrder.customer?.phone || (activeOrder as any).phone || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block">Delivery Route Zone</span>
-                  <span className="font-bold text-brand-600">{activeOrder.area?.name || 'Standard'} (Delivery Fee: ₹{activeOrder.deliveryCharge})</span>
+                  <span className="font-bold text-brand-600">{activeOrder.area?.name || 'Standard Area'} (Delivery Fee: ₹{activeOrder.deliveryCharge || 0})</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block">Full Address</span>
-                  <span className="font-semibold text-slate-700 leading-relaxed">{activeOrder.customer.address}</span>
+                  <span className="font-semibold text-slate-700 leading-relaxed">{activeOrder.customer?.address || (activeOrder as any).address || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -433,7 +440,7 @@ export const TrackingPage: React.FC = () => {
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-500">
-                      Customer: {ord.customer.name} ({ord.customer.phone}) • {new Date(ord.createdAt).toLocaleDateString()}
+                      Customer: {ord.customer?.name || 'Customer'} ({ord.customer?.phone || (ord as any).phone || 'N/A'}) • {new Date(ord.createdAt || Date.now()).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -456,13 +463,17 @@ export const TrackingPage: React.FC = () => {
                   <div>
                     <span className="text-slate-400 font-semibold block">Ordered Items:</span>
                     <p className="font-bold text-slate-800">
-                      {ord.items.map(i => `${i.product.name} (${i.selectedWeightLabel}) × ${i.quantity}`).join(', ')}
+                      {(ord.items || []).map(i => {
+                        const name = i.product?.name || (i as any).name || (i as any).productName || 'Item';
+                        const w = i.selectedWeightLabel || (i as any).weightLabel || '';
+                        return `${name}${w ? ` (${w})` : ''} × ${i.quantity || 1}`;
+                      }).join(', ')}
                     </p>
                   </div>
                   <div>
                     <span className="text-slate-400 font-semibold block">Scheduled Delivery:</span>
                     <p className="font-bold text-amber-700">
-                      {ord.deliveryDate?.dayOfWeekName} ({ord.deliveryDate?.formattedDate})
+                      {ord.deliveryDate?.dayOfWeekName || (typeof ord.deliveryDate === 'string' ? ord.deliveryDate : 'Upcoming Saturday')} ({ord.deliveryDate?.formattedDate || ''})
                     </p>
                   </div>
                 </div>
