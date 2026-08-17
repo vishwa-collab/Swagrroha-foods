@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./emailService.cjs');
 const Razorpay = require('razorpay');
@@ -31,43 +31,70 @@ app.use(cors({
 
 app.use(express.json());
 
-// ── PostgreSQL Connection Pool (Render Database)
-const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
-let pool = null;
+// ── MongoDB Schema & Connection Setup
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
+let isMongoConnected = false;
 
-if (dbUrl) {
-  pool = new Pool({
-    connectionString: dbUrl,
-    ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
-  });
+const orderSchema = new mongoose.Schema({
+  orderId: { type: String, required: true, unique: true, index: true },
+  phone: { type: String, index: true },
+  utrNumber: { type: String, index: true },
+  status: { type: String, default: 'PLACED' },
+  paymentStatus: { type: String, default: 'PAID_VIA_UPI' },
+  customer: {
+    name: String,
+    phone: String,
+    email: String,
+    address: String,
+  },
+  area: mongoose.Schema.Types.Mixed,
+  items: [mongoose.Schema.Types.Mixed],
+  subtotal: Number,
+  deliveryCharge: Number,
+  totalAmount: Number,
+  paymentMethod: String,
+  paymentProof: String,
+  deliveryDate: mongoose.Schema.Types.Mixed,
+  receiptEmailSent: { type: Boolean, default: false },
+  receiptEmailSentAt: Date,
+  receiptEmailStatus: String,
+  receiptEmailError: String,
+  review: {
+    rating: Number,
+    comment: String,
+    submittedAt: Date,
+  },
+  createdAt: { type: Date, default: Date.now },
+}, {
+  timestamps: true,
+  strict: false,
+});
 
-  pool.query(`
-    CREATE TABLE IF NOT EXISTS orders (
-      order_id VARCHAR(100) PRIMARY KEY,
-      phone VARCHAR(50),
-      utr VARCHAR(100),
-      data JSONB NOT NULL,
-      status VARCHAR(50),
-      payment_status VARCHAR(50),
-      receipt_email_sent BOOLEAN DEFAULT FALSE,
-      receipt_email_sent_at TIMESTAMP,
-      receipt_email_status VARCHAR(50),
-      receipt_email_error TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `)
-  .then(() => pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS review JSONB DEFAULT NULL;`))
-  .then(() => console.log('✅ PostgreSQL Database connected and orders table ready'))
-  .catch(err => console.error('❌ PostgreSQL table init error:', err));
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+
+const dns = require('dns');
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {}
+
+if (mongoUri) {
+  mongoose.connect(mongoUri)
+    .then(() => {
+      isMongoConnected = true;
+      console.log('✅ MongoDB Database connected and orders collection ready');
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+    });
 } else {
-  console.log('ℹ️ DATABASE_URL not detected. Falling back to in-memory order store.');
+  console.log('ℹ️ MONGODB_URI not detected. Falling back to in-memory order store.');
 }
 
 // ── Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
     message: 'PJR Swagrooha Foods API is running successfully',
-    database: pool ? 'PostgreSQL Connected' : 'In-Memory Mode'
+    database: isMongoConnected ? 'MongoDB Connected' : 'In-Memory Mode'
   });
 });
 
@@ -95,7 +122,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     service: 'PJR Swagrooha Foods API',
-    db: pool ? 'postgresql' : 'in-memory',
+    db: isMongoConnected ? 'mongodb' : 'in-memory',
     emailConfigured: !!(process.env.GMAIL_USER || process.env.SMTP_USER)
   });
 });
@@ -140,20 +167,18 @@ async function isUtrDuplicate(utr, currentOrderId) {
   if (!utr) return false;
   const cleanUtr = utr.trim().toLowerCase();
 
-  // Check PostgreSQL DB if active
-  if (pool) {
+  // Check MongoDB DB if active
+  if (isMongoConnected) {
     try {
-      const result = await pool.query(
-        `SELECT order_id FROM orders 
-         WHERE LOWER(utr) = $1 AND LOWER(order_id) != $2 
-         LIMIT 1`,
-        [cleanUtr, (currentOrderId || '').toLowerCase()]
-      );
-      if (result.rows.length > 0) {
+      const match = await Order.findOne({
+        utrNumber: { $regex: new RegExp(`^${cleanUtr}$`, 'i') },
+        orderId: { $ne: currentOrderId }
+      }).lean();
+      if (match) {
         return true;
       }
     } catch (e) {
-      console.error('Error checking duplicate UTR in PostgreSQL:', e);
+      console.error('Error checking duplicate UTR in MongoDB:', e);
     }
   }
 
@@ -165,35 +190,33 @@ async function isUtrDuplicate(utr, currentOrderId) {
   );
 }
 
-// Helper function to insert/update order in PostgreSQL & Memory
+// Helper function to insert/update order in MongoDB & Memory
 async function persistOrder(order) {
-  if (pool) {
+  const phone = order.customer && order.customer.phone ? order.customer.phone.trim().toLowerCase() : '';
+  const orderToSave = {
+    ...order,
+    phone: phone || order.phone || '',
+    utrNumber: order.utrNumber || 'DIRECT_UPI_PAYMENT',
+    status: order.status || 'PLACED',
+    paymentStatus: order.paymentStatus || 'PAID_VIA_UPI',
+    createdAt: order.createdAt || new Date()
+  };
+
+  if (isMongoConnected) {
     try {
-      await pool.query(
-        `INSERT INTO orders (order_id, phone, utr, data, status, payment_status)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (order_id) DO UPDATE SET 
-           data = $4, 
-           status = $5, 
-           payment_status = $6,
-           utr = $3`,
-        [
-          order.orderId,
-          order.customer && order.customer.phone ? order.customer.phone.trim().toLowerCase() : '',
-          order.utrNumber || 'DIRECT_UPI_PAYMENT',
-          JSON.stringify(order),
-          order.status || 'PLACED',
-          order.paymentStatus || 'PAID_VIA_UPI'
-        ]
+      await Order.findOneAndUpdate(
+        { orderId: order.orderId },
+        { $set: orderToSave },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       );
-      console.log(`✅ Order ${order.orderId} saved to PostgreSQL`);
+      console.log(`✅ Order ${order.orderId} saved to MongoDB`);
     } catch (e) {
-      console.error('Error saving order to PostgreSQL:', e);
+      console.error('Error saving order to MongoDB:', e);
     }
   }
 
   orders = orders.filter(o => o.orderId !== order.orderId);
-  orders.unshift(order);
+  orders.unshift(orderToSave);
 }
 
 // ── Razorpay credentials
@@ -325,13 +348,12 @@ app.post('/api/orders', async (req, res) => {
 
 // GET /api/orders — fetch all orders for admin dashboard
 app.get('/api/orders', async (req, res) => {
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data FROM orders ORDER BY created_at DESC');
-      const pgOrders = result.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
-      return res.json(pgOrders);
+      const mongoOrders = await Order.find().sort({ createdAt: -1 }).lean();
+      return res.json(mongoOrders);
     } catch (e) {
-      console.error('Error fetching orders from PostgreSQL:', e);
+      console.error('Error fetching orders from MongoDB:', e);
     }
   }
   return res.json(orders);
@@ -339,31 +361,33 @@ app.get('/api/orders', async (req, res) => {
 
 // GET /api/orders/:query — track order by orderId / phone / UTR
 app.get('/api/orders/:query', async (req, res) => {
-  const q = req.params.query.trim().toLowerCase();
+  const q = req.params.query.trim();
+  const qRegex = new RegExp(`^${q}$`, 'i');
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query(
-        `SELECT data FROM orders 
-         WHERE LOWER(order_id) = $1 
-            OR LOWER(phone) = $1 
-            OR LOWER(utr) = $1
-         LIMIT 1`,
-        [q]
-      );
-      if (result.rows.length > 0) {
-        const d = result.rows[0].data;
-        return res.json(typeof d === 'string' ? JSON.parse(d) : d);
+      const mongoOrder = await Order.findOne({
+        $or: [
+          { orderId: { $regex: qRegex } },
+          { phone: { $regex: qRegex } },
+          { 'customer.phone': { $regex: qRegex } },
+          { utrNumber: { $regex: qRegex } },
+        ],
+      }).lean();
+      if (mongoOrder) {
+        return res.json(mongoOrder);
       }
     } catch (e) {
-      console.error('Error querying PostgreSQL:', e);
+      console.error('Error querying MongoDB:', e);
     }
   }
 
+  const qLower = q.toLowerCase();
   const found = orders.find(o =>
-    o.orderId.toLowerCase() === q ||
-    (o.customer && o.customer.phone === q) ||
-    (o.utrNumber && o.utrNumber.toLowerCase() === q)
+    (o.orderId && o.orderId.toLowerCase() === qLower) ||
+    (o.customer && o.customer.phone && o.customer.phone.toLowerCase() === qLower) ||
+    (o.phone && o.phone.toLowerCase() === qLower) ||
+    (o.utrNumber && o.utrNumber.toLowerCase() === qLower)
   );
   if (!found) return res.status(404).json({ error: 'Order not found' });
   res.json(found);
@@ -374,71 +398,66 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
   const { orderId } = req.params;
   const { status, paymentStatus } = req.body;
 
-  let updatedOrder = null;
+  let orderObj = null;
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data, receipt_email_sent FROM orders WHERE order_id = $1', [orderId]);
-      if (result.rows.length > 0) {
-        let orderObj = typeof result.rows[0].data === 'string' ? JSON.parse(result.rows[0].data) : result.rows[0].data;
-        const alreadySent = result.rows[0].receipt_email_sent || false;
-
-        if (status) orderObj.status = status;
-        if (paymentStatus) orderObj.paymentStatus = paymentStatus;
-
-        let emailFields = {};
-
-        // Auto-send delivery receipt only when transitioning to DELIVERED and not already sent
-        if (status === 'DELIVERED' && !alreadySent) {
-          const emailResult = await sendDeliveredReceiptEmail(orderObj);
-          if (emailResult.success) {
-            emailFields = {
-              receiptEmailSent: true,
-              receiptEmailSentAt: new Date().toISOString(),
-              receiptEmailStatus: 'SENT',
-              receiptEmailError: null,
-            };
-            Object.assign(orderObj, emailFields);
-            await pool.query(
-              'UPDATE orders SET data = $1, status = $2, payment_status = $3, receipt_email_sent = TRUE, receipt_email_sent_at = NOW(), receipt_email_status = $4, receipt_email_error = NULL WHERE order_id = $5',
-              [JSON.stringify(orderObj), status || orderObj.status, paymentStatus || orderObj.paymentStatus, 'SENT', orderId]
-            );
-          } else {
-            emailFields = {
-              receiptEmailSent: false,
-              receiptEmailStatus: 'FAILED',
-              receiptEmailError: emailResult.error || emailResult.message || 'Email delivery failed',
-            };
-            Object.assign(orderObj, emailFields);
-            await pool.query(
-              'UPDATE orders SET data = $1, status = $2, payment_status = $3, receipt_email_sent = FALSE, receipt_email_status = $4, receipt_email_error = $5 WHERE order_id = $6',
-              [JSON.stringify(orderObj), status || orderObj.status, paymentStatus || orderObj.paymentStatus, 'FAILED', emailFields.receiptEmailError, orderId]
-            );
-          }
-        } else {
-          // Normal status update — preserve existing receipt email fields
-          await pool.query(
-            'UPDATE orders SET data = $1, status = $2, payment_status = $3 WHERE order_id = $4',
-            [JSON.stringify(orderObj), status || orderObj.status, paymentStatus || orderObj.paymentStatus, orderId]
-          );
-        }
-
-        updatedOrder = orderObj;
-      }
+      orderObj = await Order.findOne({ orderId }).lean();
     } catch (e) {
-      console.error('Error updating status in PostgreSQL:', e);
+      console.error('Error fetching order from MongoDB:', e);
+    }
+  }
+
+  if (!orderObj) {
+    orderObj = orders.find(o => o.orderId === orderId);
+  }
+
+  if (!orderObj) return res.status(404).json({ error: 'Order not found' });
+
+  const alreadySent = orderObj.receiptEmailSent || false;
+  if (status) orderObj.status = status;
+  if (paymentStatus) orderObj.paymentStatus = paymentStatus;
+
+  let emailFields = {};
+
+  // Auto-send delivery receipt only when transitioning to DELIVERED and not already sent
+  if (status === 'DELIVERED' && !alreadySent) {
+    const emailResult = await sendDeliveredReceiptEmail(orderObj);
+    if (emailResult.success) {
+      emailFields = {
+        receiptEmailSent: true,
+        receiptEmailSentAt: new Date().toISOString(),
+        receiptEmailStatus: 'SENT',
+        receiptEmailError: null,
+      };
+    } else {
+      emailFields = {
+        receiptEmailSent: false,
+        receiptEmailStatus: 'FAILED',
+        receiptEmailError: emailResult.error || emailResult.message || 'Email delivery failed',
+      };
+    }
+    Object.assign(orderObj, emailFields);
+  }
+
+  if (isMongoConnected) {
+    try {
+      await Order.findOneAndUpdate(
+        { orderId },
+        { $set: { ...orderObj, ...emailFields } },
+        { new: true }
+      );
+    } catch (e) {
+      console.error('Error updating status in MongoDB:', e);
     }
   }
 
   const idx = orders.findIndex(o => o.orderId === orderId);
   if (idx !== -1) {
-    if (status) orders[idx].status = status;
-    if (paymentStatus) orders[idx].paymentStatus = paymentStatus;
-    if (!updatedOrder) updatedOrder = orders[idx];
+    orders[idx] = { ...orders[idx], ...orderObj, ...emailFields };
   }
 
-  if (!updatedOrder) return res.status(404).json({ error: 'Order not found' });
-  res.json({ success: true, order: updatedOrder });
+  res.json({ success: true, order: orderObj });
 });
 
 // POST /api/orders/:orderId/resend-receipt — admin manually retries delivery receipt email
@@ -446,14 +465,11 @@ app.post('/api/orders/:orderId/resend-receipt', async (req, res) => {
   const { orderId } = req.params;
   let orderObj = null;
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data FROM orders WHERE order_id = $1', [orderId]);
-      if (result.rows.length > 0) {
-        orderObj = typeof result.rows[0].data === 'string' ? JSON.parse(result.rows[0].data) : result.rows[0].data;
-      }
+      orderObj = await Order.findOne({ orderId }).lean();
     } catch (e) {
-      console.error('Error fetching order for resend:', e);
+      console.error('Error fetching order for resend in MongoDB:', e);
     }
   }
 
@@ -477,21 +493,21 @@ app.post('/api/orders/:orderId/resend-receipt', async (req, res) => {
   orderObj.receiptEmailError = errorMsg;
   if (emailResult.success) orderObj.receiptEmailSentAt = new Date().toISOString();
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      if (emailResult.success) {
-        await pool.query(
-          'UPDATE orders SET data = $1, receipt_email_sent = TRUE, receipt_email_sent_at = NOW(), receipt_email_status = $2, receipt_email_error = NULL WHERE order_id = $3',
-          [JSON.stringify(orderObj), 'SENT', orderId]
-        );
-      } else {
-        await pool.query(
-          'UPDATE orders SET data = $1, receipt_email_sent = FALSE, receipt_email_status = $2, receipt_email_error = $3 WHERE order_id = $4',
-          [JSON.stringify(orderObj), 'FAILED', errorMsg, orderId]
-        );
-      }
+      await Order.findOneAndUpdate(
+        { orderId },
+        {
+          $set: {
+            receiptEmailSent: orderObj.receiptEmailSent,
+            receiptEmailSentAt: orderObj.receiptEmailSentAt,
+            receiptEmailStatus: orderObj.receiptEmailStatus,
+            receiptEmailError: orderObj.receiptEmailError,
+          },
+        }
+      );
     } catch (e) {
-      console.error('Error persisting resend result:', e);
+      console.error('Error persisting resend result in MongoDB:', e);
     }
   }
 
@@ -524,27 +540,29 @@ app.post('/api/orders/:orderId/review', async (req, res) => {
 
   const review = { rating: parseInt(rating), comment: (comment || '').trim(), submittedAt: new Date().toISOString() };
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data FROM orders WHERE order_id = $1', [orderId]);
-      if (result.rows.length === 0) {
+      const updated = await Order.findOneAndUpdate(
+        { orderId },
+        { $set: { review } },
+        { new: true }
+      );
+      if (!updated) {
         return res.status(404).json({ error: 'Order not found.' });
       }
-      const orderData = typeof result.rows[0].data === 'string' ? JSON.parse(result.rows[0].data) : result.rows[0].data;
-      orderData.review = review;
-      await pool.query(
-        'UPDATE orders SET review = $1, data = $2 WHERE order_id = $3',
-        [JSON.stringify(review), JSON.stringify(orderData), orderId]
-      );
     } catch (e) {
-      console.error('Error saving review:', e);
+      console.error('Error saving review in MongoDB:', e);
       return res.status(500).json({ error: 'Failed to save review.' });
     }
   }
 
   // Sync in-memory store
   const idx = orders.findIndex(o => o.orderId === orderId);
-  if (idx !== -1) orders[idx].review = review;
+  if (idx !== -1) {
+    orders[idx].review = review;
+  } else if (!isMongoConnected) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
 
   return res.json({ success: true, review });
 });
@@ -553,14 +571,12 @@ app.post('/api/orders/:orderId/review', async (req, res) => {
 app.get('/api/stats/rating', async (req, res) => {
   let reviews = [];
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query(
-        `SELECT review FROM orders WHERE review IS NOT NULL AND review->>'rating' IS NOT NULL`
-      );
-      reviews = result.rows.map(r => typeof r.review === 'string' ? JSON.parse(r.review) : r.review);
+      const ordersWithReview = await Order.find({ 'review.rating': { $exists: true, $ne: null } }, { review: 1 }).lean();
+      reviews = ordersWithReview.map(o => o.review).filter(Boolean);
     } catch (e) {
-      console.error('Error fetching ratings:', e);
+      console.error('Error fetching ratings from MongoDB:', e);
     }
   } else {
     reviews = orders.filter(o => o.review && o.review.rating).map(o => o.review);
@@ -583,12 +599,11 @@ app.get('/api/stats/rating', async (req, res) => {
 app.get('/api/stats/analytics', async (req, res) => {
   let allData = [];
 
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data, created_at FROM orders ORDER BY created_at DESC');
-      allData = result.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+      allData = await Order.find().sort({ createdAt: -1 }).lean();
     } catch (e) {
-      console.error('Error fetching analytics:', e);
+      console.error('Error fetching analytics from MongoDB:', e);
     }
   } else {
     allData = orders;
@@ -657,27 +672,26 @@ app.get('/api/stats/analytics', async (req, res) => {
 // DELETE /api/admin/reset-orders — owner resets all orders to start fresh
 app.delete('/api/admin/reset-orders', async (req, res) => {
   try {
-    if (pool) {
-      await pool.query('TRUNCATE TABLE orders;');
-      console.log('🧹 PostgreSQL orders table truncated');
+    if (isMongoConnected) {
+      await Order.deleteMany({});
+      console.log('🧹 MongoDB orders collection cleared');
     }
     orders = [];
     return res.json({ success: true, message: 'All order history has been deleted' });
   } catch (e) {
-    console.error('Error clearing PostgreSQL orders:', e);
+    console.error('Error clearing MongoDB orders:', e);
     return res.status(500).json({ error: 'Failed to clear orders: ' + e.message });
   }
 });
 
 // GET /api/admin/orders — owner fetches all orders
 app.get('/api/admin/orders', async (req, res) => {
-  if (pool) {
+  if (isMongoConnected) {
     try {
-      const result = await pool.query('SELECT data FROM orders ORDER BY created_at DESC');
-      const pgOrders = result.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
-      return res.json(pgOrders);
+      const mongoOrders = await Order.find().sort({ createdAt: -1 }).lean();
+      return res.json(mongoOrders);
     } catch (e) {
-      console.error('Error fetching orders from PostgreSQL:', e);
+      console.error('Error fetching orders from MongoDB:', e);
     }
   }
   res.json(orders);

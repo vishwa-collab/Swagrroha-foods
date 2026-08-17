@@ -11,8 +11,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "mongoose": "^9.9.2",
     "nodemailer": "^9.0.5",
-    "pg": "^8.11.3",
     "razorpay": "^2.9.8"
   },
   "engines": {
