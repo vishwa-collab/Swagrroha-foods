@@ -1,11 +1,18 @@
 require('dotenv').config();
+const crypto = require('crypto');
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = crypto.webcrypto || crypto;
+}
+if (typeof global.crypto === 'undefined') {
+  global.crypto = crypto.webcrypto || crypto;
+}
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./emailService.cjs');
 const Razorpay = require('razorpay');
-const crypto = require('crypto');
 
 const app = express();
 
