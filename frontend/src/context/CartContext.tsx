@@ -529,18 +529,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   };
 
-  const clearAllOrders = async (): Promise<void> => {
+  const clearAllOrders = async (adminToken?: string): Promise<{ success: boolean; message: string }> => {
     try {
-      await fetch(`${API_BASE}/api/admin/reset-orders`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/orders/all`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, message: data.error || 'Failed to clear orders on server.' };
+      }
+      // Clear local state
+      setAllOrders([]);
+      setCurrentOrder(null);
+      setTrackedOrder(null);
+      localStorage.removeItem('swagrooha_all_orders');
+      localStorage.removeItem('swagrooha_cart');
+      localStorage.setItem('swagrooha_orders_version', 'v_' + Date.now());
+      return { success: true, message: data.message || 'All orders cleared. Fresh start!' };
     } catch (e) {
-      console.log('Backend reset orders endpoint failed or offline');
+      console.error('Clear all orders failed:', e);
+      return { success: false, message: 'Network error. Could not connect to server.' };
     }
-    setAllOrders([]);
-    setCurrentOrder(null);
-    setTrackedOrder(null);
-    localStorage.removeItem('swagrooha_all_orders');
-    localStorage.removeItem('swagrooha_cart');
-    localStorage.setItem('swagrooha_orders_version', 'v_' + Date.now());
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);

@@ -166,6 +166,44 @@ app.get('/api/test-email', async (req, res) => {
   });
 });
 
+// ── DELETE /api/orders/all — Admin clears ALL orders (fresh start)
+// Requires the admin token in the Authorization header for security.
+app.delete('/api/orders/all', async (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+
+  // Only allow if token starts with 'jwt_owner_session_' (set at login)
+  if (!token.startsWith('jwt_owner_session_')) {
+    return res.status(403).json({ error: 'Forbidden. Admin authentication required.' });
+  }
+
+  let mongoDeleted = 0;
+  let memoryDeleted = 0;
+
+  // Clear MongoDB
+  if (isMongoConnected) {
+    try {
+      const result = await Order.deleteMany({});
+      mongoDeleted = result.deletedCount;
+    } catch (e) {
+      console.error('Error clearing MongoDB orders:', e.message);
+      return res.status(500).json({ error: 'Failed to clear MongoDB orders: ' + e.message });
+    }
+  }
+
+  // Clear in-memory store
+  memoryDeleted = orders.length;
+  orders = [];
+
+  console.log(`🗑️  Admin cleared all orders. MongoDB: ${mongoDeleted} deleted, In-memory: ${memoryDeleted} deleted.`);
+  return res.json({
+    success: true,
+    message: `All orders cleared successfully. Fresh start! 🚀`,
+    mongoDeleted,
+    memoryDeleted,
+  });
+});
+
 // ── Fallback in-memory orders store
 let orders = [];
 
