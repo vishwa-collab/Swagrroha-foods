@@ -11,7 +11,11 @@ import {
   Check,
   MessageCircle,
   PhoneCall,
-  QrCode
+  QrCode,
+  Upload,
+  Image as ImageIcon,
+  X,
+  FileCheck
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -33,9 +37,15 @@ export const PaymentPage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chosenDeliveryDate = (customerDetails as any)._deliveryDate || deliveryDateInfo;
 
+  const [paymentOption, setPaymentOption] = useState<'screenshot' | 'utr'>('screenshot');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // UTR / Transaction ID State
+  // Option 1 State (Screenshot Upload)
+  const [screenshotBase64, setScreenshotBase64] = useState<string | null>(null);
+  const [screenshotName, setScreenshotName] = useState<string>('');
+  const [screenshotError, setScreenshotError] = useState<string>('');
+
+  // Option 2 State (UTR Number)
   const [utrNumber, setUtrNumber] = useState('');
   const [utrError, setUtrError] = useState('');
 
@@ -56,22 +66,93 @@ export const PaymentPage: React.FC = () => {
     setTimeout(() => setUpiCopied(false), 2500);
   };
 
-  const handleConfirmOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const cleanUtr = utrNumber.trim();
-    if (!cleanUtr) {
-      setUtrError('Please enter your 12-digit UTR / UPI Transaction ID from PhonePe, GPay, or Paytm.');
+    if (!file.type.startsWith('image/')) {
+      setScreenshotError('Please upload a valid image file (PNG, JPG, JPEG, WEBP).');
       return;
     }
 
-    if (cleanUtr.length < 8) {
-      setUtrError('Please enter a valid UTR / Transaction ID or reference number.');
+    if (file.size > 10 * 1024 * 1024) {
+      setScreenshotError('Image file is too large. Please select a screenshot under 10MB.');
       return;
+    }
+
+    setScreenshotError('');
+    setScreenshotName(file.name);
+
+    // Compress & Convert to Base64 using Canvas
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% quality
+          setScreenshotBase64(dataUrl);
+        } else {
+          setScreenshotBase64(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveScreenshot = () => {
+    setScreenshotBase64(null);
+    setScreenshotName('');
+    setScreenshotError('');
+  };
+
+  const handleConfirmOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let finalUtr = '';
+    let finalProof = '';
+
+    if (paymentOption === 'screenshot') {
+      // Option 1: Screenshot
+      if (!screenshotBase64) {
+        setScreenshotError('Please select and upload your payment success screenshot.');
+        return;
+      }
+      finalProof = screenshotBase64;
+      finalUtr = utrNumber.trim() || 'SCREENSHOT_PROVED';
+    } else {
+      // Option 2: UTR Number
+      const cleanUtr = utrNumber.trim();
+      const utrPattern = /^\d{8,22}$/;
+      if (!cleanUtr) {
+        setUtrError('Please enter your 12‑digit UTR / Transaction ID from PhonePe, GPay, or Paytm.');
+        return;
+      }
+      if (!utrPattern.test(cleanUtr)) {
+        setUtrError('UTR must contain only numbers and be 8 to 22 digits long.');
+        return;
+      }
+      finalUtr = cleanUtr;
     }
 
     setIsSubmitting(true);
     setUtrError('');
+    setScreenshotError('');
 
     const newOrder: PlacedOrder = {
       orderId,
@@ -84,8 +165,9 @@ export const PaymentPage: React.FC = () => {
       deliveryDate: chosenDeliveryDate,
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
-      paymentMethod: 'UPI UTR Verification',
-      utrNumber: cleanUtr,
+      paymentMethod: paymentOption === 'screenshot' ? 'Payment Screenshot Proof' : 'UPI UTR Verification',
+      utrNumber: finalUtr,
+      paymentProof: finalProof,
       createdAt: new Date().toISOString(),
     };
 
@@ -104,7 +186,7 @@ export const PaymentPage: React.FC = () => {
       `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
       `💰 *Total Amount:* ₹${grandTotal}\n` +
       `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
-      `💳 *Payment Reference / UTR:* ${cleanUtr} ✅\n\n` +
+      `💳 *Payment Method:* ${paymentOption === 'screenshot' ? 'Paid ✅ (Screenshot Uploaded)' : `Paid ✅ (UTR: ${finalUtr})`}\n\n` +
       `_Thank you for ordering with PJR Swagrooha Foods!_`;
 
     // Open owner WhatsApp immediately
@@ -114,7 +196,11 @@ export const PaymentPage: React.FC = () => {
     const addRes = await addOrder(newOrder);
     if (!addRes.success) {
       const err = addRes.message || 'Unable to place your order. Please try again.';
-      setUtrError(err);
+      if (paymentOption === 'screenshot') {
+        setScreenshotError(err);
+      } else {
+        setUtrError(err);
+      }
       showToast(err);
       setIsSubmitting(false);
       if (waWindow) waWindow.close();
@@ -156,7 +242,7 @@ export const PaymentPage: React.FC = () => {
           <Sparkles className="w-6 h-6 text-amber-500" />
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Scan the QR Code or pay to <strong className="text-slate-900 font-black">{upiNumber}</strong>, then enter your 12-digit UTR / Transaction ID below to complete order.
+          Scan the QR Code photo or pay to <strong className="text-slate-900 font-black">{upiNumber}</strong>. Submit Screenshot or UTR to complete order.
         </p>
       </div>
 
@@ -210,55 +296,165 @@ export const PaymentPage: React.FC = () => {
           </p>
         </div>
 
-        {/* PAYMENT CONFIRMATION FORM (UTR / TRANSACTION NUMBER) */}
-        <form onSubmit={handleConfirmOrder} className="space-y-4 text-left">
-          <div className="bg-amber-50 rounded-3xl p-5 border-2 border-amber-300 space-y-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                After transferring ₹<strong>{grandTotal}</strong> via PhonePe, GPay, or Paytm, enter the <strong>12-digit UTR / Transaction ID</strong> from payment receipt below.
-              </p>
-            </div>
+        {/* PAYMENT VERIFICATION OPTION SELECTOR TABS */}
+        <div className="space-y-4 pt-2 text-left">
+          <label className="text-xs font-black text-slate-700 uppercase tracking-wider block text-center">
+            Choose Payment Proof Method:
+          </label>
 
-            {utrError && (
-              <div className="bg-red-100 text-red-700 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-red-200">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {utrError}
+          <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setPaymentOption('screenshot')}
+              className={`py-3 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                paymentOption === 'screenshot'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              <span>Option 1: Screenshot</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentOption('utr')}
+              className={`py-3 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                paymentOption === 'utr'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <Hash className="w-4 h-4" />
+              <span>Option 2: UTR Number</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleConfirmOrder} className="space-y-4">
+
+            {/* ── OPTION 1: UPLOAD PAYMENT SCREENSHOT ── */}
+            {paymentOption === 'screenshot' && (
+              <div className="bg-emerald-50 rounded-3xl p-5 border-2 border-emerald-300 space-y-4">
+                <div className="flex items-start gap-2">
+                  <FileCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-emerald-950 leading-relaxed font-medium">
+                    Customer pays through PhonePe/GPay ➔ Upload payment-success screenshot below. Owner will verify amount in PhonePe/bank account.
+                  </p>
+                </div>
+
+                {screenshotError && (
+                  <div className="bg-red-100 text-red-700 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-red-200">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {screenshotError}
+                  </div>
+                )}
+
+                {!screenshotBase64 ? (
+                  <label className="border-2 border-dashed border-emerald-400 hover:border-emerald-600 bg-white rounded-2xl p-6 text-center block cursor-pointer transition-all hover:bg-emerald-50/50">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="hidden"
+                    />
+                    <Upload className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
+                    <span className="text-xs font-extrabold text-slate-800 block">Click to Upload Payment Screenshot</span>
+                    <span className="text-[10px] text-slate-500 block mt-1">Supports PNG, JPG, JPEG, WEBP (PhonePe / GPay)</span>
+                  </label>
+                ) : (
+                  <div className="bg-white p-3 rounded-2xl border border-emerald-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        {screenshotName || 'Screenshot Uploaded'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveScreenshot}
+                        className="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition-all"
+                        title="Remove image"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="rounded-xl overflow-hidden border border-slate-200 max-h-48 flex justify-center bg-slate-50">
+                      <img
+                        src={screenshotBase64}
+                        alt="Payment Screenshot Proof"
+                        className="object-contain max-h-48"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
+                    Optional UTR / Note
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Optional 12-digit UTR if available"
+                    value={utrNumber}
+                    onChange={(e) => setUtrNumber(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs font-mono font-bold bg-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                <Hash className="w-3.5 h-3.5 text-amber-600" /> 12-Digit UTR / Transaction ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. 405678901234"
-                value={utrNumber}
-                onChange={(e) => {
-                  setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''));
-                  setUtrError('');
-                }}
-                className="w-full px-3.5 py-3 text-sm font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner"
-              />
-            </div>
-          </div>
+            {/* ── OPTION 2: 12-DIGIT UTR INPUT ── */}
+            {paymentOption === 'utr' && (
+              <div className="bg-amber-50 rounded-3xl p-5 border-2 border-amber-300 space-y-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                    After transferring ₹<strong>{grandTotal}</strong> via PhonePe or GPay, copy the 12-digit <strong>UTR / Transaction ID</strong> from payment history and paste below.
+                  </p>
+                </div>
 
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={isSubmitting || !utrNumber.trim()}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <MessageCircle className="w-5 h-5 text-white" />
-            <span>
-              {isSubmitting
-                ? 'Verifying & Submitting Order...'
-                : 'Submit Order & Get WhatsApp Receipt'
-              }
-            </span>
-          </button>
-        </form>
+                {utrError && (
+                  <div className="bg-red-100 text-red-700 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-red-200">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {utrError}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                    <Hash className="w-3.5 h-3.5 text-amber-600" /> 12-Digit UTR Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 405678901234"
+                    value={utrNumber}
+                    onChange={(e) => {
+                      setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''));
+                      setUtrError('');
+                    }}
+                    className="w-full px-3.5 py-3 text-sm font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* SUBMIT BUTTON */}
+            <button
+              type="submit"
+              disabled={isSubmitting || (paymentOption === 'screenshot' ? !screenshotBase64 : !utrNumber.trim())}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              <MessageCircle className="w-5 h-5 text-white" />
+              <span>
+                {isSubmitting
+                  ? 'Verifying & Submitting Order...'
+                  : 'Submit Order & Get WhatsApp Receipt'
+                }
+              </span>
+            </button>
+
+          </form>
+        </div>
 
       </div>
 
