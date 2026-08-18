@@ -106,8 +106,10 @@ export const PaymentPage: React.FC = () => {
           ctx.drawImage(img, 0, 0, width, height);
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% quality
           setScreenshotBase64(dataUrl);
+          showToast('Payment screenshot attached successfully! ✅');
         } else {
           setScreenshotBase64(event.target?.result as string);
+          showToast('Payment screenshot attached successfully! ✅');
         }
       };
       img.src = event.target?.result as string;
@@ -362,29 +364,33 @@ export const PaymentPage: React.FC = () => {
                     <span className="text-[10px] text-slate-500 block mt-1">Supports PNG, JPG, JPEG, WEBP (PhonePe / GPay)</span>
                   </label>
                 ) : (
-                  <div className="bg-white p-3 rounded-2xl border border-emerald-200 space-y-3">
+                  <div className="bg-white p-4 rounded-2xl border-2 border-emerald-500 shadow-md space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
-                        <ImageIcon className="w-4 h-4 text-emerald-600" />
-                        {screenshotName || 'Screenshot Uploaded'}
+                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-lg">
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        Screenshot Attached Successfully
                       </span>
                       <button
                         type="button"
                         onClick={handleRemoveScreenshot}
-                        className="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition-all"
+                        className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-all flex items-center gap-1 text-[11px] font-bold"
                         title="Remove image"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
+                        <span>Remove</span>
                       </button>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden border border-slate-200 max-h-48 flex justify-center bg-slate-50">
+                    <div className="rounded-xl overflow-hidden border border-emerald-200 max-h-52 flex justify-center bg-slate-900/5 p-1">
                       <img
                         src={screenshotBase64}
                         alt="Payment Screenshot Proof"
-                        className="object-contain max-h-48"
+                        className="object-contain max-h-48 rounded-lg shadow-sm"
                       />
                     </div>
+                    <p className="text-[10px] text-slate-500 text-center font-mono truncate">
+                      {screenshotName}
+                    </p>
                   </div>
                 )}
 
