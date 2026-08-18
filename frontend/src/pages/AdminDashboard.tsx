@@ -25,8 +25,7 @@ import {
   DollarSign,
   ShoppingBag,
   Award,
-  MessageSquare,
-  Trash2
+  MessageSquare
 } from 'lucide-react';
 import { getWhatsAppDeliveredReceiptLink, getWhatsAppPlacedReceiptLink } from '../utils/whatsappReceipt';
 
@@ -98,7 +97,7 @@ function normalizeOrder(raw: any): PlacedOrder {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, clearAllOrders, allOrders, showToast } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics'>('new');
   const [loading, setLoading] = useState(false);
@@ -109,9 +108,6 @@ export const AdminDashboard: React.FC = () => {
 
   // Track which orders have receipt email retry in progress
   const [resendingReceipt, setResendingReceipt] = useState<Set<string>>(new Set());
-
-  // Fresh start state
-  const [clearingOrders, setClearingOrders] = useState(false);
 
   // Screenshot Lightbox Modal State
   const [activeScreenshot, setActiveScreenshot] = useState<{ orderId: string; proofUrl: string } | null>(null);
@@ -246,23 +242,6 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  // ── Fresh Start (Clear All Orders) Handler ──
-  const handleClearAllOrders = async () => {
-    const confirm1 = window.confirm('⚠️ Are you sure you want to delete ALL orders and start completely fresh?');
-    if (!confirm1) return;
-    
-    setClearingOrders(true);
-    const result = await clearAllOrders(adminToken || undefined);
-    setClearingOrders(false);
-    
-    if (result.success) {
-      setOrders([]);
-      showToast('🚀 All orders cleared! Ready for fresh orders.');
-    } else {
-      showToast(`❌ ${result.message}`);
-    }
-  };
-
   // Filter orders strictly by status
   const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
   const activeOrders  = orders.filter(o => ['CONFIRMED', 'PAYMENT_VERIFIED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
@@ -330,25 +309,13 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={handleClearAllOrders}
-            disabled={clearingOrders}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-red-950 text-red-300 hover:text-red-200 border border-red-800/40 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all disabled:opacity-50"
-            title="Wipe all orders to start fresh"
-          >
-            {clearingOrders ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 text-red-400" />}
-            {clearingOrders ? 'Clearing…' : 'Fresh Start (Clear Orders)'}
-          </button>
-
-          <button
-            onClick={logoutAdmin}
-            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={logoutAdmin}
+          className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Logout
+        </button>
       </div>
 
       {/* ── Navigation Tabs ── */}
