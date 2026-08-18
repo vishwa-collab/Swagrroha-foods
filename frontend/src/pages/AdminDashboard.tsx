@@ -1014,6 +1014,77 @@ export const AdminDashboard: React.FC = () => {
         );
       })()}
 
+      {/* ── PAYMENT PROOF SCREENSHOT LIGHTBOX MODAL ── */}
+      {activeScreenshot && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all"
+          onClick={() => setActiveScreenshot(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
+                    <span>Payment Proof Screenshot</span>
+                    <span className="text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                      #{activeScreenshot.orderId}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Customer uploaded screenshot proof for verification</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveScreenshot(null)}
+                className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Image Body */}
+            <div className="p-4 sm:p-6 bg-slate-100/70 overflow-auto max-h-[calc(90vh-140px)] flex items-center justify-center">
+              <img
+                src={activeScreenshot.proofUrl}
+                alt={`Payment screenshot for order ${activeScreenshot.orderId}`}
+                className="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-lg border border-slate-200 bg-white"
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3">
+              <a
+                href={activeScreenshot.proofUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={`payment-screenshot-${activeScreenshot.orderId}.jpg`}
+                className="text-xs font-bold text-slate-700 hover:text-brand-600 flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all border border-slate-200"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Open Full Image</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setActiveScreenshot(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

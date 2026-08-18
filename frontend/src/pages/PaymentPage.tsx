@@ -37,17 +37,17 @@ export const PaymentPage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chosenDeliveryDate = (customerDetails as any)._deliveryDate || deliveryDateInfo;
 
-  const [paymentOption, setPaymentOption] = useState<'utr' | 'screenshot'>('utr');
+  const [paymentOption, setPaymentOption] = useState<'screenshot' | 'utr'>('screenshot');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Option 1 State
-  const [utrNumber, setUtrNumber] = useState('');
-  const [utrError, setUtrError] = useState('');
-  
-  // Option 2 State (Screenshot Upload)
+  // Option 1 State (Screenshot Upload)
   const [screenshotBase64, setScreenshotBase64] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string>('');
   const [screenshotError, setScreenshotError] = useState<string>('');
+
+  // Option 2 State (UTR Number)
+  const [utrNumber, setUtrNumber] = useState('');
+  const [utrError, setUtrError] = useState('');
 
   const [upiCopied, setUpiCopied] = useState(false);
 
@@ -127,7 +127,16 @@ export const PaymentPage: React.FC = () => {
     let finalUtr = '';
     let finalProof = '';
 
-    if (paymentOption === 'utr') {
+    if (paymentOption === 'screenshot') {
+      // Option 1: Screenshot
+      if (!screenshotBase64) {
+        setScreenshotError('Please select and upload your payment success screenshot.');
+        return;
+      }
+      finalProof = screenshotBase64;
+      finalUtr = utrNumber.trim() || 'SCREENSHOT_PROVED';
+    } else {
+      // Option 2: UTR Number
       const cleanUtr = utrNumber.trim();
       const utrPattern = /^\d{12,22}$/;
       if (!cleanUtr) {
@@ -139,14 +148,6 @@ export const PaymentPage: React.FC = () => {
         return;
       }
       finalUtr = cleanUtr;
-    } else {
-      // Option 2: Screenshot
-      if (!screenshotBase64) {
-        setScreenshotError('Please select and upload your payment success screenshot.');
-        return;
-      }
-      finalProof = screenshotBase64;
-      finalUtr = utrNumber.trim() || 'SCREENSHOT_PROVED';
     }
 
     setIsSubmitting(true);
@@ -164,7 +165,7 @@ export const PaymentPage: React.FC = () => {
       deliveryDate: chosenDeliveryDate,
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
-      paymentMethod: paymentOption === 'utr' ? 'UPI UTR Verification' : 'Payment Screenshot Proof',
+      paymentMethod: paymentOption === 'screenshot' ? 'Payment Screenshot Proof' : 'UPI UTR Verification',
       utrNumber: finalUtr,
       paymentProof: finalProof,
       createdAt: new Date().toISOString(),
@@ -185,7 +186,7 @@ export const PaymentPage: React.FC = () => {
       `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
       `💰 *Total Amount:* ₹${grandTotal}\n` +
       `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
-      `💳 *Payment Method:* ${paymentOption === 'utr' ? `Paid ✅ (UTR: ${finalUtr})` : 'Paid ✅ (Screenshot Uploaded)'}\n\n` +
+      `💳 *Payment Method:* ${paymentOption === 'screenshot' ? 'Paid ✅ (Screenshot Uploaded)' : `Paid ✅ (UTR: ${finalUtr})`}\n\n` +
       `_Thank you for ordering with PJR Swagrooha Foods!_`;
 
     // Open owner WhatsApp immediately
@@ -195,10 +196,10 @@ export const PaymentPage: React.FC = () => {
     const addRes = await addOrder(newOrder);
     if (!addRes.success) {
       const err = addRes.message || 'Unable to place your order. Please try again.';
-      if (paymentOption === 'utr') {
-        setUtrError(err);
-      } else {
+      if (paymentOption === 'screenshot') {
         setScreenshotError(err);
+      } else {
+        setUtrError(err);
       }
       showToast(err);
       setIsSubmitting(false);
@@ -305,19 +306,6 @@ export const PaymentPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl">
             <button
               type="button"
-              onClick={() => setPaymentOption('utr')}
-              className={`py-3 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                paymentOption === 'utr'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Hash className="w-4 h-4" />
-              <span>Option 1: UTR Number</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setPaymentOption('screenshot')}
               className={`py-3 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all ${
                 paymentOption === 'screenshot'
@@ -326,48 +314,26 @@ export const PaymentPage: React.FC = () => {
               }`}
             >
               <Upload className="w-4 h-4" />
-              <span>Option 2: Screenshot</span>
+              <span>Option 1: Screenshot</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentOption('utr')}
+              className={`py-3 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                paymentOption === 'utr'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <Hash className="w-4 h-4" />
+              <span>Option 2: UTR Number</span>
             </button>
           </div>
 
           <form onSubmit={handleConfirmOrder} className="space-y-4">
 
-            {/* ── OPTION 1: 12-DIGIT UTR INPUT ── */}
-            {paymentOption === 'utr' && (
-              <div className="bg-amber-50 rounded-3xl p-5 border-2 border-amber-300 space-y-4">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                    After transferring ₹<strong>{grandTotal}</strong> via PhonePe or GPay, copy the 12-digit <strong>UTR / Transaction ID</strong> from payment history and paste below.
-                  </p>
-                </div>
-
-                {utrError && (
-                  <div className="bg-red-100 text-red-700 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-red-200">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    {utrError}
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                    <Hash className="w-3.5 h-3.5 text-amber-600" /> 12-Digit UTR Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 405678901234"
-                    value={utrNumber}
-                    onChange={(e) => {
-                      setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''));
-                      setUtrError('');
-                    }}
-                    className="w-full px-3.5 py-3 text-sm font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* ── OPTION 2: UPLOAD PAYMENT SCREENSHOT ── */}
+            {/* ── OPTION 1: UPLOAD PAYMENT SCREENSHOT ── */}
             {paymentOption === 'screenshot' && (
               <div className="bg-emerald-50 rounded-3xl p-5 border-2 border-emerald-300 space-y-4">
                 <div className="flex items-start gap-2">
@@ -438,10 +404,45 @@ export const PaymentPage: React.FC = () => {
               </div>
             )}
 
+            {/* ── OPTION 2: 12-DIGIT UTR INPUT ── */}
+            {paymentOption === 'utr' && (
+              <div className="bg-amber-50 rounded-3xl p-5 border-2 border-amber-300 space-y-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                    After transferring ₹<strong>{grandTotal}</strong> via PhonePe or GPay, copy the 12-digit <strong>UTR / Transaction ID</strong> from payment history and paste below.
+                  </p>
+                </div>
+
+                {utrError && (
+                  <div className="bg-red-100 text-red-700 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-red-200">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {utrError}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                    <Hash className="w-3.5 h-3.5 text-amber-600" /> 12-Digit UTR Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 405678901234"
+                    value={utrNumber}
+                    onChange={(e) => {
+                      setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''));
+                      setUtrError('');
+                    }}
+                    className="w-full px-3.5 py-3 text-sm font-mono font-bold bg-white rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-inner"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* SUBMIT BUTTON */}
             <button
               type="submit"
-              disabled={isSubmitting || (paymentOption === 'utr' ? !utrNumber.trim() : !screenshotBase64)}
+              disabled={isSubmitting || (paymentOption === 'screenshot' ? !screenshotBase64 : !utrNumber.trim())}
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <MessageCircle className="w-5 h-5 text-white" />
