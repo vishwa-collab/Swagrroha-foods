@@ -73,7 +73,7 @@ interface CartContextType {
   // All Orders Store (Shared between Customer & Owner)
   allOrders: PlacedOrder[];
   addOrder: (order: PlacedOrder) => Promise<{ success: boolean; message?: string }>;
-  clearAllOrders: () => Promise<void>;
+  clearAllOrders: (adminToken?: string) => Promise<{ success: boolean; message: string }>;
 
   deliveryDateInfo: CalculatedDeliveryDate;
   
