@@ -406,12 +406,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If the backend returned receipt email status in the response, update local state
       const respData = await res.json().catch(() => null);
       if (respData && newStatus === 'DELIVERED') {
+        const orderData = respData.order || respData;
         setAllOrders(prev => prev.map(o => o.orderId === orderId ? {
           ...o,
-          receiptEmailSent: respData.receiptEmailSent ?? o.receiptEmailSent,
-          receiptEmailSentAt: respData.receiptEmailSentAt ?? o.receiptEmailSentAt,
-          receiptEmailStatus: respData.receiptEmailStatus ?? o.receiptEmailStatus,
-          receiptEmailError: respData.receiptEmailError ?? o.receiptEmailError,
+          receiptEmailSent: orderData.receiptEmailSent ?? o.receiptEmailSent,
+          receiptEmailSentAt: orderData.receiptEmailSentAt ?? o.receiptEmailSentAt,
+          receiptEmailStatus: orderData.receiptEmailStatus ?? o.receiptEmailStatus,
+          receiptEmailError: orderData.receiptEmailError ?? o.receiptEmailError,
         } : o));
       }
       return true;

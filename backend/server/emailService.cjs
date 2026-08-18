@@ -165,15 +165,21 @@ async function sendCustomerEmailReceipt(order) {
  * Called when the admin marks an order as DELIVERED.
  */
 async function sendDeliveredReceiptEmail(order) {
-  const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
+  const customerEmail = (
+    (order.customer && order.customer.email) ||
+    order.email ||
+    order.customerEmail ||
+    ''
+  ).trim();
+
   if (!customerEmail || !customerEmail.includes('@')) {
     console.log('ℹ️ Customer email not available for delivered receipt. Order ID:', order.orderId);
-    return { success: false, message: 'Customer email not available', receiptEmailStatus: 'FAILED' };
+    return { success: false, message: 'Customer email not available or invalid', receiptEmailStatus: 'FAILED' };
   }
 
   const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || '').trim();
   const recipients = [customerEmail];
-  if (ownerEmail && ownerEmail.includes('@') && ownerEmail !== customerEmail) {
+  if (ownerEmail && ownerEmail.includes('@') && ownerEmail.toLowerCase() !== customerEmail.toLowerCase()) {
     recipients.push(ownerEmail);
   }
 
@@ -183,6 +189,7 @@ async function sendDeliveredReceiptEmail(order) {
   console.log('\n========================================');
   console.log('📧 DELIVERY RECEIPT EMAIL DISPATCH');
   console.log('Customer Email:', customerEmail);
+  console.log('Recipients:', recipients.join(', '));
   console.log('Order ID:', order.orderId);
   console.log('========================================\n');
 
@@ -196,8 +203,8 @@ async function sendDeliveredReceiptEmail(order) {
  * Never exposes credentials in response.
  */
 async function _dispatchEmail(recipients, subject, htmlBody) {
-  const user = process.env.GMAIL_USER || process.env.SMTP_USER || '';
-  const pass = process.env.GMAIL_PASS || process.env.SMTP_PASS || '';
+  const user = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim();
+  const pass = (process.env.GMAIL_PASS || process.env.SMTP_PASS || '').trim();
 
   // ── 1. Resend HTTPS API ──────────────────────────────────────────────────────
   if (process.env.RESEND_API_KEY) {
@@ -255,40 +262,54 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
   // ── 3. Gmail SMTP (Nodemailer) ───────────────────────────────────────────────
   if (user && pass) {
     const cleanPass = pass.replace(/\s+/g, '');
-    try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: { user: user.trim(), pass: cleanPass },
-        connectionTimeout: 10000,
-        socketTimeout: 10000,
-        family: 4,
-        tls: { rejectUnauthorized: false },
-      });
+    // Try Port 465 (SSL) first, then fallback to Port 587 (TLS) if blocked
+    const configs = [
+      { port: 465, secure: true, label: 'Port 465 (SSL)' },
+      { port: 587, secure: false, label: 'Port 587 (TLS)' }
+    ];
 
-      const info = await transporter.sendMail({
-        from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
-        to: recipients.join(', '),
-        subject,
-        html: htmlBody,
-      });
+    let lastError = null;
+    for (const cfg of configs) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: cfg.port,
+          secure: cfg.secure,
+          auth: { user: user.trim(), pass: cleanPass },
+          connectionTimeout: 10000,
+          socketTimeout: 10000,
+          family: 4,
+          tls: { rejectUnauthorized: false },
+        });
 
-      console.log('✅ Email sent via Gmail SMTP to:', recipients.join(', '), info.messageId);
-      return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
-    } catch (gmailErr) {
-      console.warn('⚠️ Gmail SMTP failed:', gmailErr.message);
-      return {
-        success: false,
-        provider: 'gmail_smtp_failed',
-        error: gmailErr.message,
-        message: 'Gmail SMTP failed. Configure RESEND_API_KEY or BREVO_API_KEY for reliable HTTPS delivery.',
-      };
+        const info = await transporter.sendMail({
+          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
+          to: recipients.join(', '),
+          subject,
+          html: htmlBody,
+        });
+
+        console.log(`✅ Email sent via Gmail SMTP [${cfg.label}] to:`, recipients.join(', '), info.messageId);
+        return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
+      } catch (gmailErr) {
+        lastError = gmailErr;
+        console.warn(`⚠️ Gmail SMTP [${cfg.label}] attempt failed:`, gmailErr.message);
+      }
     }
+
+    return {
+      success: false,
+      provider: 'gmail_smtp_failed',
+      error: lastError?.message || 'SMTP connection failed',
+      message: 'Gmail SMTP authentication/connection failed. Please ensure a 16-character Google App Password is used for GMAIL_PASS (not standard account password), or configure RESEND_API_KEY for HTTPS delivery.',
+    };
   }
 
-  console.log('ℹ️ No email provider credentials configured.');
-  return { success: false, message: 'No email provider credentials configured in environment variables' };
+  console.log('ℹ️ No email provider credentials configured. Please set GMAIL_USER + GMAIL_PASS or RESEND_API_KEY.');
+  return { 
+    success: false, 
+    message: 'Email credentials not configured. Please set GMAIL_PASS (Google App Password) in your .env or Render environment variables.' 
+  };
 }
 
 module.exports = {

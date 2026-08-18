@@ -9,8 +9,10 @@ frontend/.vite/
 
 # Environment files (never commit secrets)
 .env
-.env.local
-.env.production
+.env.*
+*.env
+**/.env
+**/.env.*
 
 # OS files
 .DS_Store
