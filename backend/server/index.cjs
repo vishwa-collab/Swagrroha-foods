@@ -10,7 +10,7 @@ if (typeof global.crypto === 'undefined') {
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt } = require('./whatsappService.cjs');
+const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt, sendCustomerDeliveredWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./emailService.cjs');
 const Razorpay = require('razorpay');
 
@@ -427,24 +427,31 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
 
   let emailFields = {};
 
-  // Auto-send delivery receipt only when transitioning to DELIVERED and not already sent
-  if (status === 'DELIVERED' && !alreadySent) {
-    const emailResult = await sendDeliveredReceiptEmail(orderObj);
-    if (emailResult.success) {
-      emailFields = {
-        receiptEmailSent: true,
-        receiptEmailSentAt: new Date().toISOString(),
-        receiptEmailStatus: 'SENT',
-        receiptEmailError: null,
-      };
-    } else {
-      emailFields = {
-        receiptEmailSent: false,
-        receiptEmailStatus: 'FAILED',
-        receiptEmailError: emailResult.error || emailResult.message || 'Email delivery failed',
-      };
+  // Auto-send delivery receipt (Email + WhatsApp to phone number) when transitioning to DELIVERED
+  if (status === 'DELIVERED') {
+    // Send WhatsApp delivery receipt to customer's phone number
+    sendCustomerDeliveredWhatsAppReceipt(orderObj).catch(err => {
+      console.warn('⚠️ WhatsApp delivered receipt error:', err.message);
+    });
+
+    if (!alreadySent) {
+      const emailResult = await sendDeliveredReceiptEmail(orderObj);
+      if (emailResult.success) {
+        emailFields = {
+          receiptEmailSent: true,
+          receiptEmailSentAt: new Date().toISOString(),
+          receiptEmailStatus: 'SENT',
+          receiptEmailError: null,
+        };
+      } else {
+        emailFields = {
+          receiptEmailSent: false,
+          receiptEmailStatus: 'FAILED',
+          receiptEmailError: emailResult.error || emailResult.message || 'Email delivery failed',
+        };
+      }
+      Object.assign(orderObj, emailFields);
     }
-    Object.assign(orderObj, emailFields);
   }
 
   if (isMongoConnected) {

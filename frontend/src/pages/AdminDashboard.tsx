@@ -27,6 +27,7 @@ import {
   Award,
   MessageSquare
 } from 'lucide-react';
+import { getWhatsAppDeliveredReceiptLink, getWhatsAppPlacedReceiptLink } from '../utils/whatsappReceipt';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 const POLL_INTERVAL_MS = 10000;
@@ -749,6 +750,20 @@ export const AdminDashboard: React.FC = () => {
                             </button>
                           )}
                         </>
+                      )}
+
+                      {/* ── WhatsApp Receipt Button — 1-click sends receipt to customer's phone ── */}
+                      {order.customer.phone && (
+                        <a
+                          href={getWhatsAppDeliveredReceiptLink(order)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-400 text-white text-[11px] font-bold px-3 py-1 rounded-full transition-all"
+                          title={`Send delivery receipt to ${order.customer.phone} via WhatsApp`}
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          📱 WhatsApp Receipt
+                        </a>
                       )}
                     </div>
                   </div>
