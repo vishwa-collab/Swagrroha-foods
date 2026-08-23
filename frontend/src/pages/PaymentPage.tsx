@@ -615,8 +615,6 @@ export const PaymentPage: React.FC = () => {
               <span>
                 {isSubmitting
                   ? 'Verifying & Submitting Order...'
-                  : paymentOption === 'screenshot' && screenshotBase64
-                  ? 'Submit Order with Attached Proof (100% Ready) 🚀'
                   : 'Submit Order & Get WhatsApp Receipt'
                 }
               </span>
