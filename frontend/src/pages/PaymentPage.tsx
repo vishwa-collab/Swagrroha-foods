@@ -455,10 +455,6 @@ export const PaymentPage: React.FC = () => {
                     <span className="text-[11px] text-slate-500 block mt-1">
                       Supports PNG, JPG, JPEG, WEBP • <strong className="text-emerald-700 font-extrabold">Up to 100MB</strong>
                     </span>
-                    <div className="mt-3 inline-flex items-center gap-1.5 bg-emerald-100/70 text-emerald-900 font-extrabold text-[10px] px-2.5 py-1 rounded-full">
-                      <Sparkles className="w-3 h-3 text-emerald-600" />
-                      Enhanced 100MB Proof Engine Ready
-                    </div>
                   </div>
                 )}
 
