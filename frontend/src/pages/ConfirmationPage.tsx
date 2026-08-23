@@ -39,151 +39,190 @@ export const ConfirmationPage: React.FC = () => {
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
-    let y = 18;
+    const margin = 14;
+    const contentW = pageW - margin * 2;
+    let y = 14;
 
-    const centerText = (text: string, size: number, bold = false) => {
-      doc.setFontSize(size);
-      doc.setFont('helvetica', bold ? 'bold' : 'normal');
-      doc.text(text, pageW / 2, y, { align: 'center' });
-      y += size * 0.45 + 2;
-    };
+    // ── 1. Top Brand Header Banner ──
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.roundedRect(margin, y, contentW, 24, 3, 3, 'F');
 
-    const leftText = (text: string, size: number, bold = false, x = 16) => {
-      doc.setFontSize(size);
-      doc.setFont('helvetica', bold ? 'bold' : 'normal');
-      doc.text(text, x, y);
-    };
-
-    const rightText = (text: string, size: number, bold = false) => {
-      doc.setFontSize(size);
-      doc.setFont('helvetica', bold ? 'bold' : 'normal');
-      doc.text(text, pageW - 16, y, { align: 'right' });
-    };
-
-    const lineRow = (label: string, value: string, sz = 10) => {
-      leftText(label, sz, false);
-      rightText(value, sz, true);
-      y += sz * 0.42 + 2.5;
-    };
-
-    // Header
-    doc.setFillColor(234, 88, 12); // orange-600
-    doc.rect(0, 0, pageW, 28, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('PJR Swagrooha Foods', pageW / 2, 12, { align: 'center' });
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Authentic Homemade Telugu Food | Hayathnagar → Ibrahimpatnam', pageW / 2, 20, { align: 'center' });
-    y = 36;
+    doc.setFontSize(16);
+    doc.text('PJR SWAGROOHA FOODS', margin + 6, y + 10);
 
-    // Invoice Title
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(203, 213, 225); // slate-300
+    doc.text('Authentic Homemade Telugu Delicacies | Fresh & Pure', margin + 6, y + 17);
+
+    // Right-aligned Invoice Title & Number
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 158, 11); // amber-400
+    doc.text('ORDER RECEIPT / INVOICE', pageW - margin - 6, y + 9, { align: 'right' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Order #${currentOrder.orderId}`, pageW - margin - 6, y + 17, { align: 'right' });
+
+    y += 30;
+
+    // ── 2. Two-Column Metadata Box ──
+    const colW = (contentW - 6) / 2;
+    const boxH = 42;
+
+    // Left Box: Customer Info
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, colW, boxH, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
     doc.setTextColor(15, 23, 42);
-    centerText('ORDER INVOICE / RECEIPT', 15, true);
-    y += 2;
+    doc.text('CUSTOMER / DELIVERY TO:', margin + 4, y + 6);
 
-    // Order & date row
-    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Order ID: ${currentOrder.orderId}`, 16, y);
-    doc.text(`Date: ${new Date(currentOrder.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, pageW - 16, y, { align: 'right' });
+    doc.setFontSize(8.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text(`Name: ${currentOrder.customer.name}`, margin + 4, y + 13);
+    doc.text(`Phone: ${currentOrder.customer.phone}`, margin + 4, y + 19);
+    doc.text(`Zone: ${currentOrder.area.name}`, margin + 4, y + 25);
+
+    // Address text with automatic line-wrapping
+    const rawAddress = `Address: ${currentOrder.customer.address}`;
+    const wrappedAddress = doc.splitTextToSize(rawAddress, colW - 8);
+    const addressLines = wrappedAddress.slice(0, 2); // max 2 lines
+    doc.text(addressLines, margin + 4, y + 31);
+
+    // Right Box: Order & Payment Info
+    const rightX = margin + colW + 6;
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(rightX, y, colW, boxH, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text('ORDER & PAYMENT DETAILS:', rightX + 4, y + 6);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(51, 65, 85);
+
+    const orderDateStr = new Date(currentOrder.createdAt).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    doc.text(`Date: ${orderDateStr}`, rightX + 4, y + 13);
+
+    const deliveryDay = currentOrder.deliveryDate?.dayOfWeekName || 'Scheduled Slot';
+    const deliveryDateStr = currentOrder.deliveryDate?.formattedDate || '';
+    doc.text(`Delivery: ${deliveryDay} (${deliveryDateStr})`, rightX + 4, y + 19);
+
+    doc.text(`Status: Paid / Confirmed (UPI)`, rightX + 4, y + 25);
+
+    const utrDisplay = currentOrder.utrNumber && currentOrder.utrNumber !== 'SCREENSHOT_PROVED'
+      ? currentOrder.utrNumber
+      : 'Payment Screenshot Attached';
+    doc.text(`Payment Ref: ${utrDisplay}`, rightX + 4, y + 31);
+
+    y += boxH + 8;
+
+    // ── 3. Ordered Items Table ──
+    // Table Header
+    doc.setFillColor(241, 245, 249);
+    doc.setDrawColor(203, 213, 225);
+    doc.rect(margin, y, contentW, 8, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text('#', margin + 3, y + 5.5);
+    doc.text('ITEM NAME & PACK SIZE', margin + 12, y + 5.5);
+    doc.text('QTY', margin + 105, y + 5.5, { align: 'center' });
+    doc.text('UNIT PRICE', margin + 140, y + 5.5, { align: 'right' });
+    doc.text('AMOUNT', pageW - margin - 4, y + 5.5, { align: 'right' });
+
     y += 8;
 
-    // Divider
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.4);
-    doc.line(16, y, pageW - 16, y);
-    y += 6;
-
-    // Customer Details
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('BILL TO', 16, y);
-    y += 5;
-    doc.setFontSize(9);
+    // Table Body Rows
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(51, 65, 85);
-    doc.text(currentOrder.customer.name, 16, y); y += 4.5;
-    doc.text(`Phone: ${currentOrder.customer.phone}`, 16, y); y += 4.5;
-    if (currentOrder.customer.email) {
-      doc.text(`Email: ${currentOrder.customer.email}`, 16, y); y += 4.5;
-    }
-    doc.text(`Area: ${currentOrder.area.name}`, 16, y); y += 4.5;
-    doc.text(`Address: ${currentOrder.customer.address}`, 16, y); y += 4.5;
-    doc.text(`Delivery: ${currentOrder.deliveryDate.dayOfWeekName} — ${currentOrder.deliveryDate.formattedDate}`, 16, y); y += 7;
-
-    // Divider
-    doc.setDrawColor(226, 232, 240);
-    doc.line(16, y, pageW - 16, y);
-    y += 6;
-
-    // Items Table Header
-    doc.setFillColor(248, 250, 252);
-    doc.rect(16, y - 2, pageW - 32, 7, 'F');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 116, 139);
-    doc.text('ITEM', 18, y + 3);
-    doc.text('QTY', pageW / 2 - 10, y + 3, { align: 'center' });
-    doc.text('UNIT PRICE', pageW - 60, y + 3);
-    doc.text('AMOUNT', pageW - 16, y + 3, { align: 'right' });
-    y += 9;
-
-    // Items
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
     doc.setTextColor(15, 23, 42);
-    currentOrder.items.forEach(item => {
-      doc.setFontSize(9);
-      doc.text(`${item.product.name} (${item.selectedWeightLabel})`, 18, y);
-      doc.text(`${item.quantity}`, pageW / 2 - 10, y, { align: 'center' });
-      doc.text(`\u20B9${item.unitPrice}`, pageW - 60, y);
-      doc.text(`\u20B9${item.unitPrice * item.quantity}`, pageW - 16, y, { align: 'right' });
-      y += 6;
+
+    currentOrder.items.forEach((item, index) => {
+      const itemRowH = 7.5;
+
+      // Subtle row border
+      doc.setDrawColor(241, 245, 249);
+      doc.line(margin, y + itemRowH, pageW - margin, y + itemRowH);
+
+      doc.text(`${index + 1}`, margin + 3, y + 5);
+      
+      const itemNameText = `${item.product.name} (${item.selectedWeightLabel})`;
+      const cleanItemName = doc.splitTextToSize(itemNameText, 85)[0] || itemNameText;
+      doc.text(cleanItemName, margin + 12, y + 5);
+
+      doc.text(`${item.quantity}`, margin + 105, y + 5, { align: 'center' });
+      doc.text(`Rs. ${item.unitPrice}`, margin + 140, y + 5, { align: 'right' });
+      doc.text(`Rs. ${item.unitPrice * item.quantity}`, pageW - margin - 4, y + 5, { align: 'right' });
+
+      y += itemRowH;
     });
 
-    // Divider
-    y += 2;
-    doc.setDrawColor(226, 232, 240);
-    doc.line(16, y, pageW - 16, y);
-    y += 6;
-
-    // Totals
-    lineRow('Items Subtotal', `\u20B9${currentOrder.subtotal}`);
-    lineRow(`Delivery Charge (${currentOrder.area.name})`, `\u20B9${currentOrder.deliveryCharge}`);
-    y += 1;
-    doc.setDrawColor(15, 23, 42);
-    doc.line(16, y, pageW - 16, y);
-    y += 4;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(234, 88, 12);
-    doc.text('TOTAL AMOUNT PAID', 16, y);
-    doc.text(`\u20B9${currentOrder.totalAmount}`, pageW - 16, y, { align: 'right' });
-    y += 8;
-
-    // Payment Info
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(51, 65, 85);
-    doc.text(`Payment Method: ${currentOrder.paymentMethod || 'UPI'}`, 16, y); y += 4.5;
-    if (currentOrder.utrNumber && currentOrder.utrNumber !== 'SCREENSHOT_PROVED') {
-      doc.text(`UTR / Transaction ID: ${currentOrder.utrNumber}`, 16, y); y += 4.5;
-    }
     y += 4;
 
-    // Footer
+    // ── 4. Financial Summary Calculation Box ──
+    const summaryW = 85;
+    const summaryX = pageW - margin - summaryW;
+
     doc.setFillColor(248, 250, 252);
-    doc.rect(16, y, pageW - 32, 16, 'F');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(234, 88, 12);
-    doc.text('Thank you for ordering from PJR Swagrooha Foods!', pageW / 2, y + 5, { align: 'center' });
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(summaryX, y, summaryW, 30, 2, 2, 'FD');
+
+    let sumY = y + 6;
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+
+    doc.text('Items Subtotal:', summaryX + 4, sumY);
+    doc.text(`Rs. ${currentOrder.subtotal}`, summaryX + summaryW - 4, sumY, { align: 'right' });
+
+    sumY += 6;
+    doc.text(`Delivery Charge (${currentOrder.area.name}):`, summaryX + 4, sumY);
+    doc.text(`Rs. ${currentOrder.deliveryCharge}`, summaryX + summaryW - 4, sumY, { align: 'right' });
+
+    sumY += 4;
+    doc.setDrawColor(203, 213, 225);
+    doc.line(summaryX + 4, sumY, summaryX + summaryW - 4, sumY);
+
+    sumY += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(234, 88, 12); // brand orange
+    doc.text('TOTAL PAID:', summaryX + 4, sumY);
+    doc.text(`Rs. ${currentOrder.totalAmount}`, summaryX + summaryW - 4, sumY, { align: 'right' });
+
+    y += 38;
+
+    // ── 5. Clean Simple Footer ──
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Thank you for ordering with PJR Swagrooha Foods! We prepare every item fresh.', pageW / 2, y, { align: 'center' });
+
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text('Fresh Homemade · No Preservatives · Weekend Delivery | WhatsApp: +91 8125154114', pageW / 2, y + 11, { align: 'center' });
+    doc.text('For queries or special instructions, WhatsApp / Call: +91 8125154114 | Hayathnagar - Ibrahimpatnam', pageW / 2, y, { align: 'center' });
 
     doc.save(`PJR-Swagrooha-Invoice-${currentOrder.orderId}.pdf`);
   };
