@@ -46,26 +46,30 @@ export const PaymentPage: React.FC = () => {
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
 
   // Dynamic Live UPI URI with pre-filled exact order amount
-  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
+  const upiParams = `pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Swagrooha Foods Order')}`;
+  const rawUpiUri = `upi://pay?${upiParams}`;
   
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
-    const upiParams = `pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Swagrooha Foods Order')}`;
-
-    let url = '';
-    if (app === 'phonepe') {
-      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.phonepe.app;end`;
-    } else if (app === 'gpay') {
-      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-    } else if (app === 'paytm') {
-      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=net.one97.paytm;end`;
-    }
+    const appLinks = {
+      phonepe: `phonepe://pay?${upiParams}`,
+      gpay: `tez://upi/pay?${upiParams}`,
+      paytm: `paytmmp://pay?${upiParams}`,
+    };
+    const appPackages = {
+      phonepe: 'com.phonepe.app',
+      gpay: 'com.google.android.apps.nbu.paisa.user',
+      paytm: 'net.one97.paytm',
+    };
+    const intentUrl = `intent://upi/pay?${upiParams}#Intent;scheme=upi;package=${appPackages[app]};end`;
 
     showToast(`Opening ${app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm'}...`);
-    window.location.href = url;
+    window.location.href = appLinks[app];
+    setTimeout(() => { window.location.href = intentUrl; }, 700);
+    setTimeout(() => { window.location.href = rawUpiUri; }, 1400);
   };
 
   const handleConfirmOrder = async () => {
