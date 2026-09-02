@@ -265,15 +265,17 @@ async function persistOrder(order) {
   orders.unshift(orderToSave);
 }
 
-// ── Razorpay credentials
+// ── Razorpay credentials (UPI Intent — pays to 8125154114@ybl)
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
 
-// ── POST /api/payment/create-order — Create Razorpay order
+// ── POST /api/payment/create-order — Create Razorpay order for UPI Intent
 app.post('/api/payment/create-order', async (req, res) => {
   try {
     const { amount } = req.body;
-    const amountInPaise = Math.round(amount * 100);
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
 
     const razorpay = new Razorpay({
       key_id: RAZORPAY_KEY_ID,
@@ -281,12 +283,18 @@ app.post('/api/payment/create-order', async (req, res) => {
     });
 
     const order = await razorpay.orders.create({
-      amount: amountInPaise,
+      amount: Math.round(amount * 100), // convert to paise
       currency: 'INR',
-      receipt: 'txn_' + Date.now(),
+      receipt: 'swagrooha_' + Date.now(),
+      payment_capture: 1,
+      notes: {
+        business_name: 'PJR Swagrooha Foods',
+        upi_id: '8125154114@ybl',
+        phone: '8125154114',
+      },
     });
 
-    res.json({
+    return res.json({
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
@@ -294,16 +302,20 @@ app.post('/api/payment/create-order', async (req, res) => {
     });
   } catch (e) {
     console.error('Error creating Razorpay order:', e);
-    res.status(500).json({ error: 'Error creating payment order: ' + e.message });
+    return res.status(500).json({ error: 'Error creating payment order: ' + e.message });
   }
 });
 
-// ── POST /api/payment/verify — Verify Razorpay payment signature & amount
+// ── POST /api/payment/verify — Verify Razorpay UPI payment signature
 app.post('/api/payment/verify', async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
 
-    // 1. Verify signature
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing payment details.' });
+    }
+
+    // Verify HMAC signature to prevent fraud
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_KEY_SECRET)
       .update(razorpay_order_id + '|' + razorpay_payment_id)
@@ -313,31 +325,27 @@ app.post('/api/payment/verify', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
     }
 
-    // 2. Verify actual amount & status from Razorpay
+    // Verify amount if provided
     if (amount) {
-      const razorpay = new Razorpay({
-        key_id: RAZORPAY_KEY_ID,
-        key_secret: RAZORPAY_KEY_SECRET,
-      });
-
+      const razorpay = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
       const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      const expectedAmountInPaise = Math.round(amount * 100);
+      const expectedPaise = Math.round(amount * 100);
 
       if (payment.status !== 'captured') {
         return res.status(400).json({ success: false, message: 'Payment not captured. Status: ' + payment.status });
       }
-
-      if (payment.amount !== expectedAmountInPaise) {
+      if (payment.amount !== expectedPaise) {
         return res.status(400).json({ success: false, message: `Amount mismatch. Expected ₹${amount}, got ₹${payment.amount / 100}` });
       }
     }
 
-    res.json({ success: true, message: 'Payment verified successfully.' });
+    return res.json({ success: true, message: 'Payment verified! Order confirmed.' });
   } catch (e) {
-    console.error('Error verifying payment:', e);
-    res.status(500).json({ success: false, error: 'Error verifying payment: ' + e.message });
+    console.error('Error verifying Razorpay payment:', e);
+    return res.status(500).json({ success: false, error: 'Verification failed: ' + e.message });
   }
 });
+
 
 // ── POST /api/orders — place new order via Direct Scanner / UPI & trigger notifications
 app.post('/api/orders', async (req, res) => {
@@ -699,7 +707,6 @@ app.get('/api/stats/analytics', async (req, res) => {
   const paymentBreakdown = {
     utr: allData.filter(o => o.paymentMethod && o.paymentMethod.includes('UTR')).length,
     screenshot: allData.filter(o => o.paymentMethod && o.paymentMethod.includes('Screenshot')).length,
-    razorpay: allData.filter(o => o.paymentStatus === 'PAID_VIA_RAZORPAY').length,
   };
 
   // Average rating
