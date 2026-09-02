@@ -48,8 +48,6 @@ export const PaymentPage: React.FC = () => {
   const upiNote = encodeURIComponent('PJR Swagrooha Foods Order');
   // Dynamic Live UPI URI with pre-filled exact order amount (used for QR flow)
   const upiParamsWithAmount = `pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${upiNote}`;
-  // App-launch fallback URI without amount (used for PhonePe button flow)
-  const upiParamsWithoutAmount = `pa=${upiId}&pn=${encodeURIComponent(payeeName)}&cu=INR&tn=${upiNote}`;
   const rawUpiUri = `upi://pay?${upiParamsWithAmount}`;
   
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
@@ -57,21 +55,26 @@ export const PaymentPage: React.FC = () => {
 
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
-    const selectedParams = app === 'phonepe' ? upiParamsWithoutAmount : upiParamsWithAmount;
+    if (app === 'phonepe') {
+      showToast('Opening PhonePe...');
+      window.location.href = 'phonepe://';
+      setTimeout(() => { window.location.href = 'intent://#Intent;package=com.phonepe.app;end'; }, 700);
+      return;
+    }
+
+    const selectedParams = upiParamsWithAmount;
     const appLinks = {
-      phonepe: `phonepe://pay?${selectedParams}`,
       gpay: `tez://upi/pay?${selectedParams}`,
       paytm: `paytmmp://pay?${selectedParams}`,
     };
     const appPackages = {
-      phonepe: 'com.phonepe.app',
       gpay: 'com.google.android.apps.nbu.paisa.user',
       paytm: 'net.one97.paytm',
     };
     const intentUrl = `intent://upi/pay?${selectedParams}#Intent;scheme=upi;package=${appPackages[app]};end`;
     const fallbackUri = `upi://pay?${selectedParams}`;
 
-    showToast(`Opening ${app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm'}...`);
+    showToast(`Opening ${app === 'gpay' ? 'Google Pay' : 'Paytm'}...`);
     window.location.href = appLinks[app];
     setTimeout(() => { window.location.href = intentUrl; }, 700);
     setTimeout(() => { window.location.href = fallbackUri; }, 1400);
