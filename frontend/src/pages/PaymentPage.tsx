@@ -51,28 +51,30 @@ export const PaymentPage: React.FC = () => {
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
+  const upiNumber = '8125154114';
+
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
+    navigator.clipboard.writeText(upiNumber);
 
     const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm';
-    showToast(`Opening ${appName} for 8125154114...`);
-
-    // Standard UPI URI targeting the number/UPI ID directly
-    const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}`;
+    showToast(`Copied ${upiNumber}! In ${appName}, tap "To Mobile Number" & paste to open chat.`);
 
     let url = '';
     if (app === 'phonepe') {
-      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=com.phonepe.app;end`;
+      url = 'intent://#Intent;scheme=phonepe;package=com.phonepe.app;end';
     } else if (app === 'gpay') {
-      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+      url = 'intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end';
     } else if (app === 'paytm') {
-      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=net.one97.paytm;end`;
+      url = 'intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end';
     }
 
     try {
       window.location.href = url;
     } catch {
-      window.location.href = upiUri;
+      if (app === 'phonepe') window.location.href = 'phonepe://';
+      else if (app === 'gpay') window.location.href = 'gpay://';
+      else if (app === 'paytm') window.location.href = 'paytmmp://';
     }
   };
 
@@ -264,6 +266,13 @@ export const PaymentPage: React.FC = () => {
                 <Smartphone className="w-4 h-4" />
                 <span>Paytm</span>
               </button>
+            </div>
+
+            {/* Helpful tip for chat screen */}
+            <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-2.5 text-left space-y-1 mt-2.5">
+              <p className="text-[11px] text-purple-900 font-semibold leading-relaxed">
+                💡 <span className="font-black">To open chat:</span> Tapping copies <span className="font-black font-mono">8125154114</span>. Inside app, tap <span className="font-black">"To Mobile Number"</span> → Paste → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
+              </p>
             </div>
           </div>
 
