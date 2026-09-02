@@ -53,10 +53,19 @@ export const PaymentPage: React.FC = () => {
 
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
+    const upiParams = `pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Swagrooha Foods Order')}`;
+
+    let url = '';
+    if (app === 'phonepe') {
+      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.phonepe.app;end`;
+    } else if (app === 'gpay') {
+      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+    } else if (app === 'paytm') {
+      url = `intent://pay?${upiParams}#Intent;scheme=upi;package=net.one97.paytm;end`;
+    }
+
     showToast(`Opening ${app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm'}...`);
-    if (app === 'phonepe') window.location.href = 'phonepe://';
-    else if (app === 'gpay') window.location.href = 'gpay://';
-    else if (app === 'paytm') window.location.href = 'paytmmp://';
+    window.location.href = url;
   };
 
   const handleConfirmOrder = async () => {
