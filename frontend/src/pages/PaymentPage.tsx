@@ -279,14 +279,6 @@ export const PaymentPage: React.FC = () => {
             />
           </div>
 
-          {/* Supported UPI Apps Badges */}
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <span className="text-[10px] font-extrabold bg-[#5f259f] text-white px-2 py-0.5 rounded-md shadow-sm">PhonePe</span>
-            <span className="text-[10px] font-extrabold bg-[#1a73e8] text-white px-2 py-0.5 rounded-md shadow-sm">Google Pay</span>
-            <span className="text-[10px] font-extrabold bg-[#002970] text-white px-2 py-0.5 rounded-md shadow-sm">Paytm</span>
-            <span className="text-[10px] font-extrabold bg-emerald-700 text-white px-2 py-0.5 rounded-md shadow-sm">BHIM</span>
-          </div>
-
           {/* ── 3 APP LAUNCH BUTTONS DIRECTLY BELOW QR CODE ── */}
           <div className="pt-2">
             <span className="text-[11px] text-slate-600 font-bold block mb-2 text-center">
