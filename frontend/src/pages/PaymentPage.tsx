@@ -18,7 +18,8 @@ import {
   Smartphone, 
   Zap, 
   Lock,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -277,6 +278,39 @@ export const PaymentPage: React.FC = () => {
               alt={`Dynamic UPI QR Code for ₹${grandTotal}`} 
               className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl mx-auto"
             />
+          </div>
+
+          {/* ── DOWNLOAD QR BUTTON ── */}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const response = await fetch(dynamicQrCodeUrl);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `PJR-Swagrooha-Payment-QR-Rs${grandTotal}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              } catch {
+                window.open(dynamicQrCodeUrl, '_blank');
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-sm rounded-2xl shadow-md transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Download QR to Gallery
+          </button>
+
+          {/* PhonePe tip */}
+          <div className="flex items-start gap-2 bg-purple-50 border border-purple-200 rounded-2xl px-3 py-2.5 text-left">
+            <span className="text-base leading-none">💡</span>
+            <p className="text-[11px] text-purple-800 font-semibold leading-relaxed">
+              <span className="font-black">PhonePe users:</span> Download QR → Open PhonePe → Tap Scanner → Tap <span className="font-black">"Upload from Gallery"</span> → Select QR → ₹{grandTotal} auto-filled → Pay!
+            </p>
           </div>
 
           {/* ── 3 APP LAUNCH BUTTONS DIRECTLY BELOW QR CODE ── */}
