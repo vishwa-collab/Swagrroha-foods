@@ -11,9 +11,7 @@ import {
   Zap, 
   Lock,
   CheckCircle2,
-  Download,
-  Copy,
-  Check
+  Download
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -39,10 +37,8 @@ export const PaymentPage: React.FC = () => {
 
   // Tracks whether user has tapped a payment button — reveals Step 2
   const [hasTappedPayment, setHasTappedPayment] = useState(false);
-  const [copiedNumber, setCopiedNumber] = useState(false);
 
   // Direct Individual UPI & Contact Info
-  const upiNumber = '8125154114';
   const upiId = '8125154114@ybl';
   const payeeName = 'Ganji Vishwateja';
 
@@ -55,38 +51,28 @@ export const PaymentPage: React.FC = () => {
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
-  const copyNumber = () => {
-    navigator.clipboard.writeText(upiNumber);
-    setCopiedNumber(true);
-    setHasTappedPayment(true);
-    showToast(`Copied ${upiNumber}! Paste in app to pay ₹${grandTotal}`);
-    setTimeout(() => setCopiedNumber(false), 3000);
-  };
-
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
-    navigator.clipboard.writeText(upiNumber);
-    setCopiedNumber(true);
-    setTimeout(() => setCopiedNumber(false), 3500);
 
     const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm';
-    showToast(`Copied ${upiNumber}! Search in ${appName} & pay ₹${grandTotal}`);
+    showToast(`Opening ${appName} for 8125154114...`);
+
+    // Standard UPI URI targeting the number/UPI ID directly
+    const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}`;
 
     let url = '';
     if (app === 'phonepe') {
-      url = 'intent://#Intent;scheme=phonepe;package=com.phonepe.app;end';
+      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=com.phonepe.app;end`;
     } else if (app === 'gpay') {
-      url = 'intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end';
+      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
     } else if (app === 'paytm') {
-      url = 'intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end';
+      url = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}#Intent;scheme=upi;package=net.one97.paytm;end`;
     }
 
     try {
       window.location.href = url;
     } catch {
-      if (app === 'phonepe') window.location.href = 'phonepe://';
-      else if (app === 'gpay') window.location.href = 'gpay://';
-      else if (app === 'paytm') window.location.href = 'paytmmp://';
+      window.location.href = upiUri;
     }
   };
 
@@ -243,39 +229,10 @@ export const PaymentPage: React.FC = () => {
             </p>
           </div>
 
-          {/* ── PAY BY NUMBER BOX ── */}
-          <div className="bg-white rounded-2xl p-4 border-2 border-slate-200 shadow-sm space-y-2 text-left">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">
-                  Pay to Mobile Number / UPI
-                </span>
-                <span className="text-base font-black text-slate-900 font-mono tracking-wide">
-                  {upiNumber}
-                </span>
-                <span className="text-[11px] text-slate-500 font-semibold block">
-                  {payeeName} (PhonePe / GPay / Paytm)
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={copyNumber}
-                className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${
-                  copiedNumber 
-                    ? 'bg-emerald-600 text-white' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 active:scale-95'
-                }`}
-              >
-                {copiedNumber ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedNumber ? 'Copied!' : 'Copy'}</span>
-              </button>
-            </div>
-          </div>
-
           {/* ── 3 APP LAUNCH BUTTONS ── */}
           <div className="pt-2">
             <span className="text-[11px] text-slate-600 font-bold block mb-2 text-center">
-              Tap below to copy number &amp; open app:
+              Or tap below to open app for 8125154114:
             </span>
             <div className="grid grid-cols-3 gap-2">
               {/* PhonePe */}
@@ -308,10 +265,6 @@ export const PaymentPage: React.FC = () => {
                 <span>Paytm</span>
               </button>
             </div>
-
-            <p className="text-[11px] text-slate-500 font-medium text-center mt-2.5">
-              💡 Tapping copies <strong className="text-slate-800 font-black">{upiNumber}</strong> automatically. Search &amp; pay <strong className="text-emerald-700 font-black">₹{grandTotal}</strong> in app.
-            </p>
           </div>
 
           {/* QR UPI hint */}
