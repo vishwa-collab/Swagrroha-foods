@@ -201,20 +201,17 @@ export const PaymentPage: React.FC = () => {
           email: customerDetails.email || '',
           method: 'upi',
         },
-        // Show ONLY UPI apps — PhonePe, GPay, Paytm, BHIM
-        config: {
-          display: {
-            blocks: {
-              upi_apps: {
-                name: 'Pay via UPI App',
-                instruments: [
-                  { method: 'upi', flows: ['intent', 'qr'] },
-                ],
-              },
-            },
-            sequence: ['block.upi_apps'],
-            preferences: { show_default_blocks: false },
-          },
+        // Show ONLY UPI — works in both test & live mode
+        // In live mode on mobile → opens PhonePe / GPay chooser
+        // In test mode → shows UPI ID input field
+        method: {
+          upi: true,
+          card: false,
+          netbanking: false,
+          wallet: false,
+          emi: false,
+          bank_transfer: false,
+          paylater: false,
         },
         handler: async function (response: any) {
           // 3. Verify payment on backend

@@ -266,8 +266,8 @@ async function persistOrder(order) {
 }
 
 // ── Razorpay credentials (UPI Intent — pays to 8125154114@ybl)
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TNGuNg9TsCrgxS';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'DWd93GhUM4TSKWukxJntyb7W';
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TXAom5GBW9jBMn';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'YoIgW4u10LMpt9TrPaAqxUjx';
 
 // ── POST /api/payment/create-order — Create Razorpay order for UPI Intent
 app.post('/api/payment/create-order', async (req, res) => {
