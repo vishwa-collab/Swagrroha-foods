@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { useCart, PlacedOrder } from '../context/CartContext';
-import { IMAGES } from '../assets/images';
 import { 
   ArrowLeft, 
   ShieldCheck, 
@@ -21,9 +20,8 @@ import {
   RefreshCw,
   Maximize2,
   Smartphone,
-  ExternalLink,
-  CheckCircle,
-  HelpCircle
+  Zap,
+  CheckCircle
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -73,9 +71,11 @@ export const PaymentPage: React.FC = () => {
   // Unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
 
-  // Dynamic QR code with pre-filled amount
+  // Dynamic Live UPI URI with pre-filled exact order amount
   const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
-  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&margin=10&data=${encodeURIComponent(rawUpiUri)}`;
+  
+  // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
+  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
   const copyUpiId = () => {
     navigator.clipboard.writeText(upiId);
@@ -220,7 +220,7 @@ export const PaymentPage: React.FC = () => {
       deliveryDate: chosenDeliveryDate,
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
-      paymentMethod: paymentProofOption === 'screenshot' ? 'Direct UPI (Screenshot Proof)' : 'Direct UPI (UTR Verified)',
+      paymentMethod: paymentProofOption === 'screenshot' ? 'Dynamic QR (Screenshot Proof)' : 'Dynamic QR (UTR Verified)',
       utrNumber: finalUtr,
       paymentProof: finalProof,
       createdAt: new Date().toISOString(),
@@ -240,7 +240,7 @@ export const PaymentPage: React.FC = () => {
       `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
       `💰 *Total Amount:* ₹${grandTotal}\n` +
       `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
-      `💳 *Payment:* Direct UPI to ${upiId} (${paymentProofOption === 'screenshot' ? 'Screenshot Uploaded ✅' : `UTR: ${finalUtr}`})\n\n` +
+      `💳 *Payment:* Dynamic QR to ${upiId} (${paymentProofOption === 'screenshot' ? 'Screenshot Uploaded ✅' : `UTR: ${finalUtr}`})\n\n` +
       `_Thank you for ordering with PJR Swagrooha Foods!_`;
 
     const waWindow = window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
@@ -277,18 +277,18 @@ export const PaymentPage: React.FC = () => {
         </button>
         <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          Direct UPI Payment
+          100% Verified UPI QR
         </span>
       </div>
 
       {/* Title Header */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center justify-center gap-2">
-          <span>Pay via PhonePe / GPay / Paytm</span>
+          <span>Scan Dynamic QR to Pay</span>
           <Sparkles className="w-6 h-6 text-amber-500" />
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-          Scan the QR code below or transfer directly to <strong className="text-slate-900">{upiId}</strong> ({upiNumber}).
+          Scan the dynamically generated QR code with PhonePe, Google Pay, or Paytm. Exact <strong className="text-slate-900 font-black">₹{grandTotal}</strong> is pre-filled automatically!
         </p>
       </div>
 
@@ -300,27 +300,38 @@ export const PaymentPage: React.FC = () => {
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"></div>
           <span className="text-[11px] uppercase tracking-wider font-extrabold text-emerald-400 block">Total Amount Payable</span>
           <p className="text-5xl font-black text-white py-2">₹{grandTotal}</p>
-          <p className="text-[11px] text-slate-400">Order #{orderId} • Items (₹{subtotal}) + Delivery (₹{deliveryCharge})</p>
+          <p className="text-[11px] text-slate-400">Order #{orderId} • Exact Amount Pre-filled in QR</p>
         </div>
 
-        {/* ── STEP 1: SCAN QR CODE PHOTO (100% Guaranteed Success) ── */}
-        <div className="bg-gradient-to-b from-slate-50 to-emerald-50/50 p-5 rounded-3xl border-2 border-emerald-500/30 space-y-4 shadow-inner">
-          <div className="flex items-center justify-center gap-2 text-emerald-900 font-black text-xs uppercase tracking-wider">
-            <QrCode className="w-5 h-5 text-emerald-600" />
-            Scan QR Code in PhonePe / GPay
+        {/* ── DYNAMIC LIVE QR CODE (Generated in Real-Time with Exact Grand Total) ── */}
+        <div className="bg-gradient-to-b from-orange-50/70 via-amber-50/40 to-emerald-50/60 p-6 rounded-3xl border-2 border-brand-400/70 space-y-4 shadow-sm relative">
+          
+          {/* Live Badge */}
+          <div className="inline-flex items-center gap-1.5 bg-brand-500 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+            <Zap className="w-3.5 h-3.5 fill-white" />
+            <span>Exact ₹{grandTotal} Pre-filled QR</span>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl shadow-md inline-block border border-slate-200">
+          {/* Dynamic Generated QR Image */}
+          <div className="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-slate-200">
             <img 
-              src={IMAGES.qrCode} 
-              alt={`QR Code for ${upiId} - ₹${grandTotal}`} 
+              src={dynamicQrCodeUrl} 
+              alt={`Dynamic UPI QR Code for ₹${grandTotal}`} 
               className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl mx-auto"
             />
           </div>
 
-          <div className="space-y-1">
+          {/* Supported UPI Apps Badges */}
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <span className="text-[10px] font-extrabold bg-[#5f259f] text-white px-2 py-0.5 rounded-md">PhonePe</span>
+            <span className="text-[10px] font-extrabold bg-[#1a73e8] text-white px-2 py-0.5 rounded-md">Google Pay</span>
+            <span className="text-[10px] font-extrabold bg-[#002970] text-white px-2 py-0.5 rounded-md">Paytm</span>
+            <span className="text-[10px] font-extrabold bg-emerald-700 text-white px-2 py-0.5 rounded-md">BHIM</span>
+          </div>
+
+          <div className="space-y-0.5">
             <span className="text-[11px] text-slate-600 font-bold block">
-              Scan with PhonePe, GPay, Paytm, BHIM or any UPI scanner
+              Scan with any UPI App Scanner or Mobile Camera
             </span>
             <span className="text-xs font-black text-slate-900 block font-mono">
               {payeeName} ({upiId})
@@ -343,7 +354,7 @@ export const PaymentPage: React.FC = () => {
             <button
               type="button"
               onClick={copyNumber}
-              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all"
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all active:scale-95"
             >
               {numberCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{numberCopied ? 'Copied' : 'Copy'}</span>
@@ -359,7 +370,7 @@ export const PaymentPage: React.FC = () => {
             <button
               type="button"
               onClick={copyUpiId}
-              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all"
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all active:scale-95"
             >
               {upiCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{upiCopied ? 'Copied' : 'Copy'}</span>
