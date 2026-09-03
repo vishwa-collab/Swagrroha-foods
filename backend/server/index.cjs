@@ -212,6 +212,8 @@ let orders = [];
 async function isUtrDuplicate(utr, currentOrderId) {
   if (!utr) return false;
   const cleanUtr = utr.trim().toLowerCase();
+  const utrPattern = /^\d{12,22}$/;
+  if (!utrPattern.test(cleanUtr)) return false;
 
   // Check MongoDB DB if active
   if (isMongoConnected) {
@@ -355,12 +357,8 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ error: 'Invalid order data received' });
     }
 
-    // Validate UTR only if paymentProof is NOT uploaded and utrNumber is provided
+    // Check for duplicate UTR only if an actual numeric UTR is provided
     const utrPattern = /^\d{12,22}$/;
-    if (!order.paymentProof && order.utrNumber && !['SCREENSHOT_PROVED', 'DIRECT_UPI_PAYMENT'].includes(order.utrNumber) && !utrPattern.test(order.utrNumber.trim())) {
-      return res.status(400).json({ error: 'UTR must contain only numbers and be 12 to 22 digits long.' });
-    }
-    // Check for duplicate UTR (excluding current order and non-numeric placeholders)
     if (order.utrNumber && utrPattern.test(order.utrNumber.trim())) {
       const duplicate = await isUtrDuplicate(order.utrNumber, order.orderId);
       if (duplicate) {

@@ -195,8 +195,8 @@ export const TrackingPage: React.FC = () => {
                 <span className="text-amber-400 font-extrabold text-xs uppercase tracking-wider block">
                   Active Order ID: #{activeOrder.orderId}
                 </span>
-                <span className="text-[10px] font-mono bg-slate-800 text-amber-300 px-2 py-0.5 rounded border border-slate-700">
-                  Payment ID: {activeOrder.utrNumber || 'N/A'}
+                <span className="text-[10px] font-bold bg-emerald-950/80 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-700/50">
+                  UPI Paid ✅
                 </span>
               </div>
               <h2 className="text-2xl font-black text-white mt-1 flex items-center gap-2">

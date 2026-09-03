@@ -86,7 +86,7 @@ ${itemsListStr}
 💵 Subtotal: ₹${order.subtotal || 0}
 🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
 💰 *Total Paid: ₹${order.totalAmount || 0}*
-💳 Payment Ref (UTR): ${paymentRef}
+💳 Payment: Paid via UPI ✅
 
 📍 Delivery To: ${customer.address || 'N/A'}, ${area.name || 'Hyderabad'}
 📅 Scheduled Delivery: ${deliveryDate}
@@ -400,7 +400,7 @@ ${itemsListStr}
 💵 Subtotal: ₹${order.subtotal || 0}
 🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
-💳 Payment Ref (UTR): ${paymentRef}
+💳 Payment: Paid via UPI ✅
 
 📍 Delivered To: ${customer.address || 'N/A'}, ${area.name || 'Hyderabad'}
 

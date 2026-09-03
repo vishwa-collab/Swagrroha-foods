@@ -120,7 +120,7 @@ export const PaymentPage: React.FC = () => {
       status: 'PLACED',
       paymentStatus: 'PAID_VIA_UPI',
       paymentMethod: 'Dynamic UPI QR',
-      utrNumber: 'CUSTOMER_CONFIRMED',
+      utrNumber: 'DIRECT_UPI_PAYMENT',
       paymentProof: '',
       createdAt: new Date().toISOString(),
     };

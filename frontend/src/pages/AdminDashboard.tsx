@@ -484,15 +484,15 @@ export const AdminDashboard: React.FC = () => {
                           <ShieldCheck className="w-4 h-4 text-emerald-400" /> Payment Submitted
                         </span>
                         <span className="text-emerald-300 bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                          {order.paymentProof ? 'SCREENSHOT UPLOADED' : 'UTR VERIFIED'}
+                          {order.paymentProof ? 'SCREENSHOT UPLOADED' : 'UPI PAID'}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between gap-3 bg-emerald-950 p-2.5 rounded-xl border border-emerald-800">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-emerald-400 font-bold">UTR / Payment Ref:</span>
+                          <span className="text-[10px] text-emerald-400 font-bold">Payment Method:</span>
                           <span className="font-mono font-black text-sm text-white tracking-wider">
-                            {order.utrNumber || 'N/A'}
+                            {order.paymentMethod || 'Direct UPI'}
                           </span>
                         </div>
                         <span className="text-emerald-400 font-black text-lg">₹{order.totalAmount}</span>
@@ -562,9 +562,9 @@ export const AdminDashboard: React.FC = () => {
                           <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
                             {order.status.replace(/_/g, ' ')}
                           </span>
-                          {order.utrNumber && (
+                          {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-bold text-xs px-2 py-0.5 rounded-full">
-                              ID: {order.utrNumber}
+                              Ref: {order.utrNumber}
                             </span>
                           )}
                           {order.paymentProof && (
@@ -685,9 +685,9 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
                           <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
-                          {order.utrNumber && (
+                          {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
-                              UTR: {order.utrNumber}
+                              Ref: {order.utrNumber}
                             </span>
                           )}
                           {order.paymentProof && (

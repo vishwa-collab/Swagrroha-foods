@@ -243,7 +243,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isUtrUsed = (utr: string): boolean => {
     if (!utr) return false;
     const clean = utr.trim().toLowerCase();
-    if (['screenshot_proved', 'direct_upi_payment'].includes(clean)) return false;
+    const utrPattern = /^\d{12,22}$/;
+    if (!utrPattern.test(clean)) return false;
     return allOrders.some(o => o.utrNumber && o.utrNumber.trim().toLowerCase() === clean);
   };
 
