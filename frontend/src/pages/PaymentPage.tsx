@@ -53,20 +53,46 @@ export const PaymentPage: React.FC = () => {
 
   const upiNumber = '8125154114';
 
-  const openApp = (app: 'phonepe' | 'gpay' | 'paytm') => {
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+    } catch {
+      // Fallback if clipboard API throws permission error
+    }
+    try {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.setAttribute('readonly', '');
+      el.style.position = 'fixed';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    } catch (e) {
+      console.warn('Clipboard copy error:', e);
+    }
+  };
+
+  const openApp = async (app: 'phonepe' | 'gpay' | 'paytm') => {
     setHasTappedPayment(true);
-    navigator.clipboard.writeText(upiNumber);
+    await copyToClipboard(upiNumber);
 
     const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm';
-    showToast(`Copied ${upiNumber}! In ${appName}, tap "To Mobile Number" & paste to open chat.`);
+    showToast(`Copied ${upiNumber}! In ${appName}, tap "To Mobile Number" & paste to pay ₹${grandTotal}.`);
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     let url = '';
     if (app === 'phonepe') {
-      url = 'intent://#Intent;scheme=phonepe;package=com.phonepe.app;end';
+      url = isIOS ? 'phonepe://' : 'intent://#Intent;scheme=phonepe;package=com.phonepe.app;end';
     } else if (app === 'gpay') {
-      url = 'intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end';
+      url = isIOS ? 'gpay://' : 'intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end';
     } else if (app === 'paytm') {
-      url = 'intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end';
+      url = isIOS ? 'paytmmp://' : 'intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end';
     }
 
     try {
