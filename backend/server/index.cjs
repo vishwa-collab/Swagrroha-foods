@@ -727,6 +727,27 @@ app.get('/api/stats/analytics', async (req, res) => {
   });
 });
 
+// DELETE /api/orders/:orderId or /api/admin/orders/:orderId — owner deletes a single wrong/test order
+const handleDeleteOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (!orderId) return res.status(400).json({ error: 'Order ID is required' });
+
+    if (isMongoConnected) {
+      await Order.deleteOne({ orderId });
+      console.log(`🗑️ Removed order #${orderId} from MongoDB`);
+    }
+    orders = orders.filter(o => o.orderId !== orderId);
+    return res.json({ success: true, message: `Order #${orderId} removed successfully` });
+  } catch (e) {
+    console.error(`Error deleting order #${req.params.orderId}:`, e);
+    return res.status(500).json({ error: 'Failed to delete order: ' + e.message });
+  }
+};
+
+app.delete('/api/orders/:orderId', handleDeleteOrder);
+app.delete('/api/admin/orders/:orderId', handleDeleteOrder);
+
 // DELETE /api/admin/reset-orders — owner resets all orders to start fresh
 app.delete('/api/admin/reset-orders', async (req, res) => {
   try {

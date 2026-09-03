@@ -15,6 +15,8 @@ import {
   AlertCircle,
   Eye,
   X,
+  XCircle,
+  Trash2,
   FileCheck,
   Image as ImageIcon,
   Mail,
@@ -97,13 +99,13 @@ function normalizeOrder(raw: any): PlacedOrder {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast, clearAllOrders } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast, deleteOrder } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics'>('new');
   const [loading, setLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
-  const [showClearModal, setShowClearModal] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<PlacedOrder | null>(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false);
   
   // Track which orders are currently being updated so we can show loading
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
@@ -118,15 +120,14 @@ export const AdminDashboard: React.FC = () => {
   const pollPausedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleClearAllOrders = async () => {
-    setIsClearing(true);
-    const result = await clearAllOrders(adminToken || undefined);
-    setIsClearing(false);
-    setShowClearModal(false);
+  const handleDeleteSingleOrder = async (orderId: string) => {
+    setIsDeletingOrder(true);
+    const result = await deleteOrder(orderId, adminToken || undefined);
+    setIsDeletingOrder(false);
+    setOrderToDelete(null);
     if (result.success) {
-      setOrders([]);
-      showToast('All orders cleared! Starting fresh with 0 orders. 🚀');
-      await fetchOrders();
+      setOrders(prev => prev.filter(o => o.orderId !== orderId));
+      showToast(`🗑️ Order #${orderId} marked as wrong & removed.`);
     } else {
       showToast(`❌ ${result.message}`);
     }
@@ -327,15 +328,6 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowClearModal(true)}
-            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl shadow transition-all hover:scale-105"
-            title="Start fresh by clearing all test / mock orders"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Start Fresh (Reset Orders)</span>
-          </button>
-
-          <button
             onClick={logoutAdmin}
             className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
           >
@@ -446,9 +438,21 @@ export const AdminDashboard: React.FC = () => {
                     {/* Order Header */}
                     <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                       <div>
-                        <span className="bg-brand-100 text-brand-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded">
-                          NEW ORDER #{order.orderId}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-brand-100 text-brand-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded">
+                            NEW ORDER #{order.orderId}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setOrderToDelete(order)}
+                            disabled={isUpdating}
+                            className="text-[11px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2 py-0.5 flex items-center gap-1 transition-all"
+                            title="Mark as wrong order and remove"
+                          >
+                            <XCircle className="w-3 h-3 text-red-500" />
+                            <span>Wrong</span>
+                          </button>
+                        </div>
                         <h3 className="font-extrabold text-slate-900 text-lg mt-1">{order.customer.name}</h3>
                         <p className="text-xs text-slate-500 font-semibold">📞 {order.customer.phone}</p>
                       </div>
@@ -512,17 +516,30 @@ export const AdminDashboard: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Accept Button */}
-                    <button
-                      onClick={() => handleVerifyAndConfirm(order.orderId)}
-                      disabled={isUpdating}
-                      className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-400 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
-                    >
-                      {isUpdating
-                        ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Saving…</span></>
-                        : <><CheckCircle2 className="w-4 h-4" /><span>Accept Order &amp; Start Preparing</span></>
-                      }
-                    </button>
+                    {/* Action Buttons: Accept & Small Wrong Order */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => handleVerifyAndConfirm(order.orderId)}
+                        disabled={isUpdating}
+                        className="flex-1 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 disabled:bg-slate-400 text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider"
+                      >
+                        {isUpdating
+                          ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Saving…</span></>
+                          : <><CheckCircle2 className="w-4 h-4" /><span>Accept Order &amp; Start Preparing</span></>
+                        }
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setOrderToDelete(order)}
+                        disabled={isUpdating}
+                        className="px-3.5 py-3.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-2xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shrink-0"
+                        title="Mark as wrong / fake order and remove"
+                      >
+                        <XCircle className="w-4 h-4 text-red-600" />
+                        <span>Wrong</span>
+                      </button>
+                    </div>
 
                   </div>
                 );
@@ -562,6 +579,15 @@ export const AdminDashboard: React.FC = () => {
                           <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
                             {order.status.replace(/_/g, ' ')}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => setOrderToDelete(order)}
+                            className="text-[11px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2 py-0.5 flex items-center gap-1 transition-all"
+                            title="Mark as wrong order and remove"
+                          >
+                            <XCircle className="w-3 h-3 text-red-500" />
+                            <span>Wrong</span>
+                          </button>
                           {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-bold text-xs px-2 py-0.5 rounded-full">
                               Ref: {order.utrNumber}
@@ -685,6 +711,15 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
                           <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
+                          <button
+                            type="button"
+                            onClick={() => setOrderToDelete(order)}
+                            className="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded px-1.5 py-0.5 flex items-center gap-0.5 transition-all"
+                            title="Mark as wrong order and remove"
+                          >
+                            <XCircle className="w-2.5 h-2.5 text-red-500" />
+                            <span>Wrong</span>
+                          </button>
                           {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
                               Ref: {order.utrNumber}
@@ -1112,36 +1147,36 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ── START FRESH CONFIRMATION MODAL ── */}
-      {showClearModal && (
+      {/* ── WRONG ORDER / REMOVE CONFIRMATION MODAL ── */}
+      {orderToDelete && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
-              <RotateCcw className="w-6 h-6" />
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <XCircle className="w-7 h-7" />
             </div>
-            <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-black text-slate-900">Start Fresh with 0 Orders?</h3>
+            <div className="text-center space-y-1">
+              <h3 className="text-lg font-black text-slate-900">Remove Wrong Order?</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                This will clear all current/test orders from MongoDB Atlas database, server memory, and local cache so you can begin taking fresh real orders.
+                Order <strong className="text-slate-800 font-mono">#{orderToDelete.orderId}</strong> from <strong className="text-slate-800">{orderToDelete.customer.name}</strong> (₹{orderToDelete.totalAmount}) will be removed.
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setShowClearModal(false)}
-                disabled={isClearing}
+                onClick={() => setOrderToDelete(null)}
+                disabled={isDeletingOrder}
                 className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
               >
-                Cancel
+                Keep Order
               </button>
               <button
                 type="button"
-                onClick={handleClearAllOrders}
-                disabled={isClearing}
+                onClick={() => handleDeleteSingleOrder(orderToDelete.orderId)}
+                disabled={isDeletingOrder}
                 className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
               >
-                {isClearing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-                <span>{isClearing ? 'Clearing Database...' : 'Yes, Clear & Start Fresh'}</span>
+                {isDeletingOrder ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isDeletingOrder ? 'Removing…' : 'Yes, Wrong Order'}</span>
               </button>
             </div>
           </div>

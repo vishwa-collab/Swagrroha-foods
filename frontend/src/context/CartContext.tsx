@@ -73,6 +73,7 @@ interface CartContextType {
   // All Orders Store (Shared between Customer & Owner)
   allOrders: PlacedOrder[];
   addOrder: (order: PlacedOrder) => Promise<{ success: boolean; message?: string }>;
+  deleteOrder: (orderId: string, adminToken?: string) => Promise<{ success: boolean; message: string }>;
   clearAllOrders: (adminToken?: string) => Promise<{ success: boolean; message: string }>;
 
   deliveryDateInfo: CalculatedDeliveryDate;
@@ -531,6 +532,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   };
 
+  const deleteOrder = async (orderId: string, adminToken?: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, message: data.error || 'Failed to delete order on server.' };
+      }
+      setAllOrders(prev => {
+        const next = prev.filter(o => o.orderId !== orderId);
+        localStorage.setItem('swagrooha_all_orders', JSON.stringify(next));
+        return next;
+      });
+      return { success: true, message: data.message || `Order #${orderId} deleted successfully.` };
+    } catch (e) {
+      console.error(`Delete order ${orderId} failed:`, e);
+      // Fallback: delete locally even if offline
+      setAllOrders(prev => {
+        const next = prev.filter(o => o.orderId !== orderId);
+        localStorage.setItem('swagrooha_all_orders', JSON.stringify(next));
+        return next;
+      });
+      return { success: true, message: `Order #${orderId} removed locally.` };
+    }
+  };
+
   const clearAllOrders = async (adminToken?: string): Promise<{ success: boolean; message: string }> => {
     try {
       const res = await fetch(`${API_BASE}/api/orders/all`, {
@@ -582,6 +614,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentOrder,
       allOrders,
       addOrder,
+      deleteOrder,
       clearAllOrders,
       deliveryDateInfo,
       adminToken,
