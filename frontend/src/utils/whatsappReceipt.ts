@@ -15,7 +15,6 @@ export function getWhatsAppDeliveredReceiptText(order: PlacedOrder): string {
     return `  • ${name}${weight} x${qty} — ₹${price}`;
   }).join('\n') || '  • Homemade Sweets / Pickles';
 
-  const utr = order.utrNumber || 'Online UPI Verified';
   const address = order.customer?.address || 'Hyderabad';
   const areaName = order.area?.name || 'Hyderabad Zone';
 
@@ -31,7 +30,7 @@ ${itemsList}
 💵 Subtotal: ₹${order.subtotal || 0}
 🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
-💳 Payment Ref (UTR): ${utr}
+💳 Payment: Verified ✅
 
 📍 Delivered To: ${address}, ${areaName}
 
@@ -69,7 +68,6 @@ export function getWhatsAppPlacedReceiptLink(order: PlacedOrder): string {
     return `  • ${name}${weight} x${qty} — ₹${price}`;
   }).join('\n') || '  • Homemade Sweets / Pickles';
 
-  const utr = order.utrNumber || 'Online UPI Verified';
   const address = order.customer?.address || 'Hyderabad';
   const areaName = order.area?.name || 'Hyderabad Zone';
   const deliveryDateStr = order.deliveryDate
@@ -90,7 +88,7 @@ ${itemsList}
 💵 Subtotal: ₹${order.subtotal || 0}
 🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
-💳 Payment Ref (UTR): ${utr}
+💳 Payment: Verified ✅
 
 📍 Delivery Address: ${address}, ${areaName}
 📅 Scheduled Delivery: ${deliveryDateStr}
