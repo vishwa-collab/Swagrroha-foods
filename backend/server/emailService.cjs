@@ -56,16 +56,16 @@ function generateReceiptHtml(order, isDelivered) {
   const statusIcon       = isDelivered ? '&#10003;' : '&#128222;';
   const statusTitle      = isDelivered ? 'Your Order Has Been Delivered!' : 'Order Received & Confirmed!';
   const statusSubtitle   = isDelivered
-    ? 'Thank you for choosing PJR Swagrooha Foods! We hope you enjoy your authentic homemade food.'
+    ? 'Thank you for choosing PJR Swagruha Foods! We hope you enjoy your authentic homemade food.'
     : 'We have received your order. Our team will verify your payment and begin preparing your order shortly.';
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PJR Swagrooha Foods - Order Receipt</title></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PJR Swagruha Foods - Order Receipt</title></head>
 <body style="margin:0;padding:20px;background-color:#f1f5f9;font-family:Segoe UI,Arial,sans-serif;">
 <div style="max-width:650px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.10);border:1px solid #e2e8f0;">
 
   <div style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:32px 24px;text-align:center;">
     <div style="display:inline-block;background:#d97706;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:10px;">Authentic Homemade Delicacies</div>
-    <h1 style="margin:0;font-size:28px;font-weight:900;color:#f59e0b;">PJR Swagrooha Foods</h1>
+    <h1 style="margin:0;font-size:28px;font-weight:900;color:#f59e0b;">PJR Swagruha Foods</h1>
     <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Official Order Receipt</p>
   </div>
 
@@ -118,7 +118,7 @@ function generateReceiptHtml(order, isDelivered) {
   </div>
 
   <div style="background:#f8fafc;padding:20px 24px;text-align:center;font-size:13px;color:#64748b;border-top:1px solid #e2e8f0;">
-    <p style="margin:0;font-weight:700;color:#334155;">PJR Swagrooha Foods &#8212; Pure Homemade Goodness</p>
+    <p style="margin:0;font-weight:700;color:#334155;">PJR Swagruha Foods &#8212; Pure Homemade Goodness</p>
     <p style="margin:4px 0 0;">Questions? Call / WhatsApp: <strong>+91 8125154114</strong></p>
     <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">This is an automated system-generated receipt. Please do not reply to this email.</p>
   </div>
@@ -128,18 +128,21 @@ function generateReceiptHtml(order, isDelivered) {
 
 /**
  * Sends an automatic order confirmation/placement receipt email to the customer.
- * Called when a new order is placed (POST /api/orders).
+ * Called immediately after a successful checkout / payment verification.
  */
-async function sendCustomerEmailReceipt(order) {
-  const customerEmail = order.customer && order.customer.email ? order.customer.email.trim() : null;
-  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || '').trim();
+async function sendOrderReceiptEmail(order) {
+  const customerEmail = (
+    (order.customer && order.customer.email) ||
+    order.email ||
+    order.customerEmail ||
+    ''
+  ).trim();
 
-  // Always send to owner as CC/BCC for record
+  // Also notify owner email if set
+  const ownerEmail = (process.env.OWNER_EMAIL || process.env.GMAIL_USER || '').trim();
   const recipients = [];
-  if (customerEmail && customerEmail.includes('@')) {
-    recipients.push(customerEmail);
-  }
-  if (ownerEmail && ownerEmail.includes('@') && ownerEmail !== customerEmail) {
+  if (customerEmail && customerEmail.includes('@')) recipients.push(customerEmail);
+  if (ownerEmail && ownerEmail.includes('@') && ownerEmail.toLowerCase() !== customerEmail.toLowerCase()) {
     recipients.push(ownerEmail);
   }
 
@@ -149,7 +152,7 @@ async function sendCustomerEmailReceipt(order) {
   }
 
   const htmlBody = generateReceiptHtml(order, false);
-  const subject = `Order Received #${order.orderId} - PJR Swagrooha Foods`;
+  const subject = `Order Received #${order.orderId} - PJR Swagruha Foods`;
 
   console.log('\n========================================');
   console.log('📧 ORDER CONFIRMATION EMAIL DISPATCH');
@@ -184,7 +187,7 @@ async function sendDeliveredReceiptEmail(order) {
   }
 
   const htmlBody = generateReceiptHtml(order, true);
-  const subject = `Your Order #${order.orderId} Has Been Delivered! - PJR Swagrooha Foods`;
+  const subject = `Your Order #${order.orderId} Has Been Delivered! - PJR Swagruha Foods`;
 
   console.log('\n========================================');
   console.log('📧 DELIVERY RECEIPT EMAIL DISPATCH');
@@ -212,7 +215,7 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
       const response = await axios.post(
         'https://api.resend.com/emails',
         {
-          from: process.env.EMAIL_FROM || 'PJR Swagrooha Foods <onboarding@resend.dev>',
+          from: process.env.EMAIL_FROM || 'PJR Swagruha Foods <onboarding@resend.dev>',
           to: recipients,
           subject,
           html: htmlBody,
@@ -239,7 +242,7 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
       const response = await axios.post(
         'https://api.brevo.com/v3/smtp/email',
         {
-          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods', email: senderEmail },
+          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagruha Foods', email: senderEmail },
           to: recipients.map(email => ({ email })),
           subject,
           htmlContent: htmlBody,
@@ -283,7 +286,7 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
         });
 
         const info = await transporter.sendMail({
-          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagrooha Foods'}" <${user.trim()}>`,
+          from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagruha Foods'}" <${user.trim()}>`,
           to: recipients.join(', '),
           subject,
           html: htmlBody,

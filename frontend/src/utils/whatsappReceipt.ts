@@ -19,7 +19,7 @@ export function getWhatsAppDeliveredReceiptText(order: PlacedOrder): string {
   const address = order.customer?.address || 'Hyderabad';
   const areaName = order.area?.name || 'Hyderabad Zone';
 
-  return `🎉 *Order Delivered — PJR Swagrooha Foods*
+  return `🎉 *Order Delivered — PJR Swagruha Foods*
 
 Hi ${customerName}! Your delicious homemade food order has been successfully *DELIVERED*! 🚚✅
 
@@ -40,8 +40,8 @@ Please rate your food & leave feedback on our tracking page:
 https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}
 
 For queries, call/WhatsApp us: +91 8125154114
-
-_Thank you for choosing PJR Swagrooha Foods! Enjoy your authentic Telugu homemade treats! 🙏_`;
+ 
+_Thank you for choosing PJR Swagruha Foods! Enjoy your authentic Telugu homemade treats! 🙏_`;
 }
 
 /**
@@ -78,7 +78,7 @@ export function getWhatsAppPlacedReceiptLink(order: PlacedOrder): string {
         : String(order.deliveryDate))
     : 'Upcoming Saturday';
 
-  const text = `✅ *Order Confirmed — PJR Swagrooha Foods*
+  const text = `✅ *Order Confirmed — PJR Swagruha Foods*
 
 Hi ${customerName}! Your order has been confirmed! 🎉
 
@@ -100,7 +100,7 @@ https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}
 
 For queries, call/WhatsApp us: +91 8125154114
 
-_Thank you for ordering with PJR Swagrooha Foods! 🙏_`;
+_Thank you for ordering with PJR Swagruha Foods! 🙏_`;
 
   const rawPhone = (order.customer?.phone || (order as any).phone || '').replace(/\D/g, '');
   const phone = rawPhone.startsWith('91') ? rawPhone : `91${rawPhone}`;

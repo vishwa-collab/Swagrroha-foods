@@ -127,7 +127,7 @@ export const PaymentPage: React.FC = () => {
 
     const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
     const waText =
-      `🚀 *New Order Received — PJR Swagrooha Foods*\n\n` +
+      `🚀 *New Order Received — PJR Swagruha Foods*\n\n` +
       `*Order ID:* ${orderId}\n` +
       `*Customer Name:* ${customerDetails.name}\n` +
       `*Phone Number:* ${customerDetails.phone}\n` +

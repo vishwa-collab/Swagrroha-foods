@@ -290,7 +290,7 @@ app.post('/api/payment/create-order', async (req, res) => {
       receipt: 'swagrooha_' + Date.now(),
       payment_capture: 1,
       notes: {
-        business_name: 'PJR Swagrooha Foods',
+        business_name: 'PJR Swagruha Foods',
         upi_id: '8125154114@ybl',
         phone: '8125154114',
       },

@@ -32,7 +32,7 @@ export const AdminLoginPage: React.FC = () => {
       <div className="text-center space-y-3">
         <img 
           src={IMAGES.logo} 
-          alt="PJR Swagrooha Foods Logo" 
+          alt="PJR Swagruha Foods Logo" 
           className="w-20 h-20 rounded-2xl mx-auto border-2 border-brand-500 p-1 shadow-lg object-cover"
         />
         <div>
@@ -41,7 +41,7 @@ export const AdminLoginPage: React.FC = () => {
           </span>
           <h1 className="text-2xl font-black text-slate-900 mt-2">Owner Admin Login</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Access reserved strictly for PJR Swagrooha Foods management.
+            Access reserved strictly for PJR Swagruha Foods management.
           </p>
         </div>
       </div>

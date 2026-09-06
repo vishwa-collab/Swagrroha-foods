@@ -25,7 +25,7 @@ function formatOrderMessage(order) {
 
   const paymentRef = order.razorpayPaymentId || order.utrNumber || 'Online Payment';
 
-  return `🚀 *New Order Received — PJR Swagrooha Foods*
+  return `🚀 *New Order Received — PJR Swagruha Foods*
 
 *Order ID:* ${order.orderId}
 *Customer Name:* ${customer.name || 'Valued Customer'}
@@ -44,7 +44,7 @@ ${itemsListStr}
 💳 *Payment Status:* Paid ✅ (${paymentRef})
 📦 *Order Status:* PLACED
 
-_Thank you for ordering with PJR Swagrooha Foods!_`;
+_Thank you for ordering with PJR Swagruha Foods!_`;
 }
 
 /**
@@ -72,7 +72,7 @@ function formatCustomerReceiptMessage(order) {
 
   const paymentRef = order.utrNumber || order.razorpayPaymentId || 'UPI Payment';
 
-  return `✅ *Order Confirmed — PJR Swagrooha Foods*
+  return `✅ *Order Confirmed — PJR Swagruha Foods*
 
 Hi ${customer.name || 'Valued Customer'}! Your order has been received and confirmed. 🎉
 
@@ -93,7 +93,7 @@ ${itemsListStr}
 
 For queries, call/WhatsApp owner: +91 8125154114
 
-_Thank you for ordering with PJR Swagrooha Foods! 🙏_`;
+_Thank you for ordering with PJR Swagruha Foods! 🙏_`;
 }
 
 /**
@@ -388,7 +388,7 @@ function formatDeliveredReceiptMessage(order) {
 
   const paymentRef = order.utrNumber || order.razorpayPaymentId || 'UPI Payment';
 
-  return `🎉 *Order Delivered — PJR Swagrooha Foods*
+  return `🎉 *Order Delivered — PJR Swagruha Foods*
 
 Hi ${customer.name || 'Valued Customer'}! Your homemade food order has been successfully DELIVERED! 🚚✅
 
@@ -410,7 +410,7 @@ https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}
 
 For queries, call/WhatsApp us: +91 8125154114
 
-_Thank you for choosing PJR Swagrooha Foods! Enjoy your authentic homemade treats! 🙏_`;
+_Thank you for choosing PJR Swagruha Foods! Enjoy your authentic homemade treats! 🙏_`;
 }
 
 /**

@@ -122,7 +122,7 @@ export const TrackingPage: React.FC = () => {
 
   const STAGES: { key: OrderStageStatus; label: string; icon: any; desc: string }[] = [
     { key: 'PLACED', label: 'Order Placed', icon: PackageCheck, desc: 'Your order was received successfully' },
-    { key: 'CONFIRMED', label: 'Order Confirmed', icon: CheckCircle2, desc: 'PJR Swagrooha Foods accepted your order' },
+    { key: 'CONFIRMED', label: 'Order Confirmed', icon: CheckCircle2, desc: 'PJR Swagruha Foods accepted your order' },
     { key: 'PREPARING', label: 'Preparing Food', icon: ChefHat, desc: 'Fresh homemade batch being cooked in kitchen' },
     { key: 'READY', label: 'Ready & Packed', icon: Package, desc: 'Food items packed & sealed for delivery' },
     { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: Truck, desc: 'On scooty route to your area' },
@@ -331,7 +331,7 @@ export const TrackingPage: React.FC = () => {
                   <div className="text-center">
                     <span className="text-2xl">🎉</span>
                     <h3 className="font-black text-slate-900 text-lg mt-1">Your Order Was Delivered!</h3>
-                    <p className="text-xs text-slate-500 mt-1">How was your experience with PJR Swagrooha Foods?</p>
+                    <p className="text-xs text-slate-500 mt-1">How was your experience with PJR Swagruha Foods?</p>
                   </div>
 
                   {/* Star Picker */}

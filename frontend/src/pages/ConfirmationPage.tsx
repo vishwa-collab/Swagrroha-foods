@@ -50,7 +50,7 @@ export const ConfirmationPage: React.FC = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text('PJR SWAGROOHA FOODS', margin + 6, y + 10);
+    doc.text('PJR SWAGRUHA FOODS', margin + 6, y + 10);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
@@ -211,7 +211,7 @@ export const ConfirmationPage: React.FC = () => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(15, 23, 42);
-    doc.text('Thank you for ordering with PJR Swagrooha Foods! We prepare every item fresh.', pageW / 2, y, { align: 'center' });
+    doc.text('Thank you for ordering with PJR Swagruha Foods! We prepare every item fresh.', pageW / 2, y, { align: 'center' });
 
     y += 4.5;
     doc.setFont('helvetica', 'normal');
@@ -219,7 +219,7 @@ export const ConfirmationPage: React.FC = () => {
     doc.setTextColor(100, 116, 139);
     doc.text('For queries or special instructions, WhatsApp / Call: +91 8125154114 | Hayathnagar - Ibrahimpatnam', pageW / 2, y, { align: 'center' });
 
-    doc.save(`PJR-Swagrooha-Invoice-${currentOrder.orderId}.pdf`);
+    doc.save(`PJR-Swagruha-Invoice-${currentOrder.orderId}.pdf`);
   };
 
   if (!currentOrder) {
@@ -290,7 +290,7 @@ export const ConfirmationPage: React.FC = () => {
             </span>
             <h3 className="font-extrabold text-slate-900 text-sm">Owner Alerted (+91 8125154114)</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Order receipt automatically sent to <strong>PJR Swagrooha Foods</strong> for processing.
+              Order receipt automatically sent to <strong>PJR Swagruha Foods</strong> for processing.
             </p>
           </div>
         </div>
@@ -302,7 +302,7 @@ export const ConfirmationPage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base">Order Summary</h3>
-            <p className="text-xs text-slate-400">PJR Swagrooha Foods • Scheduled Homemade Delivery</p>
+            <p className="text-xs text-slate-400">PJR Swagruha Foods • Scheduled Homemade Delivery</p>
           </div>
           <span className="bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1 rounded-lg">
             Delivery: {currentOrder.deliveryDate.dayOfWeekName}

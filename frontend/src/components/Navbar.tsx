@@ -33,13 +33,13 @@ export const Navbar: React.FC = () => {
                 <div className="absolute inset-0 bg-brand-500/20 rounded-xl blur-md group-hover:bg-brand-500/30 transition-all" />
                 <img 
                   src={IMAGES.logo} 
-                  alt="PJR Swagrooha Foods" 
+                  alt="PJR Swagruha Foods" 
                   className="relative w-11 h-11 sm:w-13 sm:h-13 object-cover rounded-xl border-2 border-brand-400/60 shadow-md group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
               <div>
                 <div className="font-black text-lg sm:text-xl text-slate-900 leading-none tracking-tight">
-                  PJR Swagrooha <span className="text-brand-500">Foods</span>
+                  PJR Swagruha <span className="text-brand-500">Foods</span>
                 </div>
                 <p className="text-[10px] font-bold text-amber-600 tracking-widest uppercase mt-0.5">Taste you can Trust</p>
               </div>

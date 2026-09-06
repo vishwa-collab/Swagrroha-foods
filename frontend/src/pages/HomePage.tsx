@@ -60,12 +60,12 @@ export const HomePage: React.FC = () => {
             <div className="flex items-center gap-3 mb-6">
               <img
                 src={IMAGES.logo}
-                alt="PJR Swagrooha Foods"
+                alt="PJR Swagruha Foods"
                 className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm"
               />
               <div>
                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Est. Home Kitchen</p>
-                <p className="text-slate-800 font-black text-base leading-tight">PJR Swagrooha Foods</p>
+                <p className="text-slate-800 font-black text-base leading-tight">PJR Swagruha Foods</p>
               </div>
             </div>
 

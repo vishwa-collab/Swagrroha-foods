@@ -16,11 +16,11 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-3">
               <img 
                 src={IMAGES.logo} 
-                alt="PJR Swagrooha Foods" 
+                alt="PJR Swagruha Foods" 
                 className="w-12 h-12 rounded-lg border border-amber-400/50 object-cover"
               />
               <div>
-                <h3 className="font-extrabold text-lg text-white tracking-wide">PJR Swagrooha Foods</h3>
+                <h3 className="font-extrabold text-lg text-white tracking-wide">PJR Swagruha Foods</h3>
                 <p className="text-xs text-amber-400 font-semibold uppercase">Taste you can Trust</p>
               </div>
             </div>
@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="pt-2 flex items-center gap-3">
               <a 
-                href="https://wa.me/918125154114?text=Hi%20PJR%20Swagrooha%20Foods!%20I%20have%20an%20enquiry." 
+                href="https://wa.me/918125154114?text=Hi%20PJR%20Swagruha%20Foods!%20I%20have%20an%20enquiry." 
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-colors"
@@ -119,7 +119,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright & credits */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} PJR Swagrooha Foods. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} PJR Swagruha Foods. All rights reserved.</p>
           <div className="flex items-center gap-1 text-slate-400">
             Made with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> for Authentic Homemade Food Lovers.
           </div>
