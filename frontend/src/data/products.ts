@@ -24,7 +24,6 @@ export interface Product {
 // Pickles: start from 250g (unchanged)
 
 const SNACK_WEIGHTS: WeightOption[] = [
-  { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
   { label: '1 kg',  multiplier: 1.0 },
   { label: '2 kg',  multiplier: 2.0 },
@@ -34,7 +33,6 @@ const SNACK_WEIGHTS: WeightOption[] = [
 ];
 
 const SWEET_WEIGHTS: WeightOption[] = [
-  { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
   { label: '1 kg',  multiplier: 1.0 },
   { label: '2 kg',  multiplier: 2.0 },
