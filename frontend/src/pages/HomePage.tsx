@@ -4,11 +4,11 @@ import { PRODUCTS } from '../data/products';
 import { IMAGES } from '../assets/images';
 import {
   ShoppingBag, ChevronRight, Phone, MessageCircle,
-  MapPin, CheckCircle, Clock, Package, Zap, ArrowRight, Sparkles
+  MapPin, CheckCircle, Clock, Package, Zap, ArrowRight, Sparkles, Plus, Minus
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { setActiveTab, addToCart, fetchLiveRating } = useCart();
+  const { cart, setActiveTab, addToCart, updateQuantity, fetchLiveRating } = useCart();
   const [addedId, setAddedId] = useState<string | null>(null);
   const [heroIndex, setHeroIndex] = useState(0);
   const [liveRating, setLiveRating] = useState<{ avg: number; count: number }>({ avg: 4.9, count: 500 });
@@ -291,8 +291,11 @@ export const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {bestsellers.map(product => {
+            const defaultWeight = product.weightOptions[0].label;
             const lowestPrice = Math.round(product.basePrice * product.weightOptions[0].multiplier);
-            const isAdded = addedId === product.id;
+            const cartItemId = `${product.id}-${defaultWeight}`;
+            const cartItem = cart.find(item => item.cartItemId === cartItemId);
+            const quantity = cartItem ? cartItem.quantity : 0;
             return (
               <div
                 key={product.id}
@@ -322,16 +325,34 @@ export const HomePage: React.FC = () => {
                       <p className="text-[10px] text-slate-400 font-medium">From ({product.weightOptions[0].label})</p>
                       <p className="text-base font-black text-slate-900">₹{lowestPrice}</p>
                     </div>
-                    <button
-                      onClick={() => handleAdd(product)}
-                      className={`flex items-center gap-1.5 text-[11px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 active:scale-95 ${
-                        isAdded
-                          ? 'bg-green-500 text-white shadow-sm'
-                          : 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm'
-                      }`}
-                    >
-                      {isAdded ? <><CheckCircle className="w-3 h-3" /> Added</> : <><ShoppingBag className="w-3 h-3" /> Add</>}
-                    </button>
+                    {quantity === 0 ? (
+                      <button
+                        onClick={() => addToCart(product, defaultWeight)}
+                        className="flex items-center gap-1.5 text-[11px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 active:scale-95 bg-orange-500 text-white hover:bg-orange-600 shadow-sm"
+                      >
+                        <ShoppingBag className="w-3 h-3" /> Add
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1 bg-orange-50 border border-orange-300 rounded-xl p-0.5 shadow-sm">
+                        <button
+                          onClick={() => updateQuantity(cartItemId, quantity - 1)}
+                          className="w-6 h-6 rounded-lg bg-white shadow-xs flex items-center justify-center text-slate-700 hover:bg-orange-100 hover:text-orange-600 font-black text-xs transition-all active:scale-90"
+                          title="Decrease"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-5 text-center font-black text-xs text-slate-900">
+                          {quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(cartItemId, quantity + 1)}
+                          className="w-6 h-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white shadow-xs flex items-center justify-center font-black text-xs transition-all active:scale-90"
+                          title="Add +1"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

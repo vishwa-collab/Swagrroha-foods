@@ -62,10 +62,10 @@ export const CartPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         
         {/* Left Column: Selected Cart Items */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="md:col-span-7 space-y-4">
           
           <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
             <h2 className="font-extrabold text-slate-900 text-lg border-b border-slate-100 pb-3 flex items-center justify-between">
@@ -159,7 +159,7 @@ export const CartPage: React.FC = () => {
         </div>
 
         {/* Right Column: Area Selection & Order Summary */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="md:col-span-5 space-y-6">
           
           <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-6">
             
@@ -245,6 +245,23 @@ export const CartPage: React.FC = () => {
 
         </div>
 
+      </div>
+
+      {/* Mobile Sticky Checkout Bar */}
+      <div className="md:hidden fixed bottom-16 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl z-40">
+        <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase">Grand Total</p>
+            <p className="text-xl font-black text-brand-600">₹{grandTotal}</p>
+          </div>
+          <button
+            onClick={() => setActiveTab('checkout')}
+            className="flex-1 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-black py-3 px-5 rounded-xl shadow-md text-sm active:scale-95"
+          >
+            <span>Proceed to Checkout</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
     </div>

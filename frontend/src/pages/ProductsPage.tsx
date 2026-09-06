@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { PRODUCTS } from '../data/products';
 import { useCart } from '../context/CartContext';
-import { ShoppingBag, Search, ShieldCheck, Zap, Sparkles, Package } from 'lucide-react';
+import { ShoppingBag, Search, ShieldCheck, Zap, Sparkles, Package, Plus, Minus } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Snacks', 'Sweets', 'Pickles'] as const;
 type Category = typeof CATEGORIES[number];
 
 export const ProductsPage: React.FC = () => {
-  const { addToCart } = useCart();
+  const { cart, addToCart, updateQuantity } = useCart();
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
@@ -129,7 +129,9 @@ export const ProductsPage: React.FC = () => {
             const currentWeightLabel = selectedWeights[product.id] || product.weightOptions[0].label;
             const currentWeightOpt = product.weightOptions.find(w => w.label === currentWeightLabel) || product.weightOptions[0];
             const calculatedPrice = Math.round(product.basePrice * currentWeightOpt.multiplier);
-            const isAdded = addedItems[product.id];
+            const cartItemId = `${product.id}-${currentWeightLabel}`;
+            const cartItem = cart.find(item => item.cartItemId === cartItemId);
+            const quantity = cartItem ? cartItem.quantity : 0;
 
             return (
               <div key={product.id} className="group bg-white rounded-3xl overflow-hidden card-product flex flex-col border border-slate-100">
@@ -202,23 +204,35 @@ export const ProductsPage: React.FC = () => {
                       <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">For {currentWeightLabel}</p>
                       <p className="text-2xl font-black text-slate-900 leading-none mt-0.5">₹{calculatedPrice}</p>
                     </div>
-                    <button
-                      onClick={() => handleAddToCart(product, currentWeightLabel)}
-                      className={`flex items-center gap-2 font-black text-xs px-5 py-3 rounded-2xl transition-all duration-300 active:scale-95 shadow-md ${
-                        isAdded
-                          ? 'bg-emerald-500 text-white shadow-emerald'
-                          : 'btn-primary text-white'
-                      }`}
-                    >
-                      {isAdded ? (
-                        <>✓ Added!</>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                          Add to Cart
-                        </>
-                      )}
-                    </button>
+                    {quantity === 0 ? (
+                      <button
+                        onClick={() => addToCart(product, currentWeightLabel)}
+                        className="flex items-center gap-2 font-black text-xs px-5 py-3 rounded-2xl transition-all duration-300 active:scale-95 shadow-md btn-primary text-white"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        Add to Cart
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-amber-50 border-2 border-brand-500 rounded-2xl p-1 shadow-sm">
+                        <button
+                          onClick={() => updateQuantity(cartItemId, quantity - 1)}
+                          className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-700 hover:bg-orange-100 hover:text-orange-600 font-black text-sm transition-all active:scale-90"
+                          title="Decrease quantity"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="w-6 text-center font-black text-sm text-slate-900">
+                          {quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(cartItemId, quantity + 1)}
+                          className="w-8 h-8 rounded-xl bg-brand-500 hover:bg-brand-600 text-white shadow-sm flex items-center justify-center font-black text-sm transition-all active:scale-90"
+                          title="Add +1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

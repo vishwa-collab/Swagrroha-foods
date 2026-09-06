@@ -101,25 +101,29 @@ export const Navbar: React.FC = () => {
 
       {/* Floating Bottom Quick Cart Bar (Shown when cart has items and user is browsing home or products menu) */}
       {totalItemsCount > 0 && (activeTab === 'home' || activeTab === 'products') && (
-        <div className="fixed bottom-20 md:bottom-6 left-4 right-4 max-w-md mx-auto z-40 animate-fade-up">
-          <button
-            onClick={() => setActiveTab('cart')}
-            className="w-full bg-slate-900/95 hover:bg-slate-900 active:scale-98 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center justify-between font-bold transition-all group"
-          >
+        <div className="fixed bottom-20 md:bottom-6 left-4 right-4 max-w-xl mx-auto z-40 animate-fade-up">
+          <div className="w-full bg-slate-900/95 text-white p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center justify-between font-bold">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-white font-black text-xs shadow-md">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white font-black text-sm shadow-md">
                 {totalItemsCount}
               </div>
-              <div className="text-left">
-                <p className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">{totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'} in Cart</p>
-                <p className="text-sm font-black text-white leading-none mt-0.5">₹{subtotal}</p>
+              <div>
+                <p className="text-[10px] sm:text-xs text-amber-300 font-bold uppercase tracking-wider">
+                  {totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'} in Cart
+                </p>
+                <p className="text-base sm:text-lg font-black text-white leading-none mt-0.5">
+                  ₹{subtotal}
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-brand-500 group-hover:bg-brand-600 text-white text-xs font-black px-4 py-2 rounded-xl transition-colors shadow-sm">
-              <span>View Cart</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </button>
+            <button
+              onClick={() => setActiveTab('cart')}
+              className="flex items-center gap-2 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-600 hover:to-orange-600 text-white text-xs sm:text-sm font-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all shadow-md active:scale-95 group"
+            >
+              <span>View Cart & Checkout</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </div>
       )}
 
