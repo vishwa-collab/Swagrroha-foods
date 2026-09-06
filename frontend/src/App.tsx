@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CartProvider, useCart } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -15,13 +15,19 @@ import { CheckCircle } from 'lucide-react';
 const MainAppContent: React.FC = () => {
   const { activeTab, toastMessage } = useCart();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5]">
       {/* Navbar */}
       <Navbar />
 
       {/* Main View Switcher */}
-      <main className="flex-grow">
+      <main className="flex-grow pb-16 md:pb-0">
         {activeTab === 'home' && <HomePage />}
         {activeTab === 'products' && <ProductsPage />}
         {activeTab === 'cart' && <CartPage />}

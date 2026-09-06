@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
@@ -111,7 +111,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return found || DELIVERY_AREAS[4]; // Default LB Nagar
   });
 
-  const [activeTab, setActiveTab] = useState<'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin'>(() => {
+  const [activeTab, setActiveTabState] = useState<'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
@@ -121,6 +121,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return 'home';
   });
+
+  const setActiveTab = useCallback((tab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin') => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, []);
 
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>(() => {
     const saved = localStorage.getItem('swagrooha_customer');
