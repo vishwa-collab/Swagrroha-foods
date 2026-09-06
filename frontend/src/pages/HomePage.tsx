@@ -198,7 +198,7 @@ export const HomePage: React.FC = () => {
               tag: 'Most Popular',
               tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
               img: IMAGES.murukulu,
-              price: 'from ₹88',
+              price: 'from ₹175 (500g)',
               items: '7 varieties',
             },
             {
@@ -207,7 +207,7 @@ export const HomePage: React.FC = () => {
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
               img: IMAGES.gujiya,
-              price: 'from ₹95',
+              price: 'from ₹190 (500g)',
               items: '3 varieties',
             },
             {
@@ -216,7 +216,7 @@ export const HomePage: React.FC = () => {
               tag: 'Non-Veg',
               tagColor: 'bg-red-100 text-red-700 border-red-200',
               img: IMAGES.chickenPickle,
-              price: 'from ₹400',
+              price: 'from ₹400 (250g)',
               items: '2 varieties',
             },
           ].map(cat => (
@@ -319,7 +319,7 @@ export const HomePage: React.FC = () => {
                   )}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
                     <div>
-                      <p className="text-[10px] text-slate-400 font-medium">From</p>
+                      <p className="text-[10px] text-slate-400 font-medium">From ({product.weightOptions[0].label})</p>
                       <p className="text-base font-black text-slate-900">₹{lowestPrice}</p>
                     </div>
                     <button
