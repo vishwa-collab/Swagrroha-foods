@@ -11,7 +11,9 @@ import {
   Zap, 
   Lock,
   CheckCircle2,
-  Download
+  Download,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
@@ -37,6 +39,7 @@ export const PaymentPage: React.FC = () => {
 
   // Tracks whether user has tapped a payment button — reveals Step 2
   const [hasTappedPayment, setHasTappedPayment] = useState(false);
+  const [copiedNumber, setCopiedNumber] = useState(false);
 
   // Direct Individual UPI & Contact Info
   const upiId = '8125154114@ybl';
@@ -53,15 +56,7 @@ export const PaymentPage: React.FC = () => {
 
   const upiNumber = '8125154114';
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        return;
-      }
-    } catch {
-      // Fallback if clipboard API throws permission error
-    }
+  const copyToClipboard = (text: string) => {
     try {
       const el = document.createElement('textarea');
       el.value = text;
@@ -73,34 +68,66 @@ export const PaymentPage: React.FC = () => {
       document.execCommand('copy');
       document.body.removeChild(el);
     } catch (e) {
-      console.warn('Clipboard copy error:', e);
+      console.warn('execCommand copy error:', e);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(() => {});
     }
   };
 
-  const openApp = async (app: 'phonepe' | 'gpay' | 'paytm') => {
+  const openApp = (app: 'phonepe' | 'gpay' | 'paytm' | 'any') => {
     setHasTappedPayment(true);
-    await copyToClipboard(upiNumber);
+    copyToClipboard(upiNumber);
 
-    const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : 'Paytm';
-    showToast(`Copied ${upiNumber}! In ${appName}, tap "To Mobile Number" & paste to pay ₹${grandTotal}.`);
-
+    const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : app === 'paytm' ? 'Paytm' : 'UPI App';
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    let url = '';
+    if (!isMobile) {
+      showToast(`Copied ${upiNumber}! Scan the QR code with ${appName} on your phone to pay ₹${grandTotal}.`);
+      return;
+    }
+
+    showToast(`Opening ${appName}... Amount: ₹${grandTotal}`);
+
+    if (app === 'any') {
+      window.location.href = rawUpiUri;
+      return;
+    }
+
+    if (isIOS) {
+      if (app === 'phonepe') {
+        window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
+        setTimeout(() => { window.location.href = 'phonepe://'; }, 600);
+      } else if (app === 'gpay') {
+        window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
+        setTimeout(() => { window.location.href = 'gpay://'; }, 600);
+      } else if (app === 'paytm') {
+        window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
+        setTimeout(() => { window.location.href = 'paytmmp://'; }, 600);
+      }
+      return;
+    }
+
+    // Android: Use UPI Intent targeted to the specific app package
+    let intentUrl = '';
+    let launcherUrl = '';
+
     if (app === 'phonepe') {
-      url = isIOS ? 'phonepe://' : 'intent://#Intent;scheme=phonepe;package=com.phonepe.app;end';
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=com.phonepe.app;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.phonepe.app;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.phonepe.app;end`;
     } else if (app === 'gpay') {
-      url = isIOS ? 'gpay://' : 'intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end';
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.google.android.apps.nbu.paisa.user;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.nbu.paisa.user;end`;
     } else if (app === 'paytm') {
-      url = isIOS ? 'paytmmp://' : 'intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end';
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=net.one97.paytm;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dnet.one97.paytm;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=net.one97.paytm;end`;
     }
 
     try {
-      window.location.href = url;
+      window.location.href = intentUrl;
     } catch {
-      if (app === 'phonepe') window.location.href = 'phonepe://';
-      else if (app === 'gpay') window.location.href = 'gpay://';
-      else if (app === 'paytm') window.location.href = 'paytmmp://';
+      window.location.href = launcherUrl;
     }
   };
 
@@ -257,10 +284,20 @@ export const PaymentPage: React.FC = () => {
             </p>
           </div>
 
+          {/* ── PAY VIA ANY UPI APP (Universal Intent) ── */}
+          <button
+            type="button"
+            onClick={() => openApp('any')}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-purple-500/20 transition-all"
+          >
+            <Zap className="w-4 h-4 fill-white" />
+            <span>Pay ₹{grandTotal} via Any UPI App</span>
+          </button>
+
           {/* ── 3 APP LAUNCH BUTTONS ── */}
-          <div className="pt-2">
+          <div className="pt-1">
             <span className="text-[11px] text-slate-600 font-bold block mb-2 text-center">
-              Or tap below to open app for 8125154114:
+              Or open directly in:
             </span>
             <div className="grid grid-cols-3 gap-2">
               {/* PhonePe */}
@@ -294,10 +331,32 @@ export const PaymentPage: React.FC = () => {
               </button>
             </div>
 
+            {/* Quick Copy Number Box */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-left mt-2.5">
+              <div>
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">UPI / Mobile Number</span>
+                <span className="text-xs font-black font-mono text-slate-800">{upiNumber} ({payeeName})</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  copyToClipboard(upiNumber);
+                  setCopiedNumber(true);
+                  setHasTappedPayment(true);
+                  showToast(`Copied ${upiNumber} to clipboard!`);
+                  setTimeout(() => setCopiedNumber(false), 3000);
+                }}
+                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
+              >
+                {copiedNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedNumber ? 'Copied!' : 'Copy'}</span>
+              </button>
+            </div>
+
             {/* Helpful tip for chat screen */}
             <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-2.5 text-left space-y-1 mt-2.5">
               <p className="text-[11px] text-purple-900 font-semibold leading-relaxed">
-                💡 <span className="font-black">To open chat:</span> Tapping copies <span className="font-black font-mono">8125154114</span>. Inside app, tap <span className="font-black">"To Mobile Number"</span> → Paste → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
+                💡 <span className="font-black">Manual pay:</span> Tapping copies <span className="font-black font-mono">8125154114</span>. Inside app, tap <span className="font-black">"To Mobile Number"</span> → Paste → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
               </p>
             </div>
           </div>
