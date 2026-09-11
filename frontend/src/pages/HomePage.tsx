@@ -210,15 +210,6 @@ export const HomePage: React.FC = () => {
               price: '₹160 (5 Pcs Pootharekulu)',
               items: '5 varieties',
             },
-            {
-              label: 'Pickles',
-              sub: 'Chicken & Mutton Pickle',
-              tag: 'Non-Veg',
-              tagColor: 'bg-red-100 text-red-700 border-red-200',
-              img: IMAGES.chickenPickle,
-              price: 'from ₹400 (250g)',
-              items: '2 varieties',
-            },
           ].map(cat => (
             <button
               key={cat.label}
