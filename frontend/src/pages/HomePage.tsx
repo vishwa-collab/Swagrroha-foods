@@ -203,11 +203,11 @@ export const HomePage: React.FC = () => {
             },
             {
               label: 'Sweets',
-              sub: 'Pootharekulu, Laddu, Ariselu & More',
+              sub: 'Pootharekulu, Palli Laddu, Laddu & More',
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
               img: IMAGES.potharekkalu,
-              price: 'from ₹95 (250g)',
+              price: '₹160 (5 Pcs Pootharekulu)',
               items: '5 varieties',
             },
             {
