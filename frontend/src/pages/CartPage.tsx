@@ -23,6 +23,8 @@ export const CartPage: React.FC = () => {
     setSelectedAreaById, 
     subtotal, 
     deliveryCharge, 
+    originalDeliveryCharge,
+    isFreeDelivery,
     grandTotal,
     setActiveTab,
     deliveryDateInfo
@@ -175,26 +177,26 @@ export const CartPage: React.FC = () => {
                 onChange={(e) => setSelectedAreaById(e.target.value)}
                 className="w-full p-3.5 rounded-2xl border-2 border-brand-500 bg-brand-50/40 text-slate-900 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm cursor-pointer"
               >
-                <optgroup label="Near Areas (₹30 Delivery)">
+                <optgroup label="Near Zone (₹20 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Near').map(area => (
                     <option key={area.id} value={area.id}>
-                      📍 {area.name} — Near (₹30 Delivery)
+                      📍 {area.name} — Near Zone (₹{area.charge} Delivery)
                     </option>
                   ))}
                 </optgroup>
 
-                <optgroup label="Medium Areas (₹40–₹60 Delivery)">
+                <optgroup label="Medium Zone (₹30 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Medium').map(area => (
                     <option key={area.id} value={area.id}>
-                      📍 {area.name} — Medium (₹{area.charge} Delivery)
+                      📍 {area.name} — Medium Zone (₹{area.charge} Delivery)
                     </option>
                   ))}
                 </optgroup>
 
-                <optgroup label="Far Areas (₹70–₹80 Delivery)">
+                <optgroup label="Far Zone (₹50 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Far').map(area => (
                     <option key={area.id} value={area.id}>
-                      📍 {area.name} — Far (₹{area.charge} Delivery)
+                      📍 {area.name} — Far Zone (₹{area.charge} Delivery)
                     </option>
                   ))}
                 </optgroup>
@@ -205,6 +207,27 @@ export const CartPage: React.FC = () => {
                 <span className="font-bold text-brand-600">{selectedArea.tier} Route Zone</span>
               </div>
             </div>
+
+            {/* Free Delivery Banner / Progress */}
+            {isFreeDelivery ? (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 flex items-center gap-2.5 text-xs font-bold shadow-sm">
+                <span className="text-base">🎉</span>
+                <span>You unlocked <strong>FREE Delivery</strong> on this order!</span>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3 space-y-1.5 text-xs font-semibold">
+                <div className="flex items-center justify-between">
+                  <span>Add <strong>₹{500 - subtotal}</strong> more for <strong>FREE Delivery</strong></span>
+                  <span className="text-[10px] font-extrabold text-amber-700">{Math.round((subtotal / 500) * 100)}%</span>
+                </div>
+                <div className="w-full bg-amber-200/60 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-brand-500 h-full rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min(100, (subtotal / 500) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Price Breakdown */}
             <div className="space-y-3 pt-3 border-t border-slate-100">
@@ -220,7 +243,14 @@ export const CartPage: React.FC = () => {
                   <Truck className="w-3.5 h-3.5 text-brand-500" />
                   Delivery Charge ({selectedArea.name})
                 </span>
-                <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+                {isFreeDelivery ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="line-through text-slate-400">₹{originalDeliveryCharge}</span>
+                    <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE</span>
+                  </div>
+                ) : (
+                  <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+                )}
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">

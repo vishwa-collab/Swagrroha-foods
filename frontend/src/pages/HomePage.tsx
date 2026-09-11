@@ -198,7 +198,7 @@ export const HomePage: React.FC = () => {
               tag: 'Most Popular',
               tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
               img: IMAGES.murukulu,
-              price: 'from ₹175 (500g)',
+              price: 'from ₹88 (250g)',
               items: '7 varieties',
             },
             {
@@ -207,7 +207,7 @@ export const HomePage: React.FC = () => {
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
               img: IMAGES.gujiya,
-              price: 'from ₹190 (500g)',
+              price: 'from ₹95 (250g)',
               items: '3 varieties',
             },
             {

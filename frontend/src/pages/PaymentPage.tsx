@@ -163,7 +163,7 @@ export const PaymentPage: React.FC = () => {
       `*Delivery Address:* ${customerDetails.address}\n\n` +
       `📦 *Order Items:*\n${itemsText}\n\n` +
       `💵 *Subtotal:* ₹${subtotal}\n` +
-      `🚚 *Delivery Charge:* ₹${deliveryCharge}\n` +
+      `🚚 *Delivery Charge:* ${deliveryCharge === 0 ? 'FREE (₹500+ Order Discount) 🎉' : `₹${deliveryCharge}`}\n` +
       `💰 *Total Amount:* ₹${grandTotal}\n` +
       `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
       `💳 *Payment:* Direct UPI — Customer Confirmed ✅\n\n` +

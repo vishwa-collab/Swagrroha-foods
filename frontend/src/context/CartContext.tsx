@@ -59,6 +59,8 @@ interface CartContextType {
   
   subtotal: number;
   deliveryCharge: number;
+  originalDeliveryCharge: number;
+  isFreeDelivery: boolean;
   grandTotal: number;
   
   activeTab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin';
@@ -600,7 +602,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-  const deliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
+  const isFreeDelivery = subtotal >= 500;
+  const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
+  const deliveryCharge = cart.length > 0 ? (isFreeDelivery ? 0 : selectedArea.charge) : 0;
   const grandTotal = subtotal + deliveryCharge;
 
   return (
@@ -614,6 +618,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSelectedAreaById,
       subtotal,
       deliveryCharge,
+      originalDeliveryCharge,
+      isFreeDelivery,
       grandTotal,
       activeTab,
       setActiveTab,

@@ -188,7 +188,7 @@ export const ConfirmationPage: React.FC = () => {
 
     sumY += 6;
     doc.text(`Delivery Charge (${currentOrder.area.name}):`, summaryX + 4, sumY);
-    doc.text(`Rs. ${currentOrder.deliveryCharge}`, summaryX + summaryW - 4, sumY, { align: 'right' });
+    doc.text(currentOrder.deliveryCharge === 0 ? 'FREE (Discount)' : `Rs. ${currentOrder.deliveryCharge}`, summaryX + summaryW - 4, sumY, { align: 'right' });
 
     sumY += 4;
     doc.setDrawColor(203, 213, 225);
@@ -365,7 +365,11 @@ export const ConfirmationPage: React.FC = () => {
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Delivery Charge ({currentOrder.area.name})</span>
-            <span className="font-bold text-slate-900">₹{currentOrder.deliveryCharge}</span>
+            {currentOrder.deliveryCharge === 0 ? (
+              <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE (₹500+ Discount)</span>
+            ) : (
+              <span className="font-bold text-slate-900">₹{currentOrder.deliveryCharge}</span>
+            )}
           </div>
           <div className="flex justify-between text-slate-900 font-black text-lg pt-2 border-t border-slate-200">
             <span>Total Amount Paid</span>

@@ -20,10 +20,9 @@ export interface Product {
   isNew?: boolean;
 }
 
-// Snacks & Sweets: minimum order 500g (no 250g option)
-// Pickles: start from 250g (unchanged)
-
+// Weight options for all product categories
 const SNACK_WEIGHTS: WeightOption[] = [
+  { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
   { label: '1 kg',  multiplier: 1.0 },
   { label: '2 kg',  multiplier: 2.0 },
@@ -33,6 +32,7 @@ const SNACK_WEIGHTS: WeightOption[] = [
 ];
 
 const SWEET_WEIGHTS: WeightOption[] = [
+  { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
   { label: '1 kg',  multiplier: 1.0 },
   { label: '2 kg',  multiplier: 2.0 },
@@ -42,7 +42,7 @@ const SWEET_WEIGHTS: WeightOption[] = [
 ];
 
 export const PRODUCTS: Product[] = [
-  // --- SNACKS (₹350 / kg) — starts from 500g ---
+  // --- SNACKS (₹350 / kg) ---
   {
     id: 'murukulu',
     name: 'Classic Murukulu (Jantikalu)',
@@ -125,7 +125,7 @@ export const PRODUCTS: Product[] = [
     weightOptions: SNACK_WEIGHTS,
   },
 
-  // --- SWEETS (₹380 / kg) — starts from 500g ---
+  // --- SWEETS (₹380 / kg) ---
   {
     id: 'gujiya',
     name: 'Sweet Gujiya (Kajjikayalu)',

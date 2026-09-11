@@ -23,6 +23,8 @@ export const CheckoutPage: React.FC = () => {
     setSelectedAreaById, 
     subtotal, 
     deliveryCharge, 
+    originalDeliveryCharge,
+    isFreeDelivery,
     grandTotal, 
     setActiveTab, 
     customerDetails, 
@@ -190,7 +192,7 @@ export const CheckoutPage: React.FC = () => {
                 >
                   {DELIVERY_AREAS.map(area => (
                     <option key={area.id} value={area.id}>
-                      {area.name} (Delivery ₹{area.charge})
+                      {area.name} — {area.tier} Zone (₹{area.charge} Delivery)
                     </option>
                   ))}
                 </select>
@@ -311,7 +313,14 @@ export const CheckoutPage: React.FC = () => {
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Delivery Charge ({selectedArea.name})</span>
-              <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+              {isFreeDelivery ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="line-through text-slate-400">₹{originalDeliveryCharge}</span>
+                  <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE (₹500+ order)</span>
+                </div>
+              ) : (
+                <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+              )}
             </div>
             <div className="pt-2 border-t border-slate-100 flex justify-between font-black text-sm text-slate-900">
               <span>Final Total</span>
