@@ -162,6 +162,36 @@ export const PRODUCTS: Product[] = [
     weightOptions: SWEET_WEIGHTS,
     isPopular: true,
   },
+  {
+    id: 'palli-laddu',
+    name: 'Crispy Jaggery Palli Laddu',
+    teluguName: 'పల్లీ లడ్డు',
+    category: 'Sweets',
+    basePrice: 380,
+    priceUnitText: '₹380 / kg',
+    description: 'Crunchy roasted peanuts bound with pure organic jaggery syrup and cardamom, high-protein traditional sweet.',
+    image: IMAGES.palliladdu,
+    weightOptions: SWEET_WEIGHTS,
+    isPopular: true,
+  },
+  {
+    id: 'pootharekulu',
+    name: 'Traditional Pootharekulu (Potharekkallu)',
+    teluguName: 'పూతరేకులు',
+    category: 'Sweets',
+    basePrice: 160,
+    priceUnitText: '₹160 (5 Pcs)',
+    description: 'Delicate paper-thin rice starch sheets layered with pure ghee, powdered jaggery, and crushed dry fruits.',
+    image: IMAGES.potharekkalu,
+    weightOptions: [
+      { label: '5 Pcs', multiplier: 1.0 },
+      { label: '10 Pcs', multiplier: 2.0 },
+      { label: '15 Pcs', multiplier: 3.0 },
+      { label: '20 Pcs', multiplier: 4.0 },
+    ],
+    isPopular: true,
+    isBestseller: true,
+  },
 
   // --- PICKLES (Chicken ₹400/250g, Mutton ₹600/250g) — unchanged, starts from 250g ---
   {

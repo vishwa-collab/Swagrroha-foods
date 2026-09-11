@@ -12,6 +12,8 @@ import pachikaram from '../../assets/pachikaram Karppapulu hot item.jpg';
 import gujiya from '../../assets/gujiya sweet item.png';
 import harshallu from '../../assets/harshallu sweet item.png';
 import laddu from '../../assets/laddu sweet item.png';
+import palliladdu from '../../assets/palliladdu sweets.png';
+import potharekkalu from '../../assets/potharekkalu sweets.png';
 import chickenPickle from '../../assets/Chicken Pickle.png';
 import muttonPickle from '../../assets/Mutton Pickle.jpeg';
 import qrCode from '../../assets/QR code.jpeg';
@@ -28,6 +30,8 @@ export const IMAGES = {
   gujiya,
   harshallu,
   laddu,
+  palliladdu,
+  potharekkalu,
   chickenPickle,
   muttonPickle,
   qrCode,

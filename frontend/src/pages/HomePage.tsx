@@ -203,12 +203,12 @@ export const HomePage: React.FC = () => {
             },
             {
               label: 'Sweets',
-              sub: 'Gujiya, Ariselu & Laddu',
+              sub: 'Pootharekulu, Laddu, Ariselu & More',
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
-              img: IMAGES.gujiya,
+              img: IMAGES.potharekkalu,
               price: 'from ₹95 (250g)',
-              items: '3 varieties',
+              items: '5 varieties',
             },
             {
               label: 'Pickles',
