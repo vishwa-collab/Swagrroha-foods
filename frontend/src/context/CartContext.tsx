@@ -96,7 +96,9 @@ interface CartContextType {
   fetchOrderForTracking: (query: string) => Promise<PlacedOrder | null>;
 
   toastMessage: string | null;
-  showToast: (msg: string) => void;
+  isCartToast: boolean;
+  showToast: (msg: string, isCartAction?: boolean) => void;
+  clearToast: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -159,6 +161,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [trackedOrder, setTrackedOrder] = useState<PlacedOrder | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isCartToast, setIsCartToast] = useState<boolean>(false);
 
   // Owner Auth State
   const [adminToken, setAdminToken] = useState<string | null>(() => localStorage.getItem('swagrooha_admin_token'));
@@ -195,11 +198,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, isCartAction: boolean = false) => {
     setToastMessage(msg);
+    setIsCartToast(isCartAction);
     setTimeout(() => {
       setToastMessage(prev => (prev === msg ? null : prev));
-    }, 2800);
+    }, 3800);
+  };
+
+  const clearToast = () => {
+    setToastMessage(null);
+    setIsCartToast(false);
   };
 
   const setSelectedAreaById = (areaId: string) => {
@@ -232,7 +241,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    showToast(`Added ${product.name} (${weightLabel}) to cart!`);
+    showToast('Item added to cart', true);
   };
 
   const removeFromCart = (cartItemId: string) => {
@@ -643,7 +652,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       trackedOrder,
       fetchOrderForTracking,
       toastMessage,
+      isCartToast,
       showToast,
+      clearToast,
     }}>
       {children}
     </CartContext.Provider>

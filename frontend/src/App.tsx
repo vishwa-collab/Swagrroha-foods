@@ -10,10 +10,10 @@ import { PaymentPage } from './pages/PaymentPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { TrackingPage } from './pages/TrackingPage';
 import { AdminDashboard } from './pages/AdminDashboard';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle2, ChevronRight } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, toastMessage } = useCart();
+  const { activeTab, setActiveTab, toastMessage, isCartToast, clearToast } = useCart();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -38,11 +38,39 @@ const MainAppContent: React.FC = () => {
         {activeTab === 'admin' && <AdminDashboard />}
       </main>
 
-      {/* Toast Popup Notification */}
+      {/* Flipkart-Style Item Added To Cart Popup */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2.5 bg-slate-900 text-white font-bold text-sm px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700/60 toast-enter">
-          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-[150] flex items-center justify-between gap-5 bg-[#212121] text-white text-xs sm:text-sm font-medium px-4 sm:px-5 py-3 rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-white/10 min-w-[300px] sm:min-w-[360px] max-w-[92vw] flipkart-toast"
+        >
+          <div className="flex items-center gap-2.5 truncate">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="text-slate-100 font-medium truncate">
+              {toastMessage}
+            </span>
+          </div>
+
+          {(isCartToast || toastMessage.toLowerCase().includes('cart') || toastMessage.toLowerCase().includes('added')) ? (
+            <button
+              onClick={() => {
+                setActiveTab('cart');
+                clearToast();
+              }}
+              className="text-[#ff9f00] hover:text-[#ffa726] font-black tracking-wider text-xs sm:text-sm uppercase whitespace-nowrap active:scale-95 transition-all flex items-center gap-0.5 cursor-pointer pl-2"
+            >
+              <span>GO TO CART</span>
+              <ChevronRight className="w-4 h-4 text-[#ff9f00]" />
+            </button>
+          ) : (
+            <button
+              onClick={clearToast}
+              className="text-slate-400 hover:text-white text-xs font-bold px-1"
+            >
+              ✕
+            </button>
+          )}
         </div>
       )}
 
