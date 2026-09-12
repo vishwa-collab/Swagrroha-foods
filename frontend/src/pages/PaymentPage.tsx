@@ -40,22 +40,21 @@ export const PaymentPage: React.FC = () => {
   // Tracks whether user has tapped a payment button — reveals Step 2
   const [hasTappedPayment, setHasTappedPayment] = useState(false);
   const [copiedNumber, setCopiedNumber] = useState(false);
-  const [copiedUpi, setCopiedUpi] = useState(false);
 
-  // Business Merchant UPI & Contact Info
-  const upiId = 'Q27340885@ybl';
-  const payeeName = 'pjrswagrooha foods';
-  const registeredBusinessName = 'Sri Saraswathi Medical';
-  const upiNumber = '9247467111';
+  // Direct Individual UPI & Contact Info
+  const upiId = '8125154114@ybl';
+  const payeeName = 'Ganji Vishwateja';
 
   // Unique Order ID
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
 
-  // Dynamic Live UPI URI with pre-filled exact order amount & order reference note
-  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
+  // Dynamic Live UPI URI with pre-filled exact order amount
+  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
   
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
+
+  const upiNumber = '8125154114';
 
   const copyToClipboard = (text: string) => {
     try {
@@ -78,18 +77,18 @@ export const PaymentPage: React.FC = () => {
 
   const openApp = (app: 'phonepe' | 'gpay' | 'paytm' | 'any') => {
     setHasTappedPayment(true);
-    copyToClipboard(upiId);
+    copyToClipboard(upiNumber);
 
     const appName = app === 'phonepe' ? 'PhonePe' : app === 'gpay' ? 'Google Pay' : app === 'paytm' ? 'Paytm' : 'UPI App';
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (!isMobile) {
-      showToast(`Copied Merchant UPI ID (${upiId})! Scan QR with ${appName} to pay ₹${grandTotal}.`);
+      showToast(`Copied ${upiNumber}! Scan the QR code with ${appName} on your phone to pay ₹${grandTotal}.`);
       return;
     }
 
-    showToast(`Opening ${appName}... Amount: ₹${grandTotal} pre-filled`);
+    showToast(`Opening ${appName}... Amount: ₹${grandTotal}`);
 
     if (app === 'any') {
       window.location.href = rawUpiUri;
@@ -98,44 +97,37 @@ export const PaymentPage: React.FC = () => {
 
     if (isIOS) {
       if (app === 'phonepe') {
-        window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
+        window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
         setTimeout(() => { window.location.href = 'phonepe://'; }, 600);
       } else if (app === 'gpay') {
-        window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
+        window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
         setTimeout(() => { window.location.href = 'gpay://'; }, 600);
       } else if (app === 'paytm') {
-        window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
+        window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
         setTimeout(() => { window.location.href = 'paytmmp://'; }, 600);
       }
       return;
     }
 
-    // Android: Use standard direct URI or dedicated Intent with fallback
+    // Android: Use UPI Intent targeted to the specific app package
+    let intentUrl = '';
+    let launcherUrl = '';
+
     if (app === 'phonepe') {
-      const phonePeUri = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
-      const phonePeIntent = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}#Intent;scheme=upi;package=com.phonepe.app;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.phonepe.app;end`;
-      try {
-        window.location.href = phonePeUri;
-        setTimeout(() => { window.location.href = phonePeIntent; }, 500);
-      } catch {
-        window.location.href = rawUpiUri;
-      }
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=com.phonepe.app;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.phonepe.app;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.phonepe.app;end`;
     } else if (app === 'gpay') {
-      const gpayUri = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
-      try {
-        window.location.href = gpayUri;
-        setTimeout(() => { window.location.href = rawUpiUri; }, 600);
-      } catch {
-        window.location.href = rawUpiUri;
-      }
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.google.android.apps.nbu.paisa.user;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.nbu.paisa.user;end`;
     } else if (app === 'paytm') {
-      const paytmUri = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
-      try {
-        window.location.href = paytmUri;
-        setTimeout(() => { window.location.href = rawUpiUri; }, 600);
-      } catch {
-        window.location.href = rawUpiUri;
-      }
+      intentUrl = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=net.one97.paytm;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dnet.one97.paytm;end`;
+      launcherUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=net.one97.paytm;end`;
+    }
+
+    try {
+      window.location.href = intentUrl;
+    } catch {
+      window.location.href = launcherUrl;
     }
   };
 
@@ -161,30 +153,23 @@ export const PaymentPage: React.FC = () => {
     };
 
     const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
-    const waReceiptText =
-      `🧾 *OFFICIAL PAYMENT & ORDER RECEIPT*\n` +
-      `*PJR Swagruha Foods*\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    const waText =
+      `🚀 *New Order Received — PJR Swagruha Foods*\n\n` +
       `*Order ID:* ${orderId}\n` +
-      `*Payment Status:* PAID VIA UPI ✅\n` +
-      `*Payment Account:* ${upiId} (${registeredBusinessName})\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `👤 *Customer Information:*\n` +
-      `• Name: ${customerDetails.name}\n` +
-      `• Phone: ${customerDetails.phone}\n` +
-      `• Email: ${customerDetails.email || 'N/A'}\n` +
-      `• Delivery Area: ${selectedArea.name}\n` +
-      `• Address: ${customerDetails.address}\n\n` +
-      `📦 *Items Ordered:*\n${itemsText}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `💵 Items Subtotal: ₹${subtotal}\n` +
-      `🚚 Delivery Charge: ${deliveryCharge === 0 ? 'FREE (₹500+ Discount) 🎉' : `₹${deliveryCharge}`}\n` +
-      `💰 *Total Amount Paid:* ₹${grandTotal} (PAID ✅)\n` +
-      `📅 *Scheduled Delivery:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `_Official Receipt dispatched to owner WhatsApp: +91 8125154114_`;
+      `*Customer Name:* ${customerDetails.name}\n` +
+      `*Phone Number:* ${customerDetails.phone}\n` +
+      `*Email:* ${customerDetails.email || 'N/A'}\n` +
+      `*Delivery Area:* ${selectedArea.name}\n` +
+      `*Delivery Address:* ${customerDetails.address}\n\n` +
+      `📦 *Order Items:*\n${itemsText}\n\n` +
+      `💵 *Subtotal:* ₹${subtotal}\n` +
+      `🚚 *Delivery Charge:* ${deliveryCharge === 0 ? 'FREE (₹500+ Order Discount) 🎉' : `₹${deliveryCharge}`}\n` +
+      `💰 *Total Amount:* ₹${grandTotal}\n` +
+      `📅 *Delivery Day:* ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\n` +
+      `💳 *Payment:* Direct UPI — Customer Confirmed ✅\n\n` +
+      `_Please verify ₹${grandTotal} received in PhonePe before dispatching._`;
 
-    const waWindow = window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waReceiptText)}`, '_blank');
+    const waWindow = window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
 
     const addRes = await addOrder(newOrder);
     if (!addRes.success) {
@@ -346,74 +331,33 @@ export const PaymentPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Quick Copy Merchant Details Box */}
-            <div className="space-y-2 mt-2.5">
-              {/* UPI ID Row */}
-              <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-left">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">Merchant UPI ID</span>
-                  <span className="text-xs font-black font-mono text-slate-800">{upiId}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    copyToClipboard(upiId);
-                    setCopiedUpi(true);
-                    setHasTappedPayment(true);
-                    showToast(`Copied Merchant UPI ID (${upiId})!`);
-                    setTimeout(() => setCopiedUpi(false), 3000);
-                  }}
-                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
-                >
-                  {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedUpi ? 'Copied!' : 'Copy UPI'}</span>
-                </button>
+            {/* Quick Copy Number Box */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-left mt-2.5">
+              <div>
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">UPI / Mobile Number</span>
+                <span className="text-xs font-black font-mono text-slate-800">{upiNumber} ({payeeName})</span>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  copyToClipboard(upiNumber);
+                  setCopiedNumber(true);
+                  setHasTappedPayment(true);
+                  showToast(`Copied ${upiNumber} to clipboard!`);
+                  setTimeout(() => setCopiedNumber(false), 3000);
+                }}
+                className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
+              >
+                {copiedNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedNumber ? 'Copied!' : 'Copy'}</span>
+              </button>
+            </div>
 
-              {/* Mobile Number Row */}
-              <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-left">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">Business Mobile Number</span>
-                  <span className="text-xs font-black font-mono text-slate-800">{upiNumber}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    copyToClipboard(upiNumber);
-                    setCopiedNumber(true);
-                    setHasTappedPayment(true);
-                    showToast(`Copied ${upiNumber} to clipboard!`);
-                    setTimeout(() => setCopiedNumber(false), 3000);
-                  }}
-                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
-                >
-                  {copiedNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedNumber ? 'Copied!' : 'Copy No.'}</span>
-                </button>
-              </div>
-
-              {/* Merchant Verification & Warning Note */}
-              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-left space-y-1.5">
-                <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Verified Merchant Account</span>
-                </div>
-                <p className="text-[11px] text-amber-950 leading-relaxed font-medium">
-                  🏢 <strong>Brand:</strong> {payeeName} <br />
-                  🏦 <strong>Bank Verified Name:</strong> {registeredBusinessName}
-                </p>
-                <div className="bg-amber-100/90 rounded-xl p-2 text-[10.5px] text-amber-900 font-semibold leading-relaxed border border-amber-200">
-                  ⚠️ <strong>Why PhonePe/GPay shows "Merchant Account":</strong> <br />
-                  Because this is an official business account, banks restrict personal "To Mobile Number" transfers. <strong>Please scan the QR code above or pay using "To UPI ID" ({upiId}).</strong>
-                </div>
-              </div>
-
-              {/* Helpful tip for chat screen */}
-              <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-2.5 text-left space-y-1">
-                <p className="text-[11px] text-purple-900 font-semibold leading-relaxed">
-                  💡 <span className="font-black">Fastest Way to Pay:</span> Open PhonePe / GPay → Tap <span className="font-black">"To UPI ID"</span> → Paste <span className="font-black font-mono">{upiId}</span> → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
-                </p>
-              </div>
+            {/* Helpful tip for chat screen */}
+            <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-2.5 text-left space-y-1 mt-2.5">
+              <p className="text-[11px] text-purple-900 font-semibold leading-relaxed">
+                💡 <span className="font-black">Manual pay:</span> Tapping copies <span className="font-black font-mono">8125154114</span>. Inside app, tap <span className="font-black">"To Mobile Number"</span> → Paste → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
+              </p>
             </div>
           </div>
 
@@ -437,7 +381,7 @@ export const PaymentPage: React.FC = () => {
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-950 leading-relaxed font-medium">
-                  After paying <strong>₹{grandTotal}</strong> to business account (<strong>{upiId}</strong>) on PhonePe / Google Pay / Paytm, tap the button below to generate your official receipt:
+                  After paying <strong>₹{grandTotal}</strong> on PhonePe / Google Pay / Paytm, tap the button below to confirm your order:
                 </p>
               </div>
 
@@ -454,18 +398,18 @@ export const PaymentPage: React.FC = () => {
                 onClick={handleConfirmOrder}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                <CheckCircle2 className="w-5 h-5 text-white" />
+                <MessageCircle className="w-5 h-5 text-white" />
                 <span>
                   {isSubmitting
-                    ? 'Generating Official Receipt...'
-                    : '✅ Payment Completed — View & Download Receipt'
+                    ? 'Placing Your Order...'
+                    : '✅ I Have Paid — Confirm Order'
                   }
                 </span>
               </button>
 
-              <p className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-1 font-medium">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Official PDF invoice generated instantly &amp; WhatsApp alert dispatched to owner</span>
+              <p className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
+                <Lock className="w-3 h-3 text-emerald-500" />
+                <span>100% Safe • Instant WhatsApp notification sent to owner</span>
               </p>
             </div>
           </div>
