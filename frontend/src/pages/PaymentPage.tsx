@@ -101,6 +101,22 @@ export const PaymentPage: React.FC = () => {
             setOrderError('Payment done but verification failed. WhatsApp us with ID: ' + response.razorpay_payment_id);
             setIsSubmitting(false); return;
           }
+          const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
+          const waText = `*Order Receipt — PJR Swagruha Foods* 🧾\n\n` +
+            `*Order ID:* ${orderId}\n` +
+            `*Customer:* ${customerDetails.name}\n` +
+            `*Phone:* ${customerDetails.phone}\n` +
+            `*Address:* ${customerDetails.address}, ${selectedArea.name}\n` +
+            `*Delivery Date:* ${chosenDeliveryDate.dayOfWeekName || ''} (${chosenDeliveryDate.formattedDate || ''})\n\n` +
+            `*Items:*\n${itemsText}\n\n` +
+            `*Total Paid:* ₹${grandTotal} ✅ (Razorpay Online)\n` +
+            `*Payment ID:* ${response.razorpay_payment_id}\n\n` +
+            `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
+          try {
+            window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
+          } catch (err) {
+            console.warn('Could not auto-open WhatsApp:', err);
+          }
           await finalizeOrder(buildOrder('Razorpay (UPI/Card/NetBanking)', response.razorpay_payment_id));
         } catch {
           setOrderError('Verification error. WhatsApp us with payment ID: ' + response.razorpay_payment_id);

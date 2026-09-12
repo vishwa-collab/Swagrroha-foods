@@ -222,6 +222,26 @@ export const ConfirmationPage: React.FC = () => {
     doc.save(`PJR-Swagruha-Invoice-${currentOrder.orderId}.pdf`);
   };
 
+  const handleOpenWhatsApp = () => {
+    if (!currentOrder) return;
+    const itemsList = currentOrder.items.map(i => `  • ${i.product ? i.product.name : 'Item'} (${i.selectedWeightLabel || ''}) x${i.quantity} — ₹${i.unitPrice * i.quantity}`).join('\n');
+    const deliveryDateStr = currentOrder.deliveryDate ? `${currentOrder.deliveryDate.dayOfWeekName || ''} (${currentOrder.deliveryDate.formattedDate || ''})` : 'Upcoming Weekend';
+    const msg = `*Order Receipt — PJR Swagruha Foods* 🧾\n\n` +
+      `*Order ID:* ${currentOrder.orderId}\n` +
+      `*Customer:* ${currentOrder.customer.name}\n` +
+      `*Phone:* ${currentOrder.customer.phone}\n` +
+      `*Address:* ${currentOrder.customer.address}, ${currentOrder.area.name}\n` +
+      `*Delivery Date:* ${deliveryDateStr}\n\n` +
+      `*Items:*\n${itemsList}\n\n` +
+      `*Subtotal:* ₹${currentOrder.subtotal}\n` +
+      `*Delivery Charge:* ${currentOrder.deliveryCharge === 0 ? 'FREE' : `₹${currentOrder.deliveryCharge}`}\n` +
+      `*Total Paid:* ₹${currentOrder.totalAmount} ✅ (${currentOrder.paymentMethod || 'Online Paid'})\n` +
+      `*Payment Ref:* ${currentOrder.utrNumber || 'Verified'}\n\n` +
+      `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
+    window.open(`https://wa.me/918125154114?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+
   if (!currentOrder) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
@@ -250,14 +270,22 @@ export const ConfirmationPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
         </p>
-        {/* PDF Download Button inside banner */}
-        <button
-          onClick={handleDownloadInvoice}
-          className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all mx-auto mt-2"
-        >
-          <Download className="w-4 h-4" />
-          Download Invoice PDF
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            onClick={handleOpenWhatsApp}
+            className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-sm px-6 py-3 rounded-2xl shadow-lg transition-all"
+          >
+            <MessageCircle className="w-5 h-5 fill-white" />
+            <span>Open Receipt in WhatsApp</span>
+          </button>
+          <button
+            onClick={handleDownloadInvoice}
+            className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold text-xs px-5 py-3 rounded-2xl transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Download Invoice PDF
+          </button>
+        </div>
       </div>
 
       {/* AUTO-DISPATCHED NOTIFICATIONS TO OWNER */}
@@ -378,6 +406,13 @@ export const ConfirmationPage: React.FC = () => {
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <button
+            onClick={handleOpenWhatsApp}
+            className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"
+          >
+            <MessageCircle className="w-4 h-4 fill-white" />
+            Open Receipt in WhatsApp
+          </button>
           <button
             onClick={handleDownloadInvoice}
             className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"
