@@ -167,6 +167,28 @@ app.get('/api/test-email', async (req, res) => {
   });
 });
 
+// ── GET /api/test-whatsapp — Test WhatsApp alert to owner phone
+app.get('/api/test-whatsapp', async (req, res) => {
+  const testOrder = {
+    orderId: 'TEST-' + Math.floor(100000 + Math.random() * 900000),
+    customer: { name: 'PJR Swagruha Foods Owner', phone: '8125154114', email: 'vishwa81251@gmail.com', address: 'Hayathnagar, Hyderabad' },
+    area: { name: 'Hayathnagar' },
+    items: [{ product: { name: 'Mutton Pickle (250g)' }, selectedWeightLabel: '250g', quantity: 1, unitPrice: 450 }],
+    subtotal: 450,
+    deliveryCharge: 0,
+    totalAmount: 450,
+    utrNumber: 'VERIFIED_TEST_123',
+    deliveryDate: { dayOfWeek: 'Saturday', formattedDate: 'Upcoming Weekend' }
+  };
+
+  const result = await sendWhatsAppNotification(testOrder);
+  return res.json({
+    phone: process.env.CALLMEBOT_PHONE || '918125154114',
+    callmebotKeyConfigured: !!process.env.CALLMEBOT_APIKEY,
+    result: result
+  });
+});
+
 // ── DELETE /api/orders/all — Admin clears ALL orders (fresh start)
 // Requires the admin token in the Authorization header for security.
 app.delete('/api/orders/all', async (req, res) => {
