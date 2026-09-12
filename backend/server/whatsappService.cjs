@@ -131,7 +131,26 @@ async function sendWhatsAppNotification(order) {
   console.log('========================================\n');
 
   try {
-    // ── 1. CallMeBot (Free — recommended) ───────────────────────────────
+    // ── 1. UltraMsg API (Automated Background WhatsApp Delivery) ───────
+    if (provider === 'ultramsg' || (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN)) {
+      const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
+      const token = process.env.ULTRAMSG_TOKEN;
+      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
+
+      const params = new URLSearchParams();
+      params.append('token', token);
+      params.append('to', `+${cleanPhone}`);
+      params.append('body', message);
+
+      const response = await axios.post(
+        `https://api.ultramsg.com/${instanceId}/messages/chat`,
+        params
+      );
+      console.log('✅ WhatsApp sent via UltraMsg to owner:', cleanPhone, response.data);
+      return { success: true, provider: 'ultramsg', data: response.data };
+    }
+
+    // ── 2. CallMeBot (Free) ─────────────────────────────────────────────
     if (
       provider === 'callmebot' ||
       (provider === 'auto' && process.env.CALLMEBOT_APIKEY)
@@ -147,7 +166,7 @@ async function sendWhatsAppNotification(order) {
       return { success: true, provider: 'callmebot', data: response.data };
     }
 
-    // ── 2. Meta WhatsApp Cloud API ───────────────────────────────────────
+    // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (provider === 'meta' || (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)) {
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
       const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -173,7 +192,7 @@ async function sendWhatsAppNotification(order) {
       return { success: true, provider: 'meta', data: response.data };
     }
 
-    // ── 3. Twilio WhatsApp API ───────────────────────────────────────────
+    // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
     if (provider === 'twilio' || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
       const sid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -199,20 +218,6 @@ async function sendWhatsAppNotification(order) {
       );
       console.log('✅ WhatsApp sent via Twilio:', response.data.sid);
       return { success: true, provider: 'twilio', data: response.data };
-    }
-
-    // ── 4. UltraMsg API ─────────────────────────────────────────────────
-    if (provider === 'ultramsg' || (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN)) {
-      const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token = process.env.ULTRAMSG_TOKEN;
-      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
-
-      const response = await axios.post(
-        `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        { token, to: cleanPhone, body: message }
-      );
-      console.log('✅ WhatsApp sent via UltraMsg:', response.data);
-      return { success: true, provider: 'ultramsg', data: response.data };
     }
 
     // ── 5. Custom Webhook Endpoint ───────────────────────────────────────
@@ -280,14 +285,19 @@ async function sendCustomerWhatsAppReceipt(order) {
       return { success: true, provider: 'callmebot_customer', data: response.data };
     }
 
-    // ── 2. UltraMsg — works for any WhatsApp number, no opt-in needed ───
+    // ── 1. UltraMsg — works for any WhatsApp number directly ───────────
     if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
       const token = process.env.ULTRAMSG_TOKEN;
 
+      const params = new URLSearchParams();
+      params.append('token', token);
+      params.append('to', `+${customerPhone}`);
+      params.append('body', message);
+
       const response = await axios.post(
         `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        { token, to: customerPhone, body: message }
+        params
       );
       console.log('✅ Customer WhatsApp receipt sent via UltraMsg:', customerPhone, response.data);
       return { success: true, provider: 'ultramsg', data: response.data };
@@ -437,10 +447,17 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
     if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
       const token = process.env.ULTRAMSG_TOKEN;
+
+      const params = new URLSearchParams();
+      params.append('token', token);
+      params.append('to', `+${customerPhone}`);
+      params.append('body', message);
+
       const response = await axios.post(
         `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        { token, to: customerPhone, body: message }
+        params
       );
+      console.log('✅ Customer WhatsApp delivery receipt sent via UltraMsg:', customerPhone, response.data);
       return { success: true, provider: 'ultramsg', data: response.data };
     }
 
