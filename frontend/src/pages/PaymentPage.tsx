@@ -115,6 +115,69 @@ export const PaymentPage: React.FC = () => {
     rzp.open();
   };
 
+  const handleOneRupeeTest = async () => {
+    setIsSubmitting(true); setOrderError('');
+    await new Promise<void>((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).Razorpay) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(); script.onerror = () => resolve();
+      document.body.appendChild(script);
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(window as any).Razorpay) {
+      setOrderError('Could not load payment gateway. Check internet & retry.');
+      setIsSubmitting(false); return;
+    }
+    let rzpOrder: { id: string; amount: number };
+    let activeKeyId = RAZORPAY_KEY_ID;
+    try {
+      const res = await fetch(`${API_BASE}/api/create-razorpay-order`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 1, orderId }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.order?.id) throw new Error(data.message || 'Server could not create test payment order.');
+      rzpOrder = data.order;
+      if (data.keyId) activeKeyId = data.keyId;
+    } catch (e: unknown) {
+      setOrderError(e instanceof Error ? e.message : 'Could not start payment. Please retry.');
+      setIsSubmitting(false); return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rzp = new (window as any).Razorpay({
+      key: activeKeyId, amount: rzpOrder.amount, currency: 'INR',
+      name: 'PJR Swagruha Foods', description: `Order ${orderId} — ₹1 Test Payment`,
+      order_id: rzpOrder.id,
+      prefill: { name: customerDetails.name, contact: customerDetails.phone, email: customerDetails.email || '' },
+      notes: { order_id: orderId, address: customerDetails.address, is_test: '1' },
+      theme: { color: '#f59e0b' },
+      handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+        try {
+          const verifyRes = await fetch(`${API_BASE}/api/verify-razorpay-payment`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(response),
+          });
+          const result = await verifyRes.json();
+          if (!result.success) {
+            setOrderError('Payment done but verification failed. Please contact us with ID: ' + response.razorpay_payment_id);
+            setIsSubmitting(false); return;
+          }
+          await finalizeOrder(buildOrder('Razorpay ₹1 Test', response.razorpay_payment_id));
+        } catch {
+          setOrderError('Verification error. Please contact us with payment ID: ' + response.razorpay_payment_id);
+          setIsSubmitting(false);
+        }
+      },
+      modal: { ondismiss: () => { setIsSubmitting(false); showToast('Test payment cancelled.'); } },
+    });
+    rzp.on('payment.failed', (r: { error: { description: string } }) => {
+      setOrderError('Payment failed: ' + (r.error?.description || 'Please retry.')); setIsSubmitting(false);
+    });
+    rzp.open();
+  };
+
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
     await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT'));
@@ -175,6 +238,16 @@ export const PaymentPage: React.FC = () => {
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-center gap-3">
             <CreditCard className="w-5 h-5" />
             <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleOneRupeeTest}
+            className="w-full bg-amber-50 hover:bg-amber-100 active:scale-95 text-amber-900 border-2 border-amber-300 font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4 text-amber-600" />
+            <span>⚡ Test with ₹1 (Real Razorpay & WhatsApp Receipt Test)</span>
           </button>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
