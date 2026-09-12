@@ -392,18 +392,26 @@ export const PaymentPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Merchant Verification Note */}
-              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-2.5 text-left space-y-1">
-                <p className="text-[11px] text-amber-900 font-semibold leading-relaxed">
-                  🏢 <span className="font-black">Brand:</span> {payeeName} <br />
-                  <span className="text-[10px] text-amber-800">Bank verified name on PhonePe/GPay: <strong>{registeredBusinessName}</strong></span>
+              {/* Merchant Verification & Warning Note */}
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-left space-y-1.5">
+                <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Verified Merchant Account</span>
+                </div>
+                <p className="text-[11px] text-amber-950 leading-relaxed font-medium">
+                  🏢 <strong>Brand:</strong> {payeeName} <br />
+                  🏦 <strong>Bank Verified Name:</strong> {registeredBusinessName}
                 </p>
+                <div className="bg-amber-100/90 rounded-xl p-2 text-[10.5px] text-amber-900 font-semibold leading-relaxed border border-amber-200">
+                  ⚠️ <strong>Why PhonePe/GPay shows "Merchant Account":</strong> <br />
+                  Because this is an official business account, banks restrict personal "To Mobile Number" transfers. <strong>Please scan the QR code above or pay using "To UPI ID" ({upiId}).</strong>
+                </div>
               </div>
 
               {/* Helpful tip for chat screen */}
               <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-2.5 text-left space-y-1">
                 <p className="text-[11px] text-purple-900 font-semibold leading-relaxed">
-                  💡 <span className="font-black">Manual pay:</span> Open PhonePe / GPay → Tap <span className="font-black">"To UPI ID"</span> → Search <span className="font-black font-mono">{upiId}</span> (or mobile <span className="font-black font-mono">{upiNumber}</span>) → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
+                  💡 <span className="font-black">Fastest Way to Pay:</span> Open PhonePe / GPay → Tap <span className="font-black">"To UPI ID"</span> → Paste <span className="font-black font-mono">{upiId}</span> → Enter <span className="font-black">₹{grandTotal}</span> &amp; Pay!
                 </p>
               </div>
             </div>

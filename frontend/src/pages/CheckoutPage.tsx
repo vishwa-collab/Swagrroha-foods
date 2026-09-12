@@ -143,7 +143,7 @@ export const CheckoutPage: React.FC = () => {
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input 
                   type="tel"
-                  placeholder="e.g. 8125154114"
+                  placeholder="e.g. 9876543210 (Your Phone Number)"
                   maxLength={10}
                   value={customerDetails.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
