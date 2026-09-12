@@ -19,7 +19,7 @@ export const HomePage: React.FC = () => {
     });
   }, []);
 
-  const bestsellers = PRODUCTS.filter(p => p.isBestseller).slice(0, 4);
+  const bestsellers = PRODUCTS.filter(p => p.isBestseller && p.category !== 'Pickles').slice(0, 4);
 
   const heroSlides = [
     { img: IMAGES.murukulu, label: 'Crispy Murukulu', sub: 'మురుకులు' },
