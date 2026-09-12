@@ -341,7 +341,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Client-side fallback if backend is unreachable / starting up
-    if (cleanEmail === 'vishwa81251@gmail.com' && cleanPass === '9247467111') {
+    if (cleanEmail === 'vishwa81251@gmail.com' && cleanPass === '8121347549') {
       const token = 'jwt_owner_session_' + Date.now();
       setAdminToken(token);
       setAdminEmail(cleanEmail);

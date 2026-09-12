@@ -108,7 +108,7 @@ app.get('/', (req, res) => {
 
 // ── Admin credentials (from env)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vishwa81251@gmail.com';
-const ADMIN_PASS = process.env.ADMIN_PASS || '9247467111';
+const ADMIN_PASS = process.env.ADMIN_PASS || '8121347549';
 
 // ── POST /api/admin/login — Secure admin authentication
 app.post('/api/admin/login', (req, res) => {
