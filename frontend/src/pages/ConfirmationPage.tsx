@@ -222,6 +222,33 @@ export const ConfirmationPage: React.FC = () => {
     doc.save(`PJR-Swagruha-Invoice-${currentOrder.orderId}.pdf`);
   };
 
+  const ownerWaReceiptLink = currentOrder ? (() => {
+    const itemsList = currentOrder.items.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
+    const text =
+      `🧾 *OFFICIAL PAYMENT & ORDER RECEIPT*\n` +
+      `*PJR Swagruha Foods*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `*Order ID:* ${currentOrder.orderId}\n` +
+      `*Payment Status:* PAID VIA UPI ✅\n` +
+      `*Payment Account:* Q27340885@ybl (Sri Saraswathi Medical)\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤 *Customer Information:*\n` +
+      `• Name: ${currentOrder.customer.name}\n` +
+      `• Phone: ${currentOrder.customer.phone}\n` +
+      `• Email: ${currentOrder.customer.email || 'N/A'}\n` +
+      `• Delivery Area: ${currentOrder.area.name}\n` +
+      `• Address: ${currentOrder.customer.address}\n\n` +
+      `📦 *Items Ordered:*\n${itemsList}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `💵 Items Subtotal: ₹${currentOrder.subtotal}\n` +
+      `🚚 Delivery Charge: ${currentOrder.deliveryCharge === 0 ? 'FREE (₹500+ Discount) 🎉' : `₹${currentOrder.deliveryCharge}`}\n` +
+      `💰 *Total Amount Paid:* ₹${currentOrder.totalAmount} (PAID ✅)\n` +
+      `📅 *Scheduled Delivery:* ${currentOrder.deliveryDate?.dayOfWeekName || ''} (${currentOrder.deliveryDate?.formattedDate || ''})\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Official Receipt sent to owner WhatsApp: +91 8125154114_`;
+    return `https://wa.me/918125154114?text=${encodeURIComponent(text)}`;
+  })() : '';
+
   if (!currentOrder) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
@@ -245,7 +272,7 @@ export const ConfirmationPage: React.FC = () => {
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black">
-          Order Placed & Sent via WhatsApp! 🎉
+          Payment Completed & Receipt Generated! 🎉
         </h1>
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
@@ -256,7 +283,7 @@ export const ConfirmationPage: React.FC = () => {
           className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all mx-auto mt-2"
         >
           <Download className="w-4 h-4" />
-          Download Invoice PDF
+          Download Receipt PDF
         </button>
       </div>
 
@@ -378,6 +405,15 @@ export const ConfirmationPage: React.FC = () => {
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <a
+            href={ownerWaReceiptLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Send Receipt to Owner (+91 8125154114)
+          </a>
           <button
             onClick={handleDownloadInvoice}
             className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"
