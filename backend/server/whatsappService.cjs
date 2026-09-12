@@ -65,16 +65,20 @@ function formatCustomerReceiptMessage(order) {
     const weight = item.selectedWeightLabel ? ` (${item.selectedWeightLabel})` : '';
     const qty = item.quantity || 1;
     const price = item.unitPrice ? item.unitPrice * qty : 0;
-    return `  • ${pName}${weight} x${qty} — ₹${price}`;
+    return `  • ${pName}${weight} x${qty} — \u20b9${price}`;
   }).join('\n');
 
   if (!itemsListStr) itemsListStr = '  • Order Items';
 
-  const paymentRef = order.utrNumber || 'UPI Payment';
+  const paymentRef = order.utrNumber && order.utrNumber !== 'DIRECT_UPI_PAYMENT' ? order.utrNumber : null;
+  const paymentMethod = order.paymentMethod || 'Online Payment';
+  const paymentLine = paymentRef
+    ? `Paid via ${paymentMethod} ✅\n💳 Transaction Ref: ${paymentRef}`
+    : `Paid via ${paymentMethod} ✅`;
 
-  return `✅ *Order Confirmed — PJR Swagruha Foods*
+  return `✅ *Payment Successful! Order Confirmed*
 
-Hi ${customer.name || 'Valued Customer'}! Your order has been received and confirmed. 🎉
+Hi ${customer.name || 'Valued Customer'}! 🎉 Your payment was received and your order is confirmed!
 
 🧾 *Order Receipt #${order.orderId}*
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -83,17 +87,17 @@ Hi ${customer.name || 'Valued Customer'}! Your order has been received and confi
 ${itemsListStr}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-💵 Subtotal: ₹${order.subtotal || 0}
-🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
-💰 *Total Paid: ₹${order.totalAmount || 0}*
-💳 Payment: Paid via UPI ✅
+💵 Subtotal: \u20b9${order.subtotal || 0}
+🚚 Delivery Charge: \u20b9${order.deliveryCharge || 0}
+💰 *Total Paid: \u20b9${order.totalAmount || 0}*
+💳 ${paymentLine}
 
 📍 Delivery To: ${customer.address || 'N/A'}, ${area.name || 'Hyderabad'}
 📅 Scheduled Delivery: ${deliveryDate}
 
-For queries, call/WhatsApp owner: +91 8125154114
+For queries, call/WhatsApp: +91 8125154114
 
-_Thank you for ordering with PJR Swagruha Foods! 🙏_`;
+_Thank you for ordering from PJR Swagruha Foods! 🙏_`;
 }
 
 /**

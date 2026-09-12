@@ -115,16 +115,6 @@ export const PaymentPage: React.FC = () => {
     rzp.open();
   };
 
-  const handleZeroPaymentTest = async () => {
-    setIsSubmitting(true);
-    setOrderError('');
-    await finalizeOrder({
-      ...buildOrder('Free Test Check (₹0)', 'ZERO_PAYMENT_TEST'),
-      totalAmount: 0,
-    });
-  };
-
-
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
     await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT'));
@@ -187,14 +177,6 @@ export const PaymentPage: React.FC = () => {
             <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
           </button>
 
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleZeroPaymentTest}
-            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-2xl border border-slate-200 text-xs flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
-          >
-            <span>⚡ Test Order with ₹0 (Instant Free Check)</span>
-          </button>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {['PhonePe', 'Google Pay', 'Paytm', 'UPI', 'Cards', 'Net Banking'].map(m => (
               <span key={m} className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">{m}</span>
