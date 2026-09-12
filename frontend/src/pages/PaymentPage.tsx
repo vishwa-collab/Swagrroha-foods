@@ -98,28 +98,12 @@ export const PaymentPage: React.FC = () => {
           });
           const result = await verifyRes.json();
           if (!result.success) {
-            setOrderError('Payment done but verification failed. WhatsApp us with ID: ' + response.razorpay_payment_id);
+            setOrderError('Payment done but verification failed. Please contact us with ID: ' + response.razorpay_payment_id);
             setIsSubmitting(false); return;
-          }
-          const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
-          const waText = `*Order Receipt — PJR Swagruha Foods* 🧾\n\n` +
-            `*Order ID:* ${orderId}\n` +
-            `*Customer:* ${customerDetails.name}\n` +
-            `*Phone:* ${customerDetails.phone}\n` +
-            `*Address:* ${customerDetails.address}, ${selectedArea.name}\n` +
-            `*Delivery Date:* ${chosenDeliveryDate.dayOfWeekName || ''} (${chosenDeliveryDate.formattedDate || ''})\n\n` +
-            `*Items:*\n${itemsText}\n\n` +
-            `*Total Paid:* ₹${grandTotal} ✅ (Razorpay Online)\n` +
-            `*Payment ID:* ${response.razorpay_payment_id}\n\n` +
-            `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
-          try {
-            window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
-          } catch (err) {
-            console.warn('Could not auto-open WhatsApp:', err);
           }
           await finalizeOrder(buildOrder('Razorpay (UPI/Card/NetBanking)', response.razorpay_payment_id));
         } catch {
-          setOrderError('Verification error. WhatsApp us with payment ID: ' + response.razorpay_payment_id);
+          setOrderError('Verification error. Please contact us with payment ID: ' + response.razorpay_payment_id);
           setIsSubmitting(false);
         }
       },
@@ -134,22 +118,6 @@ export const PaymentPage: React.FC = () => {
   const handleZeroPaymentTest = async () => {
     setIsSubmitting(true);
     setOrderError('');
-    const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
-    const waText = `*Order Receipt — PJR Swagruha Foods* 🧾\n\n` +
-      `*Order ID:* ${orderId}\n` +
-      `*Customer:* ${customerDetails.name}\n` +
-      `*Phone:* ${customerDetails.phone}\n` +
-      `*Address:* ${customerDetails.address}, ${selectedArea.name}\n` +
-      `*Delivery Date:* ${chosenDeliveryDate.dayOfWeekName || ''} (${chosenDeliveryDate.formattedDate || ''})\n\n` +
-      `*Items:*\n${itemsText}\n\n` +
-      `*Total Paid:* ₹0 ✅ (Free Test Check)\n` +
-      `*Payment Ref:* ZERO_PAYMENT_TEST\n\n` +
-      `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
-    try {
-      window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
-    } catch (err) {
-      console.warn('Could not auto-open WhatsApp:', err);
-    }
     await finalizeOrder({
       ...buildOrder('Free Test Check (₹0)', 'ZERO_PAYMENT_TEST'),
       totalAmount: 0,
@@ -159,9 +127,6 @@ export const PaymentPage: React.FC = () => {
 
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
-    const itemsText = cart.map(i => `  * ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (Rs.${i.unitPrice * i.quantity})`).join('\n');
-    const waText = `New Order - PJR Swagruha Foods\n\nOrder ID: ${orderId}\nCustomer: ${customerDetails.name}\nPhone: ${customerDetails.phone}\nEmail: ${customerDetails.email || 'N/A'}\nArea: ${selectedArea.name}\nAddress: ${customerDetails.address}\n\nItems:\n${itemsText}\n\nSubtotal: Rs.${subtotal} | Delivery: ${deliveryCharge === 0 ? 'FREE' : `Rs.${deliveryCharge}`} | Total: Rs.${grandTotal}\nDelivery: ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\nPayment: Direct UPI QR Self-Confirmed\nPlease verify Rs.${grandTotal} received before dispatching.`;
-    window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
     await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT'));
   };
 
