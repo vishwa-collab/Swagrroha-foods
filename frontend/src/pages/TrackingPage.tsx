@@ -216,11 +216,11 @@ export const TrackingPage: React.FC = () => {
                 Auto Syncing Live
               </span>
               <span className={`text-[11px] font-extrabold px-3 py-1 rounded-full border block ${
-                (activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_RAZORPAY' || activeOrder.status !== 'PLACED')
+                (activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_UPI' || activeOrder.status !== 'PLACED')
                   ? 'bg-emerald-900/60 text-emerald-300 border-emerald-500/50'
                   : 'bg-amber-900/60 text-amber-300 border-amber-500/50 animate-pulse'
               }`}>
-                {(activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_RAZORPAY' || activeOrder.status !== 'PLACED')
+                {(activeOrder.paymentStatus === 'VERIFIED_PAID' || activeOrder.paymentStatus === 'PAID_VIA_UPI' || activeOrder.status !== 'PLACED')
                   ? '✅ Payment Verified'
                   : '⏳ Payment Pending Verification'
                 }

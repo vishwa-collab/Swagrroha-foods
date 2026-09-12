@@ -2,14 +2,14 @@ import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import confetti from 'canvas-confetti';
 import { jsPDF } from 'jspdf';
-import { 
-  MessageCircle, 
-  CheckCircle2, 
-  Calendar, 
-  MapPin, 
-  Phone, 
+import {
+  MessageCircle,
+  CheckCircle2,
+  Calendar,
+  MapPin,
+  Phone,
   Mail,
-  FileText, 
+  FileText,
   ArrowRight,
   ShoppingBag,
   ExternalLink,
@@ -156,7 +156,7 @@ export const ConfirmationPage: React.FC = () => {
       doc.line(margin, y + itemRowH, pageW - margin, y + itemRowH);
 
       doc.text(`${index + 1}`, margin + 3, y + 5);
-      
+
       const itemNameText = `${item.product.name} (${item.selectedWeightLabel})`;
       const cleanItemName = doc.splitTextToSize(itemNameText, 85)[0] || itemNameText;
       doc.text(cleanItemName, margin + 12, y + 5);
@@ -238,7 +238,7 @@ export const ConfirmationPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
+
       {/* Success Banner */}
       <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white p-6 sm:p-8 rounded-3xl shadow-xl text-center space-y-3">
         <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto text-white">
@@ -262,7 +262,7 @@ export const ConfirmationPage: React.FC = () => {
 
       {/* AUTO-DISPATCHED NOTIFICATIONS TO OWNER */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        
+
         {/* ORDER CONFIRMED CARD */}
         <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-300 shadow-md text-center space-y-3">
           <div className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">

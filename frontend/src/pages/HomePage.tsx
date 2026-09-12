@@ -126,9 +126,8 @@ export const HomePage: React.FC = () => {
                     key={s.label}
                     src={s.img}
                     alt={s.label}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                      i === heroIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                      }`}
                     style={{ objectFit: 'cover' }}
                   />
                 ))}
@@ -146,9 +145,8 @@ export const HomePage: React.FC = () => {
                   <button
                     key={i}
                     onClick={() => setHeroIndex(i)}
-                    className={`rounded-full transition-all duration-300 ${
-                      i === heroIndex ? 'w-5 h-2 bg-orange-500' : 'w-2 h-2 bg-slate-300'
-                    }`}
+                    className={`rounded-full transition-all duration-300 ${i === heroIndex ? 'w-5 h-2 bg-orange-500' : 'w-2 h-2 bg-slate-300'
+                      }`}
                   />
                 ))}
               </div>

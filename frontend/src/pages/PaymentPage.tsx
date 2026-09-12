@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useCart, PlacedOrder } from '../context/CartContext';
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Sparkles, 
-  AlertCircle, 
-  MessageCircle, 
-  QrCode, 
-  Smartphone, 
-  Zap, 
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Sparkles,
+  AlertCircle,
+  MessageCircle,
+  QrCode,
+  Smartphone,
+  Zap,
   Lock,
   CheckCircle2,
   Download,
@@ -17,14 +17,14 @@ import {
 } from 'lucide-react';
 
 export const PaymentPage: React.FC = () => {
-  const { 
-    cart, 
-    selectedArea, 
-    subtotal, 
-    deliveryCharge, 
-    grandTotal, 
-    setActiveTab, 
-    customerDetails, 
+  const {
+    cart,
+    selectedArea,
+    subtotal,
+    deliveryCharge,
+    grandTotal,
+    setActiveTab,
+    customerDetails,
     deliveryDateInfo,
     addOrder,
     clearCart,
@@ -41,7 +41,7 @@ export const PaymentPage: React.FC = () => {
   const [hasTappedPayment, setHasTappedPayment] = useState(false);
   const [copiedNumber, setCopiedNumber] = useState(false);
 
-  // Direct Individual UPI & Contact Info
+  // UPI & Contact Info
   const upiId = '8125154114@ybl';
   const payeeName = 'Ganji Vishwateja';
 
@@ -50,7 +50,7 @@ export const PaymentPage: React.FC = () => {
 
   // Dynamic Live UPI URI with pre-filled exact order amount
   const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR`;
-  
+
   // High-Resolution Live Dynamic QR Code generated specifically for this exact amount
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
@@ -71,7 +71,7 @@ export const PaymentPage: React.FC = () => {
       console.warn('execCommand copy error:', e);
     }
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).catch(() => {});
+      navigator.clipboard.writeText(text).catch(() => { });
     }
   };
 
@@ -187,14 +187,14 @@ export const PaymentPage: React.FC = () => {
     setActiveTab('confirmation');
   };
 
-  if (cart.length === 0) { 
-    setActiveTab('cart'); 
-    return null; 
+  if (cart.length === 0) {
+    setActiveTab('cart');
+    return null;
   }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
+
       {/* Back navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -234,7 +234,7 @@ export const PaymentPage: React.FC = () => {
 
         {/* ── STEP 1: DYNAMIC LIVE QR CODE ── */}
         <div className="bg-gradient-to-b from-orange-50/70 via-amber-50/40 to-emerald-50/60 p-6 rounded-3xl border-2 border-brand-400/70 space-y-4 shadow-sm relative">
-          
+
           {/* Live Badge */}
           <div className="inline-flex items-center gap-1.5 bg-brand-500 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
             <Zap className="w-3.5 h-3.5 fill-white" />
@@ -243,9 +243,9 @@ export const PaymentPage: React.FC = () => {
 
           {/* Dynamic Generated QR Image */}
           <div className="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-slate-200">
-            <img 
-              src={dynamicQrCodeUrl} 
-              alt={`Dynamic UPI QR Code for ₹${grandTotal}`} 
+            <img
+              src={dynamicQrCodeUrl}
+              alt={`Dynamic UPI QR Code for ₹${grandTotal}`}
               className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl mx-auto"
             />
           </div>

@@ -32,9 +32,9 @@ export const Navbar: React.FC = () => {
               <div onClick={() => setActiveTab('home')} className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
                   <div className="absolute inset-0 bg-brand-500/20 rounded-xl blur-md group-hover:bg-brand-500/30 transition-all" />
-                  <img 
-                    src={IMAGES.logo} 
-                    alt="PJR Swagruha Foods" 
+                  <img
+                    src={IMAGES.logo}
+                    alt="PJR Swagruha Foods"
                     className="relative w-11 h-11 sm:w-13 sm:h-13 object-cover rounded-xl border-2 border-brand-400/60 shadow-md group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
@@ -52,11 +52,10 @@ export const Navbar: React.FC = () => {
                   <button
                     key={id}
                     onClick={() => setActiveTab(id as any)}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      activeTab === id
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === id
                         ? 'text-brand-600 bg-brand-50 shadow-sm'
                         : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -79,9 +78,8 @@ export const Navbar: React.FC = () => {
 
                 <button
                   onClick={() => setActiveTab('cart')}
-                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 active:scale-95 ${
-                    activeTab === 'cart' ? 'bg-brand-600 shadow-md ring-2 ring-brand-400 ring-offset-2' : 'btn-primary'
-                  }`}
+                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 active:scale-95 ${activeTab === 'cart' ? 'bg-brand-600 shadow-md ring-2 ring-brand-400 ring-offset-2' : 'btn-primary'
+                    }`}
                   title="View Cart"
                 >
                   <ShoppingBag className="w-4 h-4" />
@@ -141,11 +139,10 @@ export const Navbar: React.FC = () => {
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl min-w-[54px] transition-all duration-200 ${
-                  isActive
+                className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl min-w-[54px] transition-all duration-200 ${isActive
                     ? 'text-brand-600 bg-brand-50/80 font-bold'
                     : 'text-slate-500 hover:text-slate-800'
-                }`}
+                  }`}
               >
                 <div className="relative">
                   <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110 text-brand-600' : 'text-slate-500'}`} />

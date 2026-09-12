@@ -20,6 +20,4 @@ declare module '*.svg' {
   export default value;
 }
 
-interface Window {
-  Razorpay: any;
-}
+

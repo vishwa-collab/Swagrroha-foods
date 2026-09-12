@@ -23,7 +23,7 @@ function formatOrderMessage(order) {
     itemsListStr = '  • Order Items';
   }
 
-  const paymentRef = order.razorpayPaymentId || order.utrNumber || 'Online Payment';
+  const paymentRef = order.utrNumber || 'Online Payment';
 
   return `🚀 *New Order Received — PJR Swagruha Foods*
 
@@ -70,7 +70,7 @@ function formatCustomerReceiptMessage(order) {
 
   if (!itemsListStr) itemsListStr = '  • Order Items';
 
-  const paymentRef = order.utrNumber || order.razorpayPaymentId || 'UPI Payment';
+  const paymentRef = order.utrNumber || 'UPI Payment';
 
   return `✅ *Order Confirmed — PJR Swagruha Foods*
 
@@ -137,7 +137,7 @@ async function sendWhatsAppNotification(order) {
       (provider === 'auto' && process.env.CALLMEBOT_APIKEY)
     ) {
       const apiKey = process.env.CALLMEBOT_APIKEY;
-      const phone  = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
+      const phone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
       const encodedMsg = encodeURIComponent(message);
 
       const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodedMsg}&apikey=${apiKey}`;
@@ -150,7 +150,7 @@ async function sendWhatsAppNotification(order) {
     // ── 2. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (provider === 'meta' || (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)) {
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token   = process.env.WHATSAPP_ACCESS_TOKEN;
+      const token = process.env.WHATSAPP_ACCESS_TOKEN;
       const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
       const response = await axios.post(
@@ -175,11 +175,11 @@ async function sendWhatsAppNotification(order) {
 
     // ── 3. Twilio WhatsApp API ───────────────────────────────────────────
     if (provider === 'twilio' || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
-      const sid        = process.env.TWILIO_ACCOUNT_SID;
-      const authToken  = process.env.TWILIO_AUTH_TOKEN;
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
       const cleanPhone = targetPhone.startsWith('91') ? targetPhone : '91' + targetPhone;
-      const toNumber   = `whatsapp:+${cleanPhone}`;
+      const toNumber = `whatsapp:+${cleanPhone}`;
 
       const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
       const params = new URLSearchParams();
@@ -204,7 +204,7 @@ async function sendWhatsAppNotification(order) {
     // ── 4. UltraMsg API ─────────────────────────────────────────────────
     if (provider === 'ultramsg' || (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN)) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token      = process.env.ULTRAMSG_TOKEN;
+      const token = process.env.ULTRAMSG_TOKEN;
       const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
       const response = await axios.post(
@@ -283,7 +283,7 @@ async function sendCustomerWhatsAppReceipt(order) {
     // ── 2. UltraMsg — works for any WhatsApp number, no opt-in needed ───
     if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token      = process.env.ULTRAMSG_TOKEN;
+      const token = process.env.ULTRAMSG_TOKEN;
 
       const response = await axios.post(
         `https://api.ultramsg.com/${instanceId}/messages/chat`,
@@ -296,7 +296,7 @@ async function sendCustomerWhatsAppReceipt(order) {
     // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token   = process.env.WHATSAPP_ACCESS_TOKEN;
+      const token = process.env.WHATSAPP_ACCESS_TOKEN;
 
       const response = await axios.post(
         `https://graph.facebook.com/v18.0/${phoneId}/messages`,
@@ -320,10 +320,10 @@ async function sendCustomerWhatsAppReceipt(order) {
 
     // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      const sid        = process.env.TWILIO_ACCOUNT_SID;
-      const authToken  = process.env.TWILIO_AUTH_TOKEN;
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const toNumber   = `whatsapp:+${customerPhone}`;
+      const toNumber = `whatsapp:+${customerPhone}`;
 
       const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
       const params = new URLSearchParams();
@@ -386,7 +386,7 @@ function formatDeliveredReceiptMessage(order) {
 
   if (!itemsListStr) itemsListStr = '  • Order Items';
 
-  const paymentRef = order.utrNumber || order.razorpayPaymentId || 'UPI Payment';
+  const paymentRef = order.utrNumber || 'UPI Payment';
 
   return `🎉 *Order Delivered — PJR Swagruha Foods*
 
@@ -436,7 +436,7 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
   try {
     if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
       const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token      = process.env.ULTRAMSG_TOKEN;
+      const token = process.env.ULTRAMSG_TOKEN;
       const response = await axios.post(
         `https://api.ultramsg.com/${instanceId}/messages/chat`,
         { token, to: customerPhone, body: message }
@@ -446,7 +446,7 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
 
     if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token   = process.env.WHATSAPP_ACCESS_TOKEN;
+      const token = process.env.WHATSAPP_ACCESS_TOKEN;
       const response = await axios.post(
         `https://graph.facebook.com/v18.0/${phoneId}/messages`,
         {
@@ -467,10 +467,10 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
     }
 
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      const sid        = process.env.TWILIO_ACCOUNT_SID;
-      const authToken  = process.env.TWILIO_AUTH_TOKEN;
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const toNumber   = `whatsapp:+${customerPhone}`;
+      const toNumber = `whatsapp:+${customerPhone}`;
       const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
       const params = new URLSearchParams();
       params.append('From', fromNumber);

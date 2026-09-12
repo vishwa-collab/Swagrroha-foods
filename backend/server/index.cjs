@@ -12,7 +12,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt, sendCustomerDeliveredWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./emailService.cjs');
-const Razorpay = require('razorpay');
 
 const app = express();
 
@@ -83,7 +82,7 @@ const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 const dns = require('dns');
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch (e) {}
+} catch (e) { }
 
 if (mongoUri) {
   mongoose.connect(mongoUri)
@@ -100,7 +99,7 @@ if (mongoUri) {
 
 // ── Root endpoint
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'PJR Swagrooha Foods API is running successfully',
     database: isMongoConnected ? 'MongoDB Connected' : 'In-Memory Mode'
   });
@@ -127,8 +126,8 @@ app.post('/api/admin/login', (req, res) => {
 
 // ── Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     service: 'PJR Swagrooha Foods API',
     db: isMongoConnected ? 'mongodb' : 'in-memory',
     emailConfigured: !!(process.env.GMAIL_USER || process.env.SMTP_USER)
@@ -232,9 +231,9 @@ async function isUtrDuplicate(utr, currentOrderId) {
 
   // Check in-memory store
   return orders.some(
-    o => o.utrNumber && 
-         o.utrNumber.trim().toLowerCase() === cleanUtr && 
-         o.orderId !== currentOrderId
+    o => o.utrNumber &&
+      o.utrNumber.trim().toLowerCase() === cleanUtr &&
+      o.orderId !== currentOrderId
   );
 }
 
@@ -267,87 +266,6 @@ async function persistOrder(order) {
   orders.unshift(orderToSave);
 }
 
-// ── Razorpay credentials (UPI Intent — pays to 8125154114@ybl)
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TXAom5GBW9jBMn';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'YoIgW4u10LMpt9TrPaAqxUjx';
-
-// ── POST /api/payment/create-order — Create Razorpay order for UPI Intent
-app.post('/api/payment/create-order', async (req, res) => {
-  try {
-    const { amount } = req.body;
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
-
-    const razorpay = new Razorpay({
-      key_id: RAZORPAY_KEY_ID,
-      key_secret: RAZORPAY_KEY_SECRET,
-    });
-
-    const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100), // convert to paise
-      currency: 'INR',
-      receipt: 'swagrooha_' + Date.now(),
-      payment_capture: 1,
-      notes: {
-        business_name: 'PJR Swagruha Foods',
-        upi_id: '8125154114@ybl',
-        phone: '8125154114',
-      },
-    });
-
-    return res.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      keyId: RAZORPAY_KEY_ID,
-    });
-  } catch (e) {
-    console.error('Error creating Razorpay order:', e);
-    return res.status(500).json({ error: 'Error creating payment order: ' + e.message });
-  }
-});
-
-// ── POST /api/payment/verify — Verify Razorpay UPI payment signature
-app.post('/api/payment/verify', async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Missing payment details.' });
-    }
-
-    // Verify HMAC signature to prevent fraud
-    const expectedSignature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      .update(razorpay_order_id + '|' + razorpay_payment_id)
-      .digest('hex');
-
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
-    }
-
-    // Verify amount if provided
-    if (amount) {
-      const razorpay = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
-      const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      const expectedPaise = Math.round(amount * 100);
-
-      if (payment.status !== 'captured') {
-        return res.status(400).json({ success: false, message: 'Payment not captured. Status: ' + payment.status });
-      }
-      if (payment.amount !== expectedPaise) {
-        return res.status(400).json({ success: false, message: `Amount mismatch. Expected ₹${amount}, got ₹${payment.amount / 100}` });
-      }
-    }
-
-    return res.json({ success: true, message: 'Payment verified! Order confirmed.' });
-  } catch (e) {
-    console.error('Error verifying Razorpay payment:', e);
-    return res.status(500).json({ success: false, error: 'Verification failed: ' + e.message });
-  }
-});
-
 
 // ── POST /api/orders — place new order via Direct Scanner / UPI & trigger notifications
 app.post('/api/orders', async (req, res) => {
@@ -374,7 +292,7 @@ app.post('/api/orders', async (req, res) => {
     };
 
     await persistOrder(finalOrder);
-    
+
     // Fire all three automatically in parallel:
     //  1. WhatsApp notification to OWNER (via CallMeBot)
     //  2. WhatsApp receipt to CUSTOMER (via UltraMsg / Meta / Twilio)
@@ -385,8 +303,8 @@ app.post('/api/orders', async (req, res) => {
       sendCustomerEmailReceipt(finalOrder),
     ]);
 
-    return res.status(201).json({ 
-      success: true, 
+    return res.status(201).json({
+      success: true,
       orderId: finalOrder.orderId,
       ownerWhatsapp: ownerWhatsappResult.value || ownerWhatsappResult.reason?.message,
       customerWhatsapp: customerWhatsappResult.value || customerWhatsappResult.reason?.message,

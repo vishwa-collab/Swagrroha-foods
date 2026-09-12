@@ -6,7 +6,7 @@ import { PlacedOrder } from '../context/CartContext';
 export function getWhatsAppDeliveredReceiptText(order: PlacedOrder): string {
   const customerName = order.customer?.name || 'Valued Customer';
   const items = order.items || [];
-  
+
   const itemsList = items.map(item => {
     const name = item.product?.name || (item as any).name || 'Item';
     const weight = item.selectedWeightLabel ? ` (${item.selectedWeightLabel})` : '';
@@ -60,7 +60,7 @@ export function getWhatsAppDeliveredReceiptLink(order: PlacedOrder): string {
 export function getWhatsAppPlacedReceiptLink(order: PlacedOrder): string {
   const customerName = order.customer?.name || 'Valued Customer';
   const items = order.items || [];
-  
+
   const itemsList = items.map(item => {
     const name = item.product?.name || (item as any).name || 'Item';
     const weight = item.selectedWeightLabel ? ` (${item.selectedWeightLabel})` : '';
@@ -74,8 +74,8 @@ export function getWhatsAppPlacedReceiptLink(order: PlacedOrder): string {
   const areaName = order.area?.name || 'Hyderabad Zone';
   const deliveryDateStr = order.deliveryDate
     ? (typeof order.deliveryDate === 'object' && (order.deliveryDate as any).formattedDate
-        ? `${(order.deliveryDate as any).dayOfWeekName || ''} (${(order.deliveryDate as any).formattedDate})`
-        : String(order.deliveryDate))
+      ? `${(order.deliveryDate as any).dayOfWeekName || ''} (${(order.deliveryDate as any).formattedDate})`
+      : String(order.deliveryDate))
     : 'Upcoming Saturday';
 
   const text = `✅ *Order Confirmed — PJR Swagruha Foods*
