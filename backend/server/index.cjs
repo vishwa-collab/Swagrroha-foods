@@ -1,4 +1,5 @@
 require('dotenv').config();
+const Razorpay = require('razorpay');
 const crypto = require('crypto');
 if (typeof globalThis.crypto === 'undefined') {
   globalThis.crypto = crypto.webcrypto || crypto;
@@ -266,6 +267,52 @@ async function persistOrder(order) {
   orders.unshift(orderToSave);
 }
 
+
+// ── Razorpay credentials
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+// ── POST /api/create-razorpay-order ── create order server-side
+app.post('/api/create-razorpay-order', async (req, res) => {
+  try {
+    const { amount, orderId } = req.body;
+    if (!amount || isNaN(Number(amount)) || Number(amount) < 1) {
+      return res.status(400).json({ success: false, message: 'Invalid amount.' });
+    }
+    const razorpay = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
+    const order = await razorpay.orders.create({
+      amount: Math.round(Number(amount) * 100), // paise
+      currency: 'INR',
+      receipt: orderId || ('pjr_' + Date.now()),
+      notes: { business: 'PJR Swagruha Foods', contact: '8125154114' },
+    });
+    return res.json({ success: true, order, keyId: RAZORPAY_KEY_ID });
+  } catch (e) {
+    console.error('Razorpay create order error:', e);
+    return res.status(500).json({ success: false, message: e.error?.description || e.message || 'Could not create payment order.' });
+  }
+});
+
+// ── POST /api/verify-razorpay-payment ── verify signature server-side
+app.post('/api/verify-razorpay-payment', (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing payment fields.' });
+    }
+    const expected = crypto
+      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Payment signature invalid. Possible fraud attempt.' });
+    }
+    return res.json({ success: true, message: 'Payment verified successfully.' });
+  } catch (e) {
+    console.error('Razorpay verify error:', e);
+    return res.status(500).json({ success: false, message: 'Verification failed.' });
+  }
+});
 
 // ── POST /api/orders — place new order via Direct Scanner / UPI & trigger notifications
 app.post('/api/orders', async (req, res) => {
