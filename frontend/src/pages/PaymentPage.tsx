@@ -131,6 +131,32 @@ export const PaymentPage: React.FC = () => {
     rzp.open();
   };
 
+  const handleZeroPaymentTest = async () => {
+    setIsSubmitting(true);
+    setOrderError('');
+    const itemsText = cart.map(i => `  • ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (₹${i.unitPrice * i.quantity})`).join('\n');
+    const waText = `*Order Receipt — PJR Swagruha Foods* 🧾\n\n` +
+      `*Order ID:* ${orderId}\n` +
+      `*Customer:* ${customerDetails.name}\n` +
+      `*Phone:* ${customerDetails.phone}\n` +
+      `*Address:* ${customerDetails.address}, ${selectedArea.name}\n` +
+      `*Delivery Date:* ${chosenDeliveryDate.dayOfWeekName || ''} (${chosenDeliveryDate.formattedDate || ''})\n\n` +
+      `*Items:*\n${itemsText}\n\n` +
+      `*Total Paid:* ₹0 ✅ (Free Test Check)\n` +
+      `*Payment Ref:* ZERO_PAYMENT_TEST\n\n` +
+      `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
+    try {
+      window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
+    } catch (err) {
+      console.warn('Could not auto-open WhatsApp:', err);
+    }
+    await finalizeOrder({
+      ...buildOrder('Free Test Check (₹0)', 'ZERO_PAYMENT_TEST'),
+      totalAmount: 0,
+    });
+  };
+
+
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
     const itemsText = cart.map(i => `  * ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (Rs.${i.unitPrice * i.quantity})`).join('\n');
@@ -194,6 +220,15 @@ export const PaymentPage: React.FC = () => {
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-center gap-3">
             <CreditCard className="w-5 h-5" />
             <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleZeroPaymentTest}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-2xl border border-slate-200 text-xs flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+          >
+            <span>⚡ Test Order with ₹0 (Instant Free Check)</span>
           </button>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {['PhonePe', 'Google Pay', 'Paytm', 'UPI', 'Cards', 'Net Banking'].map(m => (
