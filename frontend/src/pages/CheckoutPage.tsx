@@ -33,7 +33,7 @@ export const CheckoutPage: React.FC = () => {
   } = useCart();
 
   const slotOptions = getDeliverySlotOptions();
-  const [selectedSlot, setSelectedSlot] = useState<'saturday' | 'sunday'>('saturday');
+  const [selectedSlot, setSelectedSlot] = useState<'slot1' | 'slot2'>('slot1');
   const deliveryDateInfo = slotOptions[selectedSlot];
 
   const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string; address?: string }>({});
@@ -243,45 +243,49 @@ export const CheckoutPage: React.FC = () => {
             <p className="text-xs text-slate-300 font-medium">Select your preferred delivery slot:</p>
 
             <div className="grid grid-cols-2 gap-3">
-              {/* Saturday Slot */}
+              {/* Primary Slot: 4 Days Gap */}
               <button
                 type="button"
-                onClick={() => setSelectedSlot('saturday')}
+                onClick={() => setSelectedSlot('slot1')}
                 className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                  selectedSlot === 'saturday'
+                  selectedSlot === 'slot1'
                     ? 'border-amber-400 bg-amber-400/10'
                     : 'border-white/10 bg-white/5 hover:border-white/30'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-black text-amber-300">Saturday</span>
-                  {selectedSlot === 'saturday' && (
+                  <span className="text-xs font-black text-amber-300">
+                    {slotOptions.slot1.dayOfWeekName} (4 Days)
+                  </span>
+                  {selectedSlot === 'slot1' && (
                     <CheckCircle className="w-4 h-4 text-amber-400" />
                   )}
                 </div>
                 <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
-                  {slotOptions.saturday.formattedDate.replace('Saturday, ', '')}
+                  {slotOptions.slot1.formattedDate.replace(`${slotOptions.slot1.dayOfWeekName}, `, '')}
                 </p>
               </button>
 
-              {/* Sunday Slot */}
+              {/* Secondary Slot: 5 Days Gap */}
               <button
                 type="button"
-                onClick={() => setSelectedSlot('sunday')}
+                onClick={() => setSelectedSlot('slot2')}
                 className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                  selectedSlot === 'sunday'
+                  selectedSlot === 'slot2'
                     ? 'border-emerald-400 bg-emerald-400/10'
                     : 'border-white/10 bg-white/5 hover:border-white/30'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-black text-emerald-300">Sunday</span>
-                  {selectedSlot === 'sunday' && (
+                  <span className="text-xs font-black text-emerald-300">
+                    {slotOptions.slot2.dayOfWeekName} (5 Days)
+                  </span>
+                  {selectedSlot === 'slot2' && (
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
                   )}
                 </div>
                 <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
-                  {slotOptions.sunday.formattedDate.replace('Sunday, ', '')}
+                  {slotOptions.slot2.formattedDate.replace(`${slotOptions.slot2.dayOfWeekName}, `, '')}
                 </p>
               </button>
             </div>
@@ -294,12 +298,12 @@ export const CheckoutPage: React.FC = () => {
             <div className="space-y-2 text-xs text-slate-300">
               <p className="font-bold text-white flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                Delivery Schedule:
+                Fresh Preparation Schedule:
               </p>
               <ul className="space-y-1 text-[11px] text-slate-300 pl-4 list-disc">
-                <li><strong className="text-emerald-300">Mon–Wed orders</strong> → Same weekend</li>
-                <li><strong className="text-amber-300">Thu–Sun orders</strong> → Next weekend</li>
-                <li>Fresh 4–5 day preparation gap</li>
+                <li><strong className="text-emerald-300">4-Day Delivery Gap</strong> → Prepared fresh on order</li>
+                <li>Estimated delivery on <strong className="text-amber-300">{slotOptions.slot1.dayOfWeekName}</strong> ({slotOptions.slot1.formattedDate})</li>
+                <li>Handcrafted in hygienic homemade batches</li>
               </ul>
             </div>
           </div>

@@ -169,15 +169,15 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile popup for cart — triggered via the cart button in navbar on mobile */}
       {cartPopupOpen && totalItemsCount > 0 && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setCartPopupOpen(false)}>
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+        <div className="md:hidden fixed inset-0 z-[100] flex flex-col justify-end" onClick={() => setCartPopupOpen(false)}>
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <div
-            className="relative bg-white rounded-t-3xl shadow-2xl w-full max-h-[80vh] flex flex-col animate-fade-up"
+            className="relative bg-white rounded-t-3xl shadow-2xl w-full max-h-[85vh] flex flex-col animate-fade-up overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-slate-200" />
+              <div className="w-10 h-1.5 rounded-full bg-slate-300" />
             </div>
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
@@ -187,7 +187,7 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
             {/* Items */}
-            <div className="overflow-y-auto divide-y divide-slate-50 flex-1">
+            <div className="overflow-y-auto overscroll-contain divide-y divide-slate-100 flex-1 max-h-[45vh] min-h-[120px]">
               {cart.map(item => (
                 <div key={item.cartItemId} className="flex items-center gap-3 px-5 py-3.5">
                   <img src={item.product.image} alt={item.product.name} className="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0" />
@@ -214,7 +214,7 @@ export const Navbar: React.FC = () => {
               ))}
             </div>
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-none">
+            <div className="px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t border-slate-100 bg-slate-50 shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500 font-semibold">Subtotal</span>
                 <span className="font-black text-slate-900 text-lg">₹{subtotal}</span>
@@ -243,7 +243,7 @@ export const Navbar: React.FC = () => {
             return (
               <button
                 key={id}
-                onClick={() => setActiveTab(id as any)}
+                onClick={() => { setCartPopupOpen(false); setActiveTab(id as any); }}
                 className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl min-w-[54px] transition-all duration-200 ${isActive
                     ? 'text-brand-600 bg-brand-50/80 font-bold'
                     : 'text-slate-500 hover:text-slate-800'

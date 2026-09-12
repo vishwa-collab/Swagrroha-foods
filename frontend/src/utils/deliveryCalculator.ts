@@ -1,23 +1,23 @@
 /**
  * Business Rule:
- * Order Mon-Wed -> Delivered on the upcoming Saturday (this weekend)
- * Order Thu-Sun -> Delivered on the following week's Saturday (next weekend)
- * Always maintains 4-5 days gap for bulk fresh homemade preparation!
- * 
- * Customers can also choose Sunday of the same weekend as alternate slot.
+ * Order date + 4 days gap for bulk fresh homemade preparation!
+ * (e.g. Order Monday -> Delivered on Friday)
+ * Secondary slot provides a 5-day option.
  */
 
 export interface CalculatedDeliveryDate {
-  formattedDate: string; // e.g. "Saturday, Aug 15, 2026"
-  dayOfWeekName: string; // "Saturday" or "Sunday"
+  formattedDate: string; // e.g. "Friday, Sep 18, 2026"
+  dayOfWeekName: string; // "Friday"
   isSameWeekend: boolean;
   orderDayName: string;
   daysUntil?: number;
 }
 
 export interface DeliverySlotOptions {
-  saturday: CalculatedDeliveryDate;
-  sunday: CalculatedDeliveryDate;
+  slot1: CalculatedDeliveryDate;
+  slot2: CalculatedDeliveryDate;
+  saturday: CalculatedDeliveryDate; // backward compatibility
+  sunday: CalculatedDeliveryDate;   // backward compatibility
 }
 
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -27,50 +27,42 @@ const dateFormatOptions: Intl.DateTimeFormatOptions = {
   year: 'numeric',
 };
 
-function buildDeliveryDate(date: Date, dayName: string, isSameWeekend: boolean, orderDayName: string, daysUntil: number): CalculatedDeliveryDate {
+function buildDeliveryDate(date: Date, orderDayName: string, daysUntil: number): CalculatedDeliveryDate {
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[date.getDay()];
   return {
     formattedDate: date.toLocaleDateString('en-IN', dateFormatOptions),
     dayOfWeekName: dayName,
-    isSameWeekend,
+    isSameWeekend: false,
     orderDayName,
     daysUntil,
   };
 }
 
 export function getDeliverySlotOptions(currentDate: Date = new Date()): DeliverySlotOptions {
-  const dayOfWeek = currentDate.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const orderDayName = dayNames[dayOfWeek];
+  const orderDayName = dayNames[currentDate.getDay()];
 
-  let daysUntilSaturday = 0;
+  // Primary slot: exactly 4 days gap (e.g. Order Monday -> Delivered Friday)
+  const slot1Date = new Date(currentDate);
+  slot1Date.setDate(currentDate.getDate() + 4);
 
-  if (dayOfWeek >= 1 && dayOfWeek <= 3) {
-    // Monday (1), Tuesday (2), Wednesday (3) -> Same weekend Saturday
-    daysUntilSaturday = 6 - dayOfWeek;
-  } else {
-    // Thursday (4), Friday (5), Saturday (6), Sunday (0) -> Next week's Saturday
-    if (dayOfWeek === 0) {
-      daysUntilSaturday = 6; // Sunday to next Saturday = 6 days
-    } else {
-      daysUntilSaturday = (6 - dayOfWeek) + 7;
-    }
-  }
+  // Secondary slot: 5 days gap
+  const slot2Date = new Date(currentDate);
+  slot2Date.setDate(currentDate.getDate() + 5);
 
-  const isSameWeekend = dayOfWeek >= 1 && dayOfWeek <= 3;
-
-  const satDate = new Date(currentDate);
-  satDate.setDate(currentDate.getDate() + daysUntilSaturday);
-
-  const sunDate = new Date(satDate);
-  sunDate.setDate(satDate.getDate() + 1);
+  const slot1 = buildDeliveryDate(slot1Date, orderDayName, 4);
+  const slot2 = buildDeliveryDate(slot2Date, orderDayName, 5);
 
   return {
-    saturday: buildDeliveryDate(satDate, 'Saturday', isSameWeekend, orderDayName, daysUntilSaturday),
-    sunday: buildDeliveryDate(sunDate, 'Sunday', isSameWeekend, orderDayName, daysUntilSaturday + 1),
+    slot1,
+    slot2,
+    saturday: slot1,
+    sunday: slot2,
   };
 }
 
 // Backward-compatible wrapper
 export function getNextDeliverySaturday(currentDate: Date = new Date()): CalculatedDeliveryDate {
-  return getDeliverySlotOptions(currentDate).saturday;
+  return getDeliverySlotOptions(currentDate).slot1;
 }
