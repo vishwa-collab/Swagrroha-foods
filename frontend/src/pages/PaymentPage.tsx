@@ -20,7 +20,9 @@ export const PaymentPage: React.FC = () => {
   const payeeName = 'Ganji Vishwateja';
   const upiNumber = '8125154114';
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
-  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
+  const [isTestRupee, setIsTestRupee] = useState(false);
+  const payableAmount = isTestRupee ? 1 : grandTotal;
+  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${payableAmount}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
   const copyToClipboard = (text: string) => {
@@ -36,7 +38,7 @@ export const PaymentPage: React.FC = () => {
 
   const buildOrder = (paymentMethod: string, utrNumber: string): PlacedOrder => ({
     orderId, customer: customerDetails, area: selectedArea, items: cart,
-    subtotal, deliveryCharge, totalAmount: grandTotal, deliveryDate: chosenDeliveryDate,
+    subtotal, deliveryCharge, totalAmount: payableAmount, deliveryDate: chosenDeliveryDate,
     status: 'PLACED', paymentStatus: 'VERIFIED_PAID', paymentMethod, utrNumber,
     paymentProof: '', createdAt: new Date().toISOString(),
   });
@@ -72,7 +74,7 @@ export const PaymentPage: React.FC = () => {
     try {
       const res = await fetch(`${API_BASE}/api/create-razorpay-order`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: grandTotal, orderId }),
+        body: JSON.stringify({ amount: payableAmount, orderId }),
       });
       const data = await res.json();
       if (!data.success || !data.order?.id) throw new Error(data.message || 'Server could not create payment order.');
@@ -85,7 +87,7 @@ export const PaymentPage: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rzp = new (window as any).Razorpay({
       key: activeKeyId, amount: rzpOrder.amount, currency: 'INR',
-      name: 'PJR Swagruha Foods', description: `Order ${orderId} — Rs.${grandTotal}`,
+      name: 'PJR Swagruha Foods', description: `Order ${orderId} — Rs.${payableAmount}`,
       order_id: rzpOrder.id,
       prefill: { name: customerDetails.name, contact: customerDetails.phone, email: customerDetails.email || '' },
       notes: { order_id: orderId, address: customerDetails.address },
@@ -109,7 +111,7 @@ export const PaymentPage: React.FC = () => {
             `*Address:* ${customerDetails.address}, ${selectedArea.name}\n` +
             `*Delivery Date:* ${chosenDeliveryDate.dayOfWeekName || ''} (${chosenDeliveryDate.formattedDate || ''})\n\n` +
             `*Items:*\n${itemsText}\n\n` +
-            `*Total Paid:* ₹${grandTotal} ✅ (Razorpay Online)\n` +
+            `*Total Paid:* ₹${payableAmount} ✅ (Razorpay Online)\n` +
             `*Payment ID:* ${response.razorpay_payment_id}\n\n` +
             `_Thank you for ordering with PJR Swagruha Foods!_ 🙏`;
           try {
@@ -134,7 +136,7 @@ export const PaymentPage: React.FC = () => {
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
     const itemsText = cart.map(i => `  * ${i.product.name} (${i.selectedWeightLabel}) x${i.quantity} (Rs.${i.unitPrice * i.quantity})`).join('\n');
-    const waText = `New Order - PJR Swagruha Foods\n\nOrder ID: ${orderId}\nCustomer: ${customerDetails.name}\nPhone: ${customerDetails.phone}\nEmail: ${customerDetails.email || 'N/A'}\nArea: ${selectedArea.name}\nAddress: ${customerDetails.address}\n\nItems:\n${itemsText}\n\nSubtotal: Rs.${subtotal} | Delivery: ${deliveryCharge === 0 ? 'FREE' : `Rs.${deliveryCharge}`} | Total: Rs.${grandTotal}\nDelivery: ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\nPayment: Direct UPI QR Self-Confirmed\nPlease verify Rs.${grandTotal} received before dispatching.`;
+    const waText = `New Order - PJR Swagruha Foods\n\nOrder ID: ${orderId}\nCustomer: ${customerDetails.name}\nPhone: ${customerDetails.phone}\nEmail: ${customerDetails.email || 'N/A'}\nArea: ${selectedArea.name}\nAddress: ${customerDetails.address}\n\nItems:\n${itemsText}\n\nSubtotal: Rs.${subtotal} | Delivery: ${deliveryCharge === 0 ? 'FREE' : `Rs.${deliveryCharge}`} | Total: Rs.${payableAmount}\nDelivery: ${chosenDeliveryDate.dayOfWeekName} (${chosenDeliveryDate.formattedDate})\nPayment: Direct UPI QR Self-Confirmed\nPlease verify Rs.${payableAmount} received before dispatching.`;
     window.open(`https://wa.me/918125154114?text=${encodeURIComponent(waText)}`, '_blank');
     await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT'));
   };
@@ -144,7 +146,7 @@ export const PaymentPage: React.FC = () => {
     if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { showToast('Scan the QR code on your phone.'); return; }
     if (app === 'any') { window.location.href = rawUpiUri; return; }
     const pkg = app === 'phonepe' ? 'com.phonepe.app' : app === 'gpay' ? 'com.google.android.apps.nbu.paisa.user' : 'net.one97.paytm';
-    window.location.href = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=${pkg};end`;
+    window.location.href = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${payableAmount}&cu=INR#Intent;scheme=upi;package=${pkg};end`;
   };
 
   if (cart.length === 0) { setActiveTab('cart'); return null; }
@@ -170,11 +172,26 @@ export const PaymentPage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 max-w-md mx-auto">
-        <div className="bg-slate-900 text-white p-6 rounded-2xl space-y-1 shadow-xl relative overflow-hidden text-center">
+        <div className="bg-slate-900 text-white p-6 rounded-2xl space-y-2 shadow-xl relative overflow-hidden text-center">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/20 rounded-full blur-xl pointer-events-none" />
           <span className="text-[11px] uppercase tracking-wider font-extrabold text-orange-400 block">Total Amount Payable</span>
-          <p className="text-5xl font-black text-white py-2">Rs.{grandTotal}</p>
+          <p className="text-5xl font-black text-white py-1">Rs.{payableAmount}</p>
           <p className="text-[11px] text-slate-400">Order #{orderId}</p>
+
+          <div className="pt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsTestRupee(!isTestRupee)}
+              className={`text-xs font-black px-4 py-2 rounded-xl border transition-all flex items-center gap-1.5 shadow-md ${
+                isTestRupee
+                  ? 'bg-emerald-500 text-white border-emerald-400 ring-2 ring-emerald-300 scale-105'
+                  : 'bg-white/15 text-amber-300 border-amber-400/40 hover:bg-white/25 hover:text-amber-200'
+              }`}
+            >
+              <span>🧪</span>
+              <span>{isTestRupee ? '✅ ₹1 Test Mode Active (Pay ₹1)' : '⚡ Switch to ₹1 Testing Mode'}</span>
+            </button>
+          </div>
         </div>
 
         {orderError && (
@@ -193,7 +210,7 @@ export const PaymentPage: React.FC = () => {
           <button type="button" disabled={isSubmitting} onClick={handleRazorpayPayment}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-center gap-3">
             <CreditCard className="w-5 h-5" />
-            <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
+            <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${payableAmount} Securely`}</span>
           </button>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {['PhonePe', 'Google Pay', 'Paytm', 'UPI', 'Cards', 'Net Banking'].map(m => (
@@ -219,10 +236,10 @@ export const PaymentPage: React.FC = () => {
           </summary>
           <div className="bg-gradient-to-b from-orange-50/60 to-amber-50/40 rounded-3xl border-2 border-orange-200/50 p-5 space-y-4 mt-2 text-center">
             <div className="inline-flex items-center gap-1.5 bg-orange-500 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-              <Zap className="w-3.5 h-3.5 fill-white" /><span>Rs.{grandTotal} Pre-filled in QR</span>
+              <Zap className="w-3.5 h-3.5 fill-white" /><span>Rs.{payableAmount} Pre-filled in QR</span>
             </div>
             <div className="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-slate-200">
-              <img src={dynamicQrCodeUrl} alt={`UPI QR for Rs.${grandTotal}`} className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl mx-auto" />
+              <img src={dynamicQrCodeUrl} alt={`UPI QR for Rs.${payableAmount}`} className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl mx-auto" />
             </div>
             <button type="button"
               onClick={async () => {
@@ -230,7 +247,7 @@ export const PaymentPage: React.FC = () => {
                   const blob = await (await fetch(dynamicQrCodeUrl)).blob();
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
-                  a.href = url; a.download = `PJR-QR-Rs${grandTotal}.png`;
+                  a.href = url; a.download = `PJR-QR-Rs${payableAmount}.png`;
                   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
                 } catch { window.open(dynamicQrCodeUrl, '_blank'); }
               }}
@@ -267,7 +284,7 @@ export const PaymentPage: React.FC = () => {
               <div className="bg-emerald-50 rounded-2xl p-4 border-2 border-emerald-300 space-y-3 text-left">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">After paying <strong>Rs.{grandTotal}</strong> via QR, tap below to confirm:</p>
+                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">After paying <strong>Rs.{payableAmount}</strong> via QR, tap below to confirm:</p>
                 </div>
                 <button type="button" disabled={isSubmitting} onClick={handleConfirmUpiOrder}
                   className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl shadow-md active:scale-95 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
