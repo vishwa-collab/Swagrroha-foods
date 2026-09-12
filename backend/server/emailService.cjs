@@ -130,7 +130,8 @@ function generateReceiptHtml(order, isDelivered) {
  * Sends an automatic order confirmation/placement receipt email to the customer.
  * Called immediately after a successful checkout / payment verification.
  */
-async function sendOrderReceiptEmail(order) {
+async function sendCustomerEmailReceipt(order) {
+const sendOrderReceiptEmail = sendCustomerEmailReceipt;
   const customerEmail = (
     (order.customer && order.customer.email) ||
     order.email ||
@@ -317,6 +318,7 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
 
 module.exports = {
   sendCustomerEmailReceipt,
+  sendOrderReceiptEmail: sendCustomerEmailReceipt,
   sendDeliveredReceiptEmail,
   generateReceiptHtml
 };
