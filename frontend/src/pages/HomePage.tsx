@@ -208,6 +208,15 @@ export const HomePage: React.FC = () => {
               price: '₹160 (5 Pcs Pootharekulu)',
               items: '5 varieties',
             },
+            {
+              label: 'Laddu',
+              sub: 'Motichoor, Besan & Palli Laddu',
+              tag: 'All Time Fav',
+              tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+              img: IMAGES.laddu,
+              price: 'from ₹95 (250g)',
+              items: '3 varieties',
+            },
           ].map(cat => (
             <button
               key={cat.label}
