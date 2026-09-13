@@ -240,15 +240,17 @@ export const PaymentPage: React.FC = () => {
             <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
           </button>
 
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleOneRupeeTest}
-            className="w-full bg-amber-50 hover:bg-amber-100 active:scale-95 text-amber-900 border-2 border-amber-300 font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-          >
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            <span>⚡ Test with ₹1 (Real Razorpay & WhatsApp Receipt Test)</span>
-          </button>
+          {typeof window !== 'undefined' && (window.location.search.toLowerCase().includes('test') || window.location.search.toLowerCase().includes('admin') || window.location.hash.toLowerCase().includes('admin')) && (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleOneRupeeTest}
+              className="w-full bg-amber-50 hover:bg-amber-100 active:scale-95 text-amber-900 border-2 border-amber-300 font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>⚡ Test with ₹1 (Owner Test Mode)</span>
+            </button>
+          )}
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {['PhonePe', 'Google Pay', 'Paytm', 'UPI', 'Cards', 'Net Banking'].map(m => (

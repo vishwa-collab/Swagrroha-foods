@@ -122,7 +122,8 @@ export const ConfirmationPage: React.FC = () => {
     const deliveryDateStr = currentOrder.deliveryDate?.formattedDate || '';
     doc.text(`Delivery: ${deliveryDay} (${deliveryDateStr})`, rightX + 4, y + 19);
 
-    doc.text(`Payment: Direct UPI (Confirmed)`, rightX + 4, y + 31);
+    const paymentMethodLabel = currentOrder.paymentMethod || 'Direct UPI (Confirmed)';
+    doc.text(`Payment: ${paymentMethodLabel}`, rightX + 4, y + 31);
 
     y += boxH + 8;
 
@@ -334,11 +335,11 @@ export const ConfirmationPage: React.FC = () => {
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
               <span className="font-extrabold text-emerald-950 block">Payment Confirmed ✅</span>
-              <span className="text-emerald-800 text-[11px]">Payment Mode: <strong>Direct UPI Payment</strong></span>
+              <span className="text-emerald-800 text-[11px]">Payment Mode: <strong>{currentOrder.paymentMethod || 'Online Payment'}</strong></span>
             </div>
           </div>
           <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-            Paid via UPI ✅
+            {currentOrder.paymentMethod ? 'Paid ✅' : 'Paid via UPI ✅'}
           </span>
         </div>
 
