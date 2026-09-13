@@ -8,16 +8,24 @@ export const Navbar: React.FC = () => {
   const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const [cartPopupOpen, setCartPopupOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
+  const mobileSheetRef = useRef<HTMLDivElement>(null);
 
   // Close popup when clicking outside
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        setCartPopupOpen(false);
-      }
+    const handleClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (popupRef.current && popupRef.current.contains(target)) return;
+      if (mobileSheetRef.current && mobileSheetRef.current.contains(target)) return;
+      setCartPopupOpen(false);
     };
-    if (cartPopupOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    if (cartPopupOpen) {
+      document.addEventListener('mousedown', handleClick);
+      document.addEventListener('touchstart', handleClick, { passive: true });
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
   }, [cartPopupOpen]);
 
   const navItems = [
@@ -105,9 +113,9 @@ export const Navbar: React.FC = () => {
                     )}
                   </button>
 
-                  {/* Mini Cart Popup */}
+                  {/* Mini Cart Popup - Desktop Only */}
                   {cartPopupOpen && totalItemsCount > 0 && (
-                    <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-up">
+                    <div className="hidden md:block absolute right-0 top-full mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-up">
                       {/* Header */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
                         <p className="font-black text-slate-900 text-sm">🛒 Cart ({totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'})</p>
@@ -151,8 +159,14 @@ export const Navbar: React.FC = () => {
                           <span className="font-black text-slate-900 text-sm">₹{subtotal}</span>
                         </div>
                         <button
-                          onClick={() => { setCartPopupOpen(false); setActiveTab('cart'); }}
-                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-black py-3 rounded-xl transition-all shadow-md active:scale-95"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setCartPopupOpen(false);
+                            setActiveTab('cart');
+                          }}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-black py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
                         >
                           Go to Cart <ArrowRight className="w-4 h-4" />
                         </button>
@@ -172,6 +186,7 @@ export const Navbar: React.FC = () => {
         <div className="md:hidden fixed inset-0 z-[100] flex flex-col justify-end" onClick={() => setCartPopupOpen(false)}>
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <div
+            ref={mobileSheetRef}
             className="relative bg-white rounded-t-3xl shadow-2xl w-full max-h-[85vh] flex flex-col animate-fade-up overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
@@ -220,8 +235,14 @@ export const Navbar: React.FC = () => {
                 <span className="font-black text-slate-900 text-lg">₹{subtotal}</span>
               </div>
               <button
-                onClick={() => { setCartPopupOpen(false); setActiveTab('cart'); }}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md active:scale-95"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCartPopupOpen(false);
+                  setActiveTab('cart');
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
               >
                 Go to Cart <ArrowRight className="w-4 h-4" />
               </button>
