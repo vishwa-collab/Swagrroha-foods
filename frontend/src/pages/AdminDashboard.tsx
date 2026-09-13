@@ -30,6 +30,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { getWhatsAppDeliveredReceiptLink, getWhatsAppPlacedReceiptLink } from '../utils/whatsappReceipt';
+import { playNewOrderChime } from '../utils/audioAlert';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 const POLL_INTERVAL_MS = 10000;
@@ -119,6 +120,26 @@ export const AdminDashboard: React.FC = () => {
   // Use a ref to control polling — we pause it during status updates
   const pollPausedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Track latest order time to play chime when new orders arrive
+  const latestOrderTimeRef = useRef<number>(0);
+
+  // Play sound when new order arrives
+  useEffect(() => {
+    if (orders.length === 0) return;
+    
+    // orders are sorted newest first (descending createdAt)
+    const newestTime = new Date(orders[0].createdAt || 0).getTime();
+
+    if (latestOrderTimeRef.current === 0) {
+      // Initial load
+      latestOrderTimeRef.current = newestTime;
+    } else if (newestTime > latestOrderTimeRef.current) {
+      // A newer order arrived!
+      playNewOrderChime();
+      latestOrderTimeRef.current = newestTime;
+    }
+  }, [orders]);
 
   const handleDeleteSingleOrder = async (orderId: string) => {
     setIsDeletingOrder(true);
