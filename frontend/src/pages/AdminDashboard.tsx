@@ -349,6 +349,14 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => playNewOrderChime()}
+            className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
+            title="Test the new order notification sound"
+          >
+            <span className="text-[14px]">🔊</span>
+            Test Chime
+          </button>
+          <button
             onClick={logoutAdmin}
             className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
           >
