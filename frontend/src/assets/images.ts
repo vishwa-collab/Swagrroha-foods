@@ -1,7 +1,7 @@
 // src/assets/images.ts
 // Direct imports so Vite hashes & bundles each image correctly.
 
-import logo from '../../assets/logo of pjr swagrooha foods.jpeg';
+import logo from '../../assets/logo.png';
 import murukulu from '../../assets/Murkullu hot item.png';
 import redSakinalu from '../../assets/Red Sakinnalu hot item.png';
 import yellowSakinalu from '../../assets/yellow sakinnalu hot item.png';
