@@ -24,7 +24,8 @@ export const HomePage: React.FC = () => {
   const heroSlides = [
     { img: IMAGES.murukulu, label: 'Crispy Murukulu', sub: 'మురుకులు' },
     { img: IMAGES.gujiya, label: 'Sweet Gujiya', sub: 'గుజియా' },
-    { img: IMAGES.chickenPickle, label: 'Chicken Pickle', sub: 'చికెన్ పచ్చడి' },
+    { img: IMAGES.potharekkalu, label: 'Special Pootharekulu', sub: 'పూతరేకులు' },
+    { img: IMAGES.yellowSakinalu, label: 'Classic Sakinalu', sub: 'సకినాలు' },
   ];
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed mb-8 max-w-md">
-              Fresh murukulu, sweets & pickles — made in small batches and delivered every weekend along the Hayathnagar → Ibrahimpatnam route.
+              Fresh traditional sweets, snacks & savouries — made in small batches and delivered every weekend along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
             {/* Quick stats */}
