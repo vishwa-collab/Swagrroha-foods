@@ -106,3 +106,53 @@ _Thank you for ordering with PJR Swagruha Foods! 🙏_`;
   const phone = rawPhone.startsWith('91') ? rawPhone : `91${rawPhone}`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
+
+/**
+ * Generates the full wa.me link to send the order receipt to the STORE OWNER (+91 8125154114).
+ */
+export function getWhatsAppOwnerReceiptLink(order: PlacedOrder): string {
+  const customerName = order.customer?.name || 'Valued Customer';
+  const customerPhone = order.customer?.phone || 'N/A';
+  const items = order.items || [];
+
+  const itemsList = items.map(item => {
+    const name = item.product?.name || (item as any).name || 'Item';
+    const weight = item.selectedWeightLabel ? ` (${item.selectedWeightLabel})` : '';
+    const qty = item.quantity || 1;
+    const price = item.unitPrice ? item.unitPrice * qty : 0;
+    return `  • ${name}${weight} x${qty} — ₹${price}`;
+  }).join('\n') || '  • Homemade Sweets / Savouries';
+
+  const utr = order.utrNumber || 'Online UPI Verified';
+  const address = order.customer?.address || 'Hyderabad';
+  const areaName = order.area?.name || 'Hyderabad Zone';
+  const deliveryDateStr = order.deliveryDate
+    ? (typeof order.deliveryDate === 'object' && (order.deliveryDate as any).formattedDate
+      ? `${(order.deliveryDate as any).dayOfWeekName || ''} (${(order.deliveryDate as any).formattedDate})`
+      : String(order.deliveryDate))
+    : 'Upcoming Saturday';
+
+  const text = `🚀 *New Order Alert — PJR Swagruha Foods*
+
+*Order ID:* ${order.orderId}
+*Customer:* ${customerName}
+*Phone:* +91 ${customerPhone}
+*Email:* ${order.customer?.email || 'N/A'}
+*Delivery Area:* ${areaName}
+*Address:* ${address}
+*Scheduled Delivery:* ${deliveryDateStr}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+📦 *Items Ordered:*
+${itemsList}
+━━━━━━━━━━━━━━━━━━━━━━━
+💵 Subtotal: ₹${order.subtotal || 0}
+🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
+💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
+💳 Payment Method: ${order.paymentMethod || 'Online UPI'} (Ref: ${utr})
+
+Track Order:
+https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}`;
+
+  return `https://wa.me/918125154114?text=${encodeURIComponent(text)}`;
+}

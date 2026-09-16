@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Download
 } from 'lucide-react';
+import { getWhatsAppPlacedReceiptLink, getWhatsAppOwnerReceiptLink } from '../utils/whatsappReceipt';
 
 export const ConfirmationPage: React.FC = () => {
   const { currentOrder, setActiveTab } = useCart();
@@ -252,6 +253,15 @@ export const ConfirmationPage: React.FC = () => {
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <a
+            href={getWhatsAppPlacedReceiptLink(currentOrder)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs px-5 py-3 rounded-2xl transition-all shadow-lg shadow-emerald-950/20 active:scale-95"
+          >
+            <MessageCircle className="w-4 h-4 fill-white" />
+            <span>Open WhatsApp Receipt</span>
+          </a>
           <button
             onClick={handleDownloadInvoice}
             className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold text-xs px-5 py-3 rounded-2xl transition-all shadow-sm active:scale-95"
@@ -259,6 +269,45 @@ export const ConfirmationPage: React.FC = () => {
             <Download className="w-4 h-4" />
             Download Invoice PDF
           </button>
+        </div>
+      </div>
+
+      {/* WhatsApp Receipt Action Center */}
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-2 border-[#25D366] rounded-3xl p-6 shadow-md space-y-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-12 h-12 bg-[#25D366] text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+            <MessageCircle className="w-6 h-6 fill-white" />
+          </div>
+          <div className="space-y-1 text-left">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-black text-slate-900">WhatsApp Order Receipt</h3>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-300">Instant</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Open your official order receipt on WhatsApp in 1 tap to save it or send it directly to our store manager for priority preparation.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <a
+            href={getWhatsAppPlacedReceiptLink(currentOrder)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-xs py-3.5 px-4 rounded-2xl shadow-md transition-all text-center"
+          >
+            <MessageCircle className="w-4 h-4 fill-white" />
+            <span>Open Receipt on My WhatsApp</span>
+          </a>
+          <a
+            href={getWhatsAppOwnerReceiptLink(currentOrder)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-xs py-3.5 px-4 rounded-2xl shadow-md transition-all text-center"
+          >
+            <MessageCircle className="w-4 h-4 text-[#25D366]" />
+            <span>Send to Store WhatsApp (+91 8125154114)</span>
+          </a>
         </div>
       </div>
 
@@ -288,13 +337,22 @@ export const ConfirmationPage: React.FC = () => {
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ Auto-Dispatched
+              Store WhatsApp
             </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Owner Alerted (+91 8125154114)</h3>
+            <h3 className="font-extrabold text-slate-900 text-sm">Owner WhatsApp (+91 8125154114)</h3>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Order receipt automatically sent to <strong>PJR Swagruha Foods</strong> for processing.
+              Order receipt ready to view or chat directly with <strong>PJR Swagruha Foods</strong>.
             </p>
           </div>
+          <a
+            href={getWhatsAppOwnerReceiptLink(currentOrder)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-3 py-1.5 rounded-xl transition-all"
+          >
+            <span>💬 Chat with Store on WhatsApp</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
 
       </div>
@@ -380,6 +438,15 @@ export const ConfirmationPage: React.FC = () => {
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <a
+            href={getWhatsAppPlacedReceiptLink(currentOrder)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all active:scale-95 shadow-md"
+          >
+            <MessageCircle className="w-4 h-4 fill-white" />
+            WhatsApp Receipt
+          </a>
           <button
             onClick={handleDownloadInvoice}
             className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all active:scale-95 shadow-md"

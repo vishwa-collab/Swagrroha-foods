@@ -172,81 +172,96 @@ async function sendWhatsAppNotification(order) {
 
     // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (provider === 'meta' || (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)) {
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
-      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
+      try {
+        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const token = process.env.WHATSAPP_ACCESS_TOKEN;
+        const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
-      const response = await axios.post(
-        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: cleanPhone,
-          type: 'text',
-          text: { body: message }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        const response = await axios.post(
+          `https://graph.facebook.com/v18.0/${phoneId}/messages`,
+          {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: cleanPhone,
+            type: 'text',
+            text: { body: message }
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
-      console.log('✅ WhatsApp sent via Meta Cloud API:', response.data);
-      return { success: true, provider: 'meta', data: response.data };
+        );
+        console.log('✅ WhatsApp sent via Meta Cloud API:', response.data);
+        return { success: true, provider: 'meta', data: response.data };
+      } catch (metaErr) {
+        console.warn('⚠️ Meta Cloud API failed (token expired or blocked):', metaErr.response ? JSON.stringify(metaErr.response.data) : metaErr.message);
+      }
     }
 
     // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
     if (provider === 'twilio' || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
-      const sid = process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.TWILIO_AUTH_TOKEN;
-      const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : '91' + targetPhone;
-      const toNumber = `whatsapp:+${cleanPhone}`;
+      try {
+        const sid = process.env.TWILIO_ACCOUNT_SID;
+        const authToken = process.env.TWILIO_AUTH_TOKEN;
+        const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+        const cleanPhone = targetPhone.startsWith('91') ? targetPhone : '91' + targetPhone;
+        const toNumber = `whatsapp:+${cleanPhone}`;
 
-      const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
-      const params = new URLSearchParams();
-      params.append('From', fromNumber);
-      params.append('To', toNumber);
-      params.append('Body', message);
+        const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
+        const params = new URLSearchParams();
+        params.append('From', fromNumber);
+        params.append('To', toNumber);
+        params.append('Body', message);
 
-      const response = await axios.post(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-        params.toString(),
-        {
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
+        const response = await axios.post(
+          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+          params.toString(),
+          {
+            headers: {
+              'Authorization': `Basic ${authHeader}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
           }
-        }
-      );
-      console.log('✅ WhatsApp sent via Twilio:', response.data.sid);
-      return { success: true, provider: 'twilio', data: response.data };
+        );
+        console.log('✅ WhatsApp sent via Twilio:', response.data.sid);
+        return { success: true, provider: 'twilio', data: response.data };
+      } catch (twilioErr) {
+        console.warn('⚠️ Twilio WhatsApp API failed:', twilioErr.message);
+      }
     }
 
     // ── 5. Custom Webhook Endpoint ───────────────────────────────────────
     if (process.env.WHATSAPP_WEBHOOK_URL) {
-      const response = await axios.post(process.env.WHATSAPP_WEBHOOK_URL, {
-        event: 'order_paid',
-        recipient: targetPhone,
-        message,
-        order
-      });
-      console.log('✅ WhatsApp notification posted to Webhook:', response.data);
-      return { success: true, provider: 'webhook', data: response.data };
+      try {
+        const response = await axios.post(process.env.WHATSAPP_WEBHOOK_URL, {
+          event: 'order_paid',
+          recipient: targetPhone,
+          message,
+          order
+        });
+        console.log('✅ WhatsApp notification posted to Webhook:', response.data);
+        return { success: true, provider: 'webhook', data: response.data };
+      } catch (webhookErr) {
+        console.warn('⚠️ WhatsApp webhook failed:', webhookErr.message);
+      }
     }
 
-    // ── No provider configured ───────────────────────────────────────────
-    console.log('⚠️  No WhatsApp API credentials detected.');
-    console.log('   To enable automatic admin WhatsApp alerts, set env vars on Render:');
-    console.log('   CALLMEBOT_PHONE  = 918125154114');
-    console.log('   CALLMEBOT_APIKEY = <your CallMeBot API key>');
-    console.log('   (Get your free API key at https://www.callmebot.com/blog/free-api-whatsapp-messages/)');
-    return { success: false, provider: 'none', message: 'No WhatsApp provider configured. Set CALLMEBOT_APIKEY on Render.' };
+    // ── Fallback: Always generate direct wa.me link ─────────────────────
+    const waLink = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+    console.log('ℹ️ Generated direct owner WhatsApp link:', waLink);
+    return {
+      success: false,
+      provider: 'none',
+      message: 'Automated WhatsApp API not connected or token expired. Use direct WhatsApp link.',
+      waLink
+    };
 
   } catch (err) {
     console.error('❌ Error sending WhatsApp notification:', err.response ? JSON.stringify(err.response.data) : err.message);
-    return { success: false, error: err.message };
+    const waLink = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+    return { success: false, error: err.message, waLink };
   }
 }
 
@@ -309,54 +324,62 @@ async function sendCustomerWhatsAppReceipt(order) {
 
     // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
     if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
+      try {
+        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const token = process.env.WHATSAPP_ACCESS_TOKEN;
 
-      const response = await axios.post(
-        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: customerPhone,
-          type: 'text',
-          text: { body: message }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        const response = await axios.post(
+          `https://graph.facebook.com/v18.0/${phoneId}/messages`,
+          {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: customerPhone,
+            type: 'text',
+            text: { body: message }
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
-      console.log('✅ Customer WhatsApp receipt sent via Meta Cloud API:', response.data);
-      return { success: true, provider: 'meta', data: response.data };
+        );
+        console.log('✅ Customer WhatsApp receipt sent via Meta Cloud API:', response.data);
+        return { success: true, provider: 'meta', data: response.data };
+      } catch (metaErr) {
+        console.warn('⚠️ Meta Cloud API failed for customer receipt (token expired or blocked):', metaErr.response ? JSON.stringify(metaErr.response.data) : metaErr.message);
+      }
     }
 
     // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      const sid = process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.TWILIO_AUTH_TOKEN;
-      const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const toNumber = `whatsapp:+${customerPhone}`;
+      try {
+        const sid = process.env.TWILIO_ACCOUNT_SID;
+        const authToken = process.env.TWILIO_AUTH_TOKEN;
+        const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+        const toNumber = `whatsapp:+${customerPhone}`;
 
-      const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
-      const params = new URLSearchParams();
-      params.append('From', fromNumber);
-      params.append('To', toNumber);
-      params.append('Body', message);
+        const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
+        const params = new URLSearchParams();
+        params.append('From', fromNumber);
+        params.append('To', toNumber);
+        params.append('Body', message);
 
-      const response = await axios.post(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-        params.toString(),
-        {
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
+        const response = await axios.post(
+          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+          params.toString(),
+          {
+            headers: {
+              'Authorization': `Basic ${authHeader}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
           }
-        }
-      );
-      console.log('✅ Customer WhatsApp receipt sent via Twilio:', response.data.sid);
-      return { success: true, provider: 'twilio', data: response.data };
+        );
+        console.log('✅ Customer WhatsApp receipt sent via Twilio:', response.data.sid);
+        return { success: true, provider: 'twilio', data: response.data };
+      } catch (twilioErr) {
+        console.warn('⚠️ Twilio WhatsApp API failed for customer receipt:', twilioErr.message);
+      }
     }
 
     // ── No API configured — log wa.me link as fallback info ─────────────
