@@ -11,8 +11,10 @@ import {
   ArrowRight, 
   AlertCircle,
   Calendar,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Sparkles
 } from 'lucide-react';
+import { PRODUCTS } from '../data/products';
 
 export const CartPage: React.FC = () => {
   const { 
@@ -27,7 +29,9 @@ export const CartPage: React.FC = () => {
     isFreeDelivery,
     grandTotal,
     setActiveTab,
-    deliveryDateInfo
+    deliveryDateInfo,
+    addToCart,
+    showToast
   } = useCart();
 
   if (cart.length === 0) {
@@ -42,13 +46,28 @@ export const CartPage: React.FC = () => {
             Explore our homemade Telangana sweets, snacks, and chicken/mutton pickles to add items to your cart.
           </p>
         </div>
-        <button
-          onClick={() => setActiveTab('products')}
-          className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-brand-500/20 transition-all text-sm"
-        >
-          <UtensilsCrossed className="w-4 h-4" />
-          Browse Food Menu
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => setActiveTab('products')}
+            className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-brand-500/20 transition-all text-sm"
+          >
+            <UtensilsCrossed className="w-4 h-4" />
+            Browse Food Menu
+          </button>
+          <button
+            onClick={() => {
+              if (PRODUCTS.length > 0) {
+                addToCart(PRODUCTS[0], PRODUCTS[0].weightOptions[0].label, 1);
+                showToast('Sample item added! Taking you to checkout...');
+                setActiveTab('checkout');
+              }
+            }}
+            className="inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold px-5 py-3 rounded-2xl transition-all text-sm shadow-sm"
+          >
+            <Sparkles className="w-4 h-4 text-amber-600" />
+            ⚡ Quick Test Checkout (1-Click Test)
+          </button>
+        </div>
       </div>
     );
   }
