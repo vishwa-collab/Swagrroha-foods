@@ -29,7 +29,9 @@ export const CheckoutPage: React.FC = () => {
     setActiveTab, 
     customerDetails, 
     setCustomerDetails,
-    showToast
+    showToast,
+    appliedCoupon,
+    couponDiscount,
   } = useCart();
 
   const slotOptions = getDeliverySlotOptions();
@@ -344,6 +346,14 @@ export const CheckoutPage: React.FC = () => {
                 <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
               )}
             </div>
+            {appliedCoupon && couponDiscount > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <span className="font-bold flex items-center gap-1">
+                  🎟️ Coupon ({appliedCoupon.code})
+                </span>
+                <span className="font-black">− ₹{couponDiscount}</span>
+              </div>
+            )}
             <div className="pt-2 border-t border-slate-100 flex justify-between font-black text-sm text-slate-900">
               <span>Final Total</span>
               <span className="text-brand-600">₹{grandTotal}</span>

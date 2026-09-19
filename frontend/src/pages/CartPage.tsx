@@ -12,7 +12,11 @@ import {
   AlertCircle,
   Calendar,
   UtensilsCrossed,
-  Sparkles
+  Sparkles,
+  Tag,
+  X,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { PRODUCTS } from '../data/products';
 
@@ -31,7 +35,15 @@ export const CartPage: React.FC = () => {
     setActiveTab,
     deliveryDateInfo,
     addToCart,
-    showToast
+    showToast,
+    appliedCoupon,
+    couponDiscount,
+    couponInput,
+    setCouponInput,
+    couponError,
+    couponLoading,
+    applyCoupon,
+    removeCoupon,
   } = useCart();
 
   if (cart.length === 0) {
@@ -271,6 +283,67 @@ export const CartPage: React.FC = () => {
                   <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
                 )}
               </div>
+
+              {/* Coupon Input / Applied Badge */}
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-xs font-black text-emerald-800 font-mono">{appliedCoupon.code}</p>
+                      <p className="text-[10px] text-emerald-700 font-semibold">Saving ₹{appliedCoupon.discountAmount}!</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={removeCoupon}
+                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Remove coupon"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Enter coupon code"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-mono tracking-widest"
+                      />
+                    </div>
+                    <button
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shrink-0"
+                    >
+                      {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      {couponError}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-400">🎟️ Complete 1 order to earn a coupon code!</p>
+                </div>
+              )}
+
+              {/* Coupon Discount Row */}
+              {appliedCoupon && (
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                    <Tag className="w-3.5 h-3.5" />
+                    Coupon Discount ({appliedCoupon.code})
+                  </span>
+                  <span className="font-black text-emerald-600">− ₹{couponDiscount}</span>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
                 <div>

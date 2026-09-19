@@ -9,7 +9,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha
 const RAZORPAY_KEY_ID = (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || 'rzp_live_Tb0kqqroUwypkp';
 
 export const PaymentPage: React.FC = () => {
-  const { cart, selectedArea, subtotal, deliveryCharge, grandTotal, setActiveTab, customerDetails, deliveryDateInfo, addOrder, clearCart, showToast } = useCart();
+  const { cart, selectedArea, subtotal, deliveryCharge, grandTotal, setActiveTab, customerDetails, deliveryDateInfo, addOrder, clearCart, showToast, appliedCoupon, couponDiscount } = useCart();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chosenDeliveryDate = (customerDetails as any)._deliveryDate || deliveryDateInfo;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +38,10 @@ export const PaymentPage: React.FC = () => {
 
   const buildOrder = (paymentMethod: string, utrNumber: string, actualPaidAmount?: number): PlacedOrder => ({
     orderId, customer: customerDetails, area: selectedArea, items: cart,
-    subtotal, deliveryCharge, totalAmount: actualPaidAmount !== undefined ? actualPaidAmount : effectiveAmount, deliveryDate: chosenDeliveryDate,
+    subtotal, deliveryCharge,
+    couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+    couponDiscount: couponDiscount || 0,
+    totalAmount: actualPaidAmount !== undefined ? actualPaidAmount : effectiveAmount, deliveryDate: chosenDeliveryDate,
     status: 'PLACED', paymentStatus: 'VERIFIED_PAID', paymentMethod, utrNumber,
     paymentProof: '', createdAt: new Date().toISOString(),
   });
@@ -204,6 +207,11 @@ export const PaymentPage: React.FC = () => {
           {isOneRupeeMode && (
             <p className="text-xs font-bold text-amber-400">
               (Original Cart: Rs.{grandTotal} • Test charge: ₹1)
+            </p>
+          )}
+          {!isOneRupeeMode && appliedCoupon && couponDiscount > 0 && (
+            <p className="text-xs font-bold text-emerald-400">
+              🎟️ {appliedCoupon.code}: 10% off − ₹{couponDiscount} saved!
             </p>
           )}
           <p className="text-[11px] text-slate-400">Order #{orderId}</p>

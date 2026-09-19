@@ -31,6 +31,8 @@ export interface PlacedOrder {
   items: CartItem[];
   subtotal: number;
   deliveryCharge: number;
+  couponCode?: string;
+  couponDiscount?: number;
   totalAmount: number;
   deliveryDate: CalculatedDeliveryDate;
   status: OrderStageStatus;
@@ -62,6 +64,16 @@ interface CartContextType {
   originalDeliveryCharge: number;
   isFreeDelivery: boolean;
   grandTotal: number;
+
+  // Coupon
+  appliedCoupon: { code: string; discountAmount: number; discountType: string; discountValue: number } | null;
+  couponDiscount: number;
+  couponInput: string;
+  setCouponInput: (v: string) => void;
+  couponError: string;
+  couponLoading: boolean;
+  applyCoupon: () => Promise<void>;
+  removeCoupon: () => void;
   
   activeTab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin';
   setActiveTab: (tab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin') => void;
@@ -163,6 +175,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCartToast, setIsCartToast] = useState<boolean>(false);
 
+  // Coupon state
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number; discountType: string; discountValue: number } | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+
   // Owner Auth State
   const [adminToken, setAdminToken] = useState<string | null>(() => localStorage.getItem('swagrooha_admin_token'));
   const [adminEmail, setAdminEmail] = useState<string | null>(() => localStorage.getItem('swagrooha_admin_email'));
@@ -258,6 +277,52 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = () => {
     setCart([]);
+    // Also remove coupon when cart is cleared
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
+
+  // Coupon functions
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) {
+      setCouponError('Please enter a coupon code.');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/coupons/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim(), orderTotal: subtotal + deliveryCharge }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAppliedCoupon({
+          code: data.code,
+          discountAmount: data.discountAmount,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+        });
+        setCouponError('');
+        showToast(`🎟️ Coupon applied! You save ₹${data.discountAmount}`);
+      } else {
+        setCouponError(data.error || 'Invalid coupon code.');
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponError('Could not validate coupon. Please try again.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+    showToast('Coupon removed.');
   };
 
   // UTR Duplicate Check (Prevents fraud & duplicate submissions)
@@ -614,7 +679,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isFreeDelivery = subtotal >= 500;
   const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
   const deliveryCharge = cart.length > 0 ? (isFreeDelivery ? 0 : selectedArea.charge) : 0;
-  const grandTotal = subtotal + deliveryCharge;
+  const grandTotal = Math.max(0, subtotal + deliveryCharge - couponDiscount);
 
   return (
     <CartContext.Provider value={{
@@ -630,6 +695,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       originalDeliveryCharge,
       isFreeDelivery,
       grandTotal,
+      appliedCoupon,
+      couponDiscount,
+      couponInput,
+      setCouponInput,
+      couponError,
+      couponLoading,
+      applyCoupon,
+      removeCoupon,
       activeTab,
       setActiveTab,
       customerDetails,

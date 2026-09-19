@@ -101,12 +101,18 @@ function normalizeOrder(raw: any): PlacedOrder {
 export const AdminDashboard: React.FC = () => {
   const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast, deleteOrder } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
-  const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics'>('new');
+  const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics' | 'coupons'>('new');
   const [loading, setLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   const [orderToDelete, setOrderToDelete] = useState<PlacedOrder | null>(null);
   const [isDeletingOrder, setIsDeletingOrder] = useState(false);
-  
+
+  // Coupon state
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [couponForm, setCouponForm] = useState({ code: '', discountValue: '10', discountType: 'percent', minOrderValue: '0', expiresAt: '' });
+  const [couponFormLoading, setCouponFormLoading] = useState(false);
+
   // Track which orders are currently being updated so we can show loading
   const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
 
@@ -403,6 +409,30 @@ export const AdminDashboard: React.FC = () => {
           }`}
         >
           <span>📊 Analytics &amp; Reviews</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTabSection('coupons');
+            // Fetch coupons when tab is opened
+            setCouponsLoading(true);
+            fetch(`${API_BASE}/api/coupons`)
+              .then(r => r.json())
+              .then(data => { setCoupons(Array.isArray(data) ? data : []); setCouponsLoading(false); })
+              .catch(() => setCouponsLoading(false));
+          }}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
+            activeTabSection === 'coupons'
+              ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <span>🎟️ Coupons</span>
+          {coupons.filter(c => !c.isUsed && c.isActive).length > 0 && (
+            <span className="bg-amber-400 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black">
+              {coupons.filter(c => !c.isUsed && c.isActive).length}
+            </span>
+          )}
         </button>
 
       </div>
@@ -1179,6 +1209,217 @@ export const AdminDashboard: React.FC = () => {
                 <span>{isDeletingOrder ? 'Removing…' : 'Yes, Wrong Order'}</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── COUPONS SECTION ── */}
+      {activeTabSection === 'coupons' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <span>🎟️ Loyalty Coupons</span>
+              <span className="text-xs bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full">
+                Auto-generated after 1 delivered order
+              </span>
+            </h2>
+            <button
+              onClick={() => {
+                setCouponsLoading(true);
+                fetch(`${API_BASE}/api/coupons`)
+                  .then(r => r.json())
+                  .then(data => { setCoupons(Array.isArray(data) ? data : []); setCouponsLoading(false); })
+                  .catch(() => setCouponsLoading(false));
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${couponsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          {/* How it works banner */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-1">
+            <p className="font-extrabold text-sm text-amber-950">🔄 How Loyalty Coupons Work</p>
+            <p>When an order is marked as <strong>DELIVERED</strong>, the system automatically:</p>
+            <ol className="list-decimal pl-4 space-y-0.5 font-semibold">
+              <li>Generates a unique coupon code (e.g., <code className="font-mono bg-amber-100 px-1 rounded">THANK4114ABCD</code>)</li>
+              <li>Sends it to the customer via email with instructions</li>
+              <li>Gives <strong>10% off</strong> their next order — single use only</li>
+              <li>Expires in 60 days</li>
+            </ol>
+          </div>
+
+          {/* Manual Coupon Creation Form */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+            <h3 className="font-extrabold text-slate-900 text-sm border-b border-slate-100 pb-2">➕ Create Manual Coupon</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">Coupon Code *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SPECIAL20"
+                  value={couponForm.code}
+                  onChange={e => setCouponForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">Discount Type</label>
+                <select
+                  value={couponForm.discountType}
+                  onChange={e => setCouponForm(p => ({ ...p, discountType: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-500"
+                >
+                  <option value="percent">Percent (%)</option>
+                  <option value="flat">Flat (₹)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">Discount Value *</label>
+                <input
+                  type="number"
+                  placeholder="10"
+                  value={couponForm.discountValue}
+                  onChange={e => setCouponForm(p => ({ ...p, discountValue: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">Min Order (₹)</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={couponForm.minOrderValue}
+                  onChange={e => setCouponForm(p => ({ ...p, minOrderValue: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">Expiry Date</label>
+                <input
+                  type="date"
+                  value={couponForm.expiresAt}
+                  onChange={e => setCouponForm(p => ({ ...p, expiresAt: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  disabled={couponFormLoading || !couponForm.code.trim() || !couponForm.discountValue}
+                  onClick={async () => {
+                    setCouponFormLoading(true);
+                    try {
+                      const res = await fetch(`${API_BASE}/api/coupons`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(couponForm),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.success) {
+                        showToast(`🎟️ Coupon ${couponForm.code} created!`);
+                        setCouponForm({ code: '', discountValue: '10', discountType: 'percent', minOrderValue: '0', expiresAt: '' });
+                        // Refresh list
+                        const r2 = await fetch(`${API_BASE}/api/coupons`);
+                        setCoupons(await r2.json());
+                      } else {
+                        showToast(`❌ ${data.error || 'Failed to create coupon'}`);
+                      }
+                    } catch { showToast('❌ Network error'); }
+                    setCouponFormLoading(false);
+                  }}
+                  className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-black text-xs py-2.5 px-4 rounded-xl transition-all"
+                >
+                  {couponFormLoading ? '...' : '+ Create'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Coupons List */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-3">
+            <h3 className="font-extrabold text-slate-900 text-sm border-b border-slate-100 pb-2">
+              All Coupons ({coupons.length})
+            </h3>
+            {couponsLoading ? (
+              <div className="text-center py-8 text-slate-400">
+                <RefreshCw className="w-8 h-8 mx-auto animate-spin text-amber-400 mb-2" />
+                <p className="text-xs font-semibold">Loading coupons...</p>
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className="text-center py-10 space-y-2">
+                <p className="text-3xl">🎟️</p>
+                <p className="text-xs text-slate-500 font-semibold">No coupons yet. Mark an order as DELIVERED to auto-generate the first loyalty coupon!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {coupons.map((c: any, i: number) => (
+                  <div key={c.code || i} className={`flex items-center justify-between p-3 rounded-2xl border text-xs ${
+                    c.isUsed ? 'bg-slate-50 border-slate-100 opacity-60' :
+                    !c.isActive ? 'bg-red-50 border-red-100' :
+                    'bg-emerald-50 border-emerald-100'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-black font-mono text-sm text-slate-900 tracking-widest">{c.code}</p>
+                        <p className="text-slate-500 font-semibold">
+                          {c.discountType === 'percent' ? `${c.discountValue}% off` : `₹${c.discountValue} off`}
+                          {c.minOrderValue > 0 ? ` • Min ₹${c.minOrderValue}` : ''}
+                          {c.expiresAt ? ` • Exp: ${new Date(c.expiresAt).toLocaleDateString('en-IN')}` : ''}
+                        </p>
+                        {c.createdForPhone && (
+                          <p className="text-slate-400 font-medium">For: {c.createdForPhone} {c.createdForOrderId ? `(Order #${c.createdForOrderId})` : ''}</p>
+                        )}
+                        {c.isUsed && c.usedInOrderId && (
+                          <p className="text-slate-400 font-medium">Used in Order #{c.usedInOrderId}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Status badge */}
+                      <span className={`font-black px-2.5 py-1 rounded-full ${
+                        c.isUsed ? 'bg-slate-200 text-slate-600' :
+                        !c.isActive ? 'bg-red-100 text-red-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {c.isUsed ? '✓ Used' : c.isActive ? '● Active' : '○ Disabled'}
+                      </span>
+                      {/* Toggle enable/disable */}
+                      {!c.isUsed && (
+                        <button
+                          onClick={async () => {
+                            await fetch(`${API_BASE}/api/coupons/${c.code}/toggle`, { method: 'PUT' });
+                            const r2 = await fetch(`${API_BASE}/api/coupons`);
+                            setCoupons(await r2.json());
+                            showToast(`Coupon ${c.code} ${c.isActive ? 'disabled' : 'enabled'}.`);
+                          }}
+                          className={`px-2.5 py-1 rounded-xl font-bold transition-all ${
+                            c.isActive
+                              ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                              : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                          }`}
+                        >
+                          {c.isActive ? 'Disable' : 'Enable'}
+                        </button>
+                      )}
+                      {/* Delete */}
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Delete coupon ${c.code}?`)) return;
+                          await fetch(`${API_BASE}/api/coupons/${c.code}`, { method: 'DELETE' });
+                          const r2 = await fetch(`${API_BASE}/api/coupons`);
+                          setCoupons(await r2.json());
+                          showToast(`🗑️ Coupon ${c.code} deleted.`);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                        title="Delete coupon"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

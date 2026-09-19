@@ -59,6 +59,8 @@ const orderSchema = new mongoose.Schema({
   items: [mongoose.Schema.Types.Mixed],
   subtotal: Number,
   deliveryCharge: Number,
+  couponCode: String,
+  couponDiscount: { type: Number, default: 0 },
   totalAmount: Number,
   paymentMethod: String,
   paymentProof: String,
@@ -79,6 +81,167 @@ const orderSchema = new mongoose.Schema({
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+
+// ── Coupon Schema & Model
+const couponSchema = new mongoose.Schema({
+  code: { type: String, required: true, unique: true, uppercase: true, index: true },
+  discountType: { type: String, enum: ['flat', 'percent'], default: 'flat' },
+  discountValue: { type: Number, required: true, default: 50 },
+  minOrderValue: { type: Number, default: 0 },
+  isActive: { type: Boolean, default: true },
+  isUsed: { type: Boolean, default: false },
+  usedInOrderId: String,
+  usedAt: Date,
+  // Loyalty coupon: tied to customer after 1 completed order
+  createdForPhone: String,
+  createdForEmail: String,
+  createdForOrderId: String,
+  expiresAt: Date,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
+
+// In-memory coupon fallback
+let coupons = [];
+
+// ── Loyalty coupon reward settings
+const LOYALTY_COUPON_DISCOUNT_VALUE = 10;  // 10% off
+const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
+const LOYALTY_COUPON_MIN_ORDER = 0;        // no minimum order required
+const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
+
+// Generate a unique coupon code
+function generateCouponCode(phone) {
+  const suffix = phone ? phone.slice(-4) : Math.floor(1000 + Math.random() * 9000);
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `THANK${suffix}${rand}`;
+}
+
+// Auto-generate and send loyalty coupon when order is DELIVERED
+async function generateLoyaltyCoupon(orderObj) {
+  try {
+    const customerPhone = (orderObj.customer?.phone || orderObj.phone || '').trim();
+    const customerEmail = (orderObj.customer?.email || '').trim();
+    const customerName  = (orderObj.customer?.name || 'Valued Customer').trim();
+
+    if (!customerPhone && !customerEmail) {
+      console.log('\u26a0\ufe0f No phone/email on order, skipping loyalty coupon');
+      return;
+    }
+
+    // \ud83d\udee1\ufe0f Duplicate guard: each delivered order generates exactly ONE coupon (handles admin re-clicking DELIVERED)
+    if (orderObj.orderId) {
+      const alreadyExists = isMongoConnected
+        ? await Coupon.findOne({ createdForOrderId: orderObj.orderId }).lean()
+        : coupons.find(c => c.createdForOrderId === orderObj.orderId);
+      if (alreadyExists) {
+        console.log(`\u26a0\ufe0f Coupon already generated for order ${orderObj.orderId} — skipping.`);
+        return;
+      }
+    }
+
+    const code = generateCouponCode(customerPhone);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + LOYALTY_COUPON_VALIDITY_DAYS);
+
+    const newCoupon = {
+      code,
+      discountType: LOYALTY_COUPON_DISCOUNT_TYPE,
+      discountValue: LOYALTY_COUPON_DISCOUNT_VALUE,
+      minOrderValue: LOYALTY_COUPON_MIN_ORDER,
+      isActive: true,
+      isUsed: false,
+      createdForPhone: customerPhone,
+      createdForEmail: customerEmail,
+      createdForOrderId: orderObj.orderId,
+      expiresAt,
+      createdAt: new Date(),
+    };
+
+    if (isMongoConnected) {
+      await Coupon.create(newCoupon);
+    } else {
+      coupons.unshift(newCoupon);
+    }
+
+    console.log(`🎟️ Loyalty coupon ${code} generated for order ${orderObj.orderId}`);
+
+    // Send coupon email to customer
+    if (customerEmail) {
+      await sendCouponRewardEmail({
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+        couponCode: code,
+        discountValue: LOYALTY_COUPON_DISCOUNT_VALUE,
+        discountType: LOYALTY_COUPON_DISCOUNT_TYPE,
+        minOrderValue: LOYALTY_COUPON_MIN_ORDER,
+        expiresAt,
+        orderId: orderObj.orderId,
+      });
+    }
+  } catch (e) {
+    console.error('❌ Error generating loyalty coupon:', e.message);
+  }
+}
+
+// Send coupon reward email
+async function sendCouponRewardEmail({ name, email, phone, couponCode, discountValue, discountType, minOrderValue, expiresAt, orderId }) {
+  try {
+    const nodemailer = require('nodemailer');
+    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const gmailPass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
+    if (!gmailUser || !gmailPass) {
+      console.log('⚠️ Email not configured, skipping coupon email');
+      return;
+    }
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
+    });
+    const discountText = discountType === 'percent' ? `${discountValue}%` : `₹${discountValue}`;
+    const expiry = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '60 days';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Your Reward Coupon - PJR Swagruha Foods</title></head>
+<body style="margin:0;padding:20px;background:#fef3c7;font-family:Segoe UI,Arial,sans-serif;">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.10);border:2px solid #f59e0b;">
+  <div style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:32px 24px;text-align:center;">
+    <div style="display:inline-block;background:#d97706;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:10px;">Loyalty Reward</div>
+    <h1 style="margin:0;font-size:28px;font-weight:900;color:#f59e0b;">PJR Swagruha Foods</h1>
+    <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Your Thank You Gift 🎁</p>
+  </div>
+  <div style="padding:30px 24px;text-align:center;">
+    <div style="font-size:50px;margin-bottom:12px;">🎟️</div>
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#1e293b;">You Earned a Free Coupon!</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:#475569;">Hi <strong>${name}</strong>, thank you for completing Order <strong>#${orderId}</strong>! As a token of our gratitude, enjoy <strong>${discountText} off</strong> on your next order.</p>
+    <div style="background:#fef3c7;border:2px dashed #f59e0b;border-radius:16px;padding:24px 20px;margin:0 auto 24px;max-width:320px;">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;color:#92400e;letter-spacing:1px;">Your Coupon Code</p>
+      <p style="margin:0 0 8px;font-size:32px;font-weight:900;color:#b45309;letter-spacing:3px;font-family:monospace;">${couponCode}</p>
+      <p style="margin:0;font-size:13px;color:#78350f;font-weight:600;">${discountText} off • Min. order ₹${minOrderValue}</p>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;text-align:left;margin-bottom:20px;">
+      <p style="margin:0 0 6px;font-size:13px;font-weight:800;color:#166534;">How to use:</p>
+      <p style="margin:0;font-size:13px;color:#15803d;line-height:1.6;">1. Visit our website and add items to cart<br>2. On the Cart page, enter code <strong style="font-family:monospace;">${couponCode}</strong><br>3. Click "Apply" to see your discount<br>4. Valid until <strong>${expiry}</strong></p>
+    </div>
+    <p style="margin:0;font-size:12px;color:#94a3b8;">Single use only. Cannot be combined with other offers.</p>
+  </div>
+  <div style="background:#1e293b;padding:16px 24px;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#64748b;">PJR Swagruha Foods — Authentic Telangana Homemade Delicacies</p>
+  </div>
+</div>
+</body></html>`;
+
+    await transporter.sendMail({
+      from: `"PJR Swagruha Foods" <${gmailUser}>`,
+      to: email,
+      subject: `🎟️ Your Reward Coupon: ${couponCode} — ${discountText} off your next order!`,
+      html,
+    });
+    console.log(`✅ Coupon reward email sent to ${email} with code ${couponCode}`);
+  } catch (e) {
+    console.error('❌ Coupon email send failed:', e.message);
+  }
+}
 
 const dns = require('dns');
 try {
@@ -362,6 +525,25 @@ app.post('/api/orders', async (req, res) => {
 
     await persistOrder(finalOrder);
 
+    // If a coupon code was used, mark it as used (single-use enforcement)
+    if (finalOrder.couponCode) {
+      const cleanCode = finalOrder.couponCode.trim().toUpperCase();
+      if (isMongoConnected) {
+        try {
+          await Coupon.findOneAndUpdate(
+            { code: cleanCode },
+            { $set: { isUsed: true, usedInOrderId: finalOrder.orderId, usedAt: new Date() } }
+          );
+          console.log(`✅ Coupon ${cleanCode} marked as used for order ${finalOrder.orderId}`);
+        } catch (e) {
+          console.error('❌ Failed to mark coupon as used:', e.message);
+        }
+      } else {
+        const c = coupons.find(c => c.code === cleanCode);
+        if (c) { c.isUsed = true; c.usedInOrderId = finalOrder.orderId; c.usedAt = new Date(); }
+      }
+    }
+
     // Fire all three automatically in parallel:
     //  1. WhatsApp notification to OWNER (via CallMeBot)
     //  2. WhatsApp receipt to CUSTOMER (via UltraMsg / Meta / Twilio)
@@ -484,6 +666,11 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
       }
       Object.assign(orderObj, emailFields);
     }
+
+    // 🎟️ Auto-generate a loyalty coupon reward for this customer
+    generateLoyaltyCoupon(orderObj).catch(err => {
+      console.warn('⚠️ Loyalty coupon generation error:', err.message);
+    });
   }
 
   if (isMongoConnected) {
@@ -762,6 +949,129 @@ app.get('/api/admin/orders', async (req, res) => {
   }
   res.json(orders);
 });
+
+// ── COUPON ROUTES ──────────────────────────────────────────────
+
+// POST /api/coupons/validate — Customer validates a coupon code against their order total
+app.post('/api/coupons/validate', async (req, res) => {
+  try {
+    const { code, orderTotal } = req.body;
+    if (!code) return res.status(400).json({ success: false, error: 'Coupon code is required.' });
+
+    const cleanCode = code.trim().toUpperCase();
+    let coupon = null;
+
+    if (isMongoConnected) {
+      coupon = await Coupon.findOne({ code: cleanCode }).lean();
+    } else {
+      coupon = coupons.find(c => c.code === cleanCode) || null;
+    }
+
+    if (!coupon) return res.status(404).json({ success: false, error: 'Invalid coupon code. Please check and try again.' });
+    if (!coupon.isActive) return res.status(400).json({ success: false, error: 'This coupon is no longer active.' });
+    if (coupon.isUsed) return res.status(400).json({ success: false, error: 'This coupon has already been used.' });
+    if (coupon.expiresAt && new Date() > new Date(coupon.expiresAt)) {
+      return res.status(400).json({ success: false, error: 'This coupon has expired.' });
+    }
+    if (coupon.minOrderValue && orderTotal < coupon.minOrderValue) {
+      return res.status(400).json({ success: false, error: `This coupon requires a minimum order of ₹${coupon.minOrderValue}.` });
+    }
+
+    const discountAmount = coupon.discountType === 'percent'
+      ? Math.round((orderTotal * coupon.discountValue) / 100)
+      : Math.min(coupon.discountValue, orderTotal);
+
+    return res.json({
+      success: true,
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      discountAmount,
+      message: `Coupon applied! You save ₹${discountAmount}.`,
+    });
+  } catch (e) {
+    console.error('Coupon validate error:', e);
+    return res.status(500).json({ success: false, error: 'Server error validating coupon.' });
+  }
+});
+
+// GET /api/coupons — Admin: list all coupons
+app.get('/api/coupons', async (req, res) => {
+  if (isMongoConnected) {
+    try {
+      const all = await Coupon.find().sort({ createdAt: -1 }).lean();
+      return res.json(all);
+    } catch (e) {
+      console.error('Error fetching coupons:', e);
+    }
+  }
+  return res.json(coupons);
+});
+
+// POST /api/coupons — Admin: manually create a coupon
+app.post('/api/coupons', async (req, res) => {
+  try {
+    const { code, discountType, discountValue, minOrderValue, expiresAt } = req.body;
+    if (!code || !discountValue) return res.status(400).json({ error: 'code and discountValue are required.' });
+    const cleanCode = code.trim().toUpperCase();
+    const newCoupon = {
+      code: cleanCode,
+      discountType: discountType || 'flat',
+      discountValue: Number(discountValue),
+      minOrderValue: Number(minOrderValue) || 0,
+      isActive: true,
+      isUsed: false,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      createdAt: new Date(),
+    };
+    if (isMongoConnected) {
+      const created = await Coupon.create(newCoupon);
+      return res.status(201).json({ success: true, coupon: created });
+    }
+    coupons.unshift(newCoupon);
+    return res.status(201).json({ success: true, coupon: newCoupon });
+  } catch (e) {
+    console.error('Error creating coupon:', e);
+    return res.status(500).json({ error: 'Failed to create coupon: ' + e.message });
+  }
+});
+
+// PUT /api/coupons/:code/toggle — Admin: enable / disable coupon
+app.put('/api/coupons/:code/toggle', async (req, res) => {
+  try {
+    const cleanCode = req.params.code.trim().toUpperCase();
+    if (isMongoConnected) {
+      const coupon = await Coupon.findOne({ code: cleanCode });
+      if (!coupon) return res.status(404).json({ error: 'Coupon not found.' });
+      coupon.isActive = !coupon.isActive;
+      await coupon.save();
+      return res.json({ success: true, isActive: coupon.isActive });
+    }
+    const c = coupons.find(c => c.code === cleanCode);
+    if (!c) return res.status(404).json({ error: 'Coupon not found.' });
+    c.isActive = !c.isActive;
+    return res.json({ success: true, isActive: c.isActive });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to toggle coupon: ' + e.message });
+  }
+});
+
+// DELETE /api/coupons/:code — Admin: delete coupon
+app.delete('/api/coupons/:code', async (req, res) => {
+  try {
+    const cleanCode = req.params.code.trim().toUpperCase();
+    if (isMongoConnected) {
+      await Coupon.deleteOne({ code: cleanCode });
+    } else {
+      coupons = coupons.filter(c => c.code !== cleanCode);
+    }
+    return res.json({ success: true, message: `Coupon ${cleanCode} deleted.` });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to delete coupon: ' + e.message });
+  }
+});
+
+// ── END COUPON ROUTES ──────────────────────────────────────────
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
