@@ -123,6 +123,11 @@ export const PaymentPage: React.FC = () => {
     await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT', grandTotal));
   };
 
+  const handleTryOnceFree = async () => {
+    setIsSubmitting(true); setOrderError('');
+    await finalizeOrder(buildOrder('Try Once Free (Test Order)', 'TRY_ONCE_FREE', 0));
+  };
+
   const openUpiApp = (app: 'phonepe' | 'gpay' | 'paytm' | 'any') => {
     setHasTappedUpi(true); copyToClipboard(upiNumber);
     if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { showToast('Scan the QR code on your phone.'); return; }
@@ -185,6 +190,17 @@ export const PaymentPage: React.FC = () => {
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-center gap-3">
             <CreditCard className="w-5 h-5" />
             <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
+          </button>
+
+          {/* Try Once Free Option */}
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleTryOnceFree}
+            className="w-full bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-900 border-2 border-emerald-400 font-black py-3.5 px-4 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span>🎁 Try Once Free (Test Order — ₹0 No Payment Needed)</span>
           </button>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
