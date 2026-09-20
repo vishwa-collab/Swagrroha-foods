@@ -8,16 +8,9 @@ import {
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { cart, setActiveTab, addToCart, updateQuantity, fetchLiveRating } = useCart();
+  const { cart, setActiveTab, addToCart, updateQuantity } = useCart();
   const [addedId, setAddedId] = useState<string | null>(null);
   const [heroIndex, setHeroIndex] = useState(0);
-  const [liveRating, setLiveRating] = useState<{ avg: number; count: number }>({ avg: 4.9, count: 500 });
-
-  useEffect(() => {
-    fetchLiveRating().then(data => {
-      setLiveRating({ avg: data.averageRating, count: data.count });
-    });
-  }, []);
 
   const bestsellers = PRODUCTS.filter(p => p.isBestseller && p.category !== 'Pickles').slice(0, 4);
 
@@ -85,18 +78,23 @@ export const HomePage: React.FC = () => {
               Fresh traditional sweets, snacks & savouries — made in small batches and delivered every weekend along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
-            {/* Quick stats */}
-            <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-100">
-              {[
-                { val: '500+', label: 'Happy Customers' },
-                { val: '12+', label: 'Varieties' },
-                { val: `${liveRating.avg} ★`, label: 'Customer Rating' },
-              ].map(s => (
-                <div key={s.label}>
-                  <p className="text-slate-900 font-black text-xl">{s.val}</p>
-                  <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wide">{s.label}</p>
-                </div>
-              ))}
+            {/* Real Kitchen Principles — Authentic & Honest */}
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-8 pb-8 border-b border-slate-100">
+              <div className="bg-orange-50/70 border border-orange-200/70 rounded-2xl p-3 text-center">
+                <span className="text-base sm:text-lg block mb-1">🏡</span>
+                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Home Kitchen</p>
+                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Hayathnagar Home</p>
+              </div>
+              <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-2xl p-3 text-center">
+                <span className="text-base sm:text-lg block mb-1">🌿</span>
+                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Pure Ghee</p>
+                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Zero Preservatives</p>
+              </div>
+              <div className="bg-amber-50/70 border border-amber-200/70 rounded-2xl p-3 text-center">
+                <span className="text-base sm:text-lg block mb-1">🔥</span>
+                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Made to Order</p>
+                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Fresh Small Batches</p>
+              </div>
             </div>
 
             {/* CTAs */}
@@ -382,6 +380,20 @@ export const HomePage: React.FC = () => {
               <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5 text-slate-500" /> ₹20 – ₹40 delivery charge
               </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4 text-[11px] text-slate-300">
+              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                <strong className="text-amber-400 block font-bold">Near Zone (₹20)</strong>
+                Hayathnagar, Bhagyalatha, Panama, Vanasthalipuram
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                <strong className="text-amber-400 block font-bold">Medium Zone (₹30)</strong>
+                LB Nagar, Sagar Ring Road, Hasthinapuram, BN Reddy, Turkayamjal
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                <strong className="text-amber-400 block font-bold">Far Zone (₹40)</strong>
+                Manneguda, Bongloor, Mangalpally, Sheriguda, Ibrahimpatnam
+              </div>
             </div>
           </div>
 

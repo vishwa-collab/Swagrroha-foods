@@ -429,7 +429,7 @@ export const ConfirmationPage: React.FC = () => {
           <div className="flex justify-between text-slate-600">
             <span>Delivery Charge ({currentOrder.area.name})</span>
             {currentOrder.deliveryCharge === 0 ? (
-              <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE (₹500+ Discount)</span>
+              <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE</span>
             ) : (
               <span className="font-bold text-slate-900">₹{currentOrder.deliveryCharge}</span>
             )}

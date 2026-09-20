@@ -229,7 +229,7 @@ export const CheckoutPage: React.FC = () => {
             type="submit"
             className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-brand-500/30 hover:scale-[1.01] active:scale-95 transition-all text-sm"
           >
-            <span>Proceed to Payment (UPI Only)</span>
+            <span>Proceed to Payment</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

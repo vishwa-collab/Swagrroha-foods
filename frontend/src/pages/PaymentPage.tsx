@@ -3,6 +3,7 @@ import { useCart, PlacedOrder } from '../context/CartContext';
 import {
   ArrowLeft, ShieldCheck, Sparkles, AlertCircle, CreditCard,
   Zap, Lock, CheckCircle2, QrCode, Download, Copy, Check, Smartphone,
+  MapPin, Clock,
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
@@ -154,6 +155,28 @@ export const PaymentPage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 max-w-md mx-auto">
+        {/* Delivery Details Verification Card */}
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-1.5 text-slate-700">
+          <div className="flex items-center justify-between font-bold">
+            <span className="flex items-center gap-1.5 text-slate-900">
+              <MapPin className="w-3.5 h-3.5 text-orange-600" />
+              {selectedArea.name} ({selectedArea.tier} Zone)
+            </span>
+            <span className="text-orange-600 font-extrabold">Delivery: ₹{deliveryCharge}</span>
+          </div>
+          {customerDetails.address && (
+            <p className="text-[11px] text-slate-500 truncate">
+              📍 {customerDetails.address}
+            </p>
+          )}
+          {chosenDeliveryDate && (
+            <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 pt-0.5">
+              <Clock className="w-3 h-3 text-emerald-600" />
+              Delivery: {chosenDeliveryDate.formattedDate || chosenDeliveryDate.dayOfWeekName || 'Upcoming Weekend'}
+            </p>
+          )}
+        </div>
+
         <div className="bg-slate-900 text-white p-6 rounded-2xl space-y-1 shadow-xl relative overflow-hidden text-center">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/20 rounded-full blur-xl pointer-events-none" />
           <span className="text-[11px] uppercase tracking-wider font-extrabold text-orange-400 block">
