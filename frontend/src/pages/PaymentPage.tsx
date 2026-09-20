@@ -20,9 +20,7 @@ export const PaymentPage: React.FC = () => {
   const payeeName = 'Ganji Vishwateja';
   const upiNumber = '8125154114';
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
-  const [isOneRupeeMode, setIsOneRupeeMode] = useState(false);
-  const effectiveAmount = isOneRupeeMode ? 1 : grandTotal;
-  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${effectiveAmount}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId + (isOneRupeeMode ? ' Test' : ''))}`;
+  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
 
   const copyToClipboard = (text: string) => {
@@ -41,7 +39,7 @@ export const PaymentPage: React.FC = () => {
     subtotal, deliveryCharge,
     couponCode: appliedCoupon ? appliedCoupon.code : undefined,
     couponDiscount: couponDiscount || 0,
-    totalAmount: actualPaidAmount !== undefined ? actualPaidAmount : effectiveAmount, deliveryDate: chosenDeliveryDate,
+    totalAmount: actualPaidAmount !== undefined ? actualPaidAmount : grandTotal, deliveryDate: chosenDeliveryDate,
     status: 'PLACED', paymentStatus: 'VERIFIED_PAID', paymentMethod, utrNumber,
     paymentProof: '', createdAt: new Date().toISOString(),
   });
@@ -57,8 +55,7 @@ export const PaymentPage: React.FC = () => {
     setActiveTab('confirmation');
   };
 
-  const handleRazorpayPayment = async (overrideAmount?: number) => {
-    const chargeAmount = overrideAmount !== undefined ? overrideAmount : effectiveAmount;
+  const handleRazorpayPayment = async () => {
     setIsSubmitting(true); setOrderError('');
     await new Promise<void>((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,7 +75,7 @@ export const PaymentPage: React.FC = () => {
     try {
       const res = await fetch(`${API_BASE}/api/create-razorpay-order`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: chargeAmount, orderId }),
+        body: JSON.stringify({ amount: grandTotal, orderId }),
       });
       const data = await res.json();
       if (!data.success || !data.order?.id) throw new Error(data.message || 'Server could not create payment order.');
@@ -91,11 +88,11 @@ export const PaymentPage: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rzp = new (window as any).Razorpay({
       key: activeKeyId, amount: rzpOrder.amount, currency: 'INR',
-      name: 'PJR Swagruha Foods', description: `Order ${orderId} — Rs.${chargeAmount}${chargeAmount === 1 ? ' (₹1 Test Payment)' : ''}`,
+      name: 'PJR Swagruha Foods', description: `Order ${orderId} — Rs.${grandTotal}`,
       order_id: rzpOrder.id,
       prefill: { name: customerDetails.name, contact: customerDetails.phone, email: customerDetails.email || '' },
-      notes: { order_id: orderId, address: customerDetails.address, is_test: chargeAmount === 1 ? '1' : '0' },
-      theme: { color: chargeAmount === 1 ? '#f59e0b' : '#f97316' },
+      notes: { order_id: orderId, address: customerDetails.address },
+      theme: { color: '#f97316' },
       handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
         try {
           const verifyRes = await fetch(`${API_BASE}/api/verify-razorpay-payment`, {
@@ -107,7 +104,7 @@ export const PaymentPage: React.FC = () => {
             setOrderError('Payment done but verification failed. Please contact us with ID: ' + response.razorpay_payment_id);
             setIsSubmitting(false); return;
           }
-          await finalizeOrder(buildOrder(chargeAmount === 1 ? 'Razorpay ₹1 Test' : 'Razorpay (UPI/Card/NetBanking)', response.razorpay_payment_id, chargeAmount));
+          await finalizeOrder(buildOrder('Razorpay (UPI/Card/NetBanking)', response.razorpay_payment_id, grandTotal));
         } catch {
           setOrderError('Verification error. Please contact us with payment ID: ' + response.razorpay_payment_id);
           setIsSubmitting(false);
@@ -121,13 +118,9 @@ export const PaymentPage: React.FC = () => {
     rzp.open();
   };
 
-  const handleOneRupeeTest = () => {
-    handleRazorpayPayment(1);
-  };
-
   const handleConfirmUpiOrder = async () => {
     setIsSubmitting(true); setOrderError('');
-    await finalizeOrder(buildOrder(isOneRupeeMode ? 'Direct UPI QR (₹1 Test)' : 'Direct UPI QR', 'DIRECT_UPI_PAYMENT', effectiveAmount));
+    await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT', grandTotal));
   };
 
   const openUpiApp = (app: 'phonepe' | 'gpay' | 'paytm' | 'any') => {
@@ -135,7 +128,7 @@ export const PaymentPage: React.FC = () => {
     if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { showToast('Scan the QR code on your phone.'); return; }
     if (app === 'any') { window.location.href = rawUpiUri; return; }
     const pkg = app === 'phonepe' ? 'com.phonepe.app' : app === 'gpay' ? 'com.google.android.apps.nbu.paisa.user' : 'net.one97.paytm';
-    window.location.href = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${effectiveAmount}&cu=INR#Intent;scheme=upi;package=${pkg};end`;
+    window.location.href = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=${pkg};end`;
   };
 
   if (cart.length === 0) { setActiveTab('cart'); return null; }
@@ -161,57 +154,15 @@ export const PaymentPage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 max-w-md mx-auto">
-        
-        {/* Test Mode Toggle Card */}
-        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-300 rounded-2xl p-4 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-              </span>
-              <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                ₹1 Live Test Mode
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsOneRupeeMode(prev => !prev)}
-              className={`px-3 py-1 text-xs font-black rounded-xl transition-all shadow-sm ${
-                isOneRupeeMode 
-                  ? 'bg-amber-600 text-white hover:bg-amber-700' 
-                  : 'bg-white text-amber-950 border border-amber-300 hover:bg-amber-100'
-              }`}
-            >
-              {isOneRupeeMode ? '✓ ₹1 Mode Active' : 'Switch to ₹1'}
-            </button>
-          </div>
-          <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
-            {isOneRupeeMode ? (
-              <span className="text-emerald-700 font-bold">
-                ✓ Active: You will only be charged <strong>₹1.00</strong> to test real Razorpay & receipts!
-              </span>
-            ) : (
-              <span>Want to test real payment & instant WhatsApp receipt? Click "Switch to ₹1" or tap the instant test button below.</span>
-            )}
-          </p>
-        </div>
-
         <div className="bg-slate-900 text-white p-6 rounded-2xl space-y-1 shadow-xl relative overflow-hidden text-center">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/20 rounded-full blur-xl pointer-events-none" />
           <span className="text-[11px] uppercase tracking-wider font-extrabold text-orange-400 block">
-            {isOneRupeeMode ? '⚡ ₹1 Test Mode Amount' : 'Total Amount Payable'}
+            Total Amount Payable
           </span>
-          <p className="text-5xl font-black text-white py-2">Rs.{effectiveAmount}</p>
-          {isOneRupeeMode && (
-            <p className="text-xs font-bold text-amber-400">
-              (Original Cart: Rs.{grandTotal} • Test charge: ₹1)
-            </p>
-          )}
-          {!isOneRupeeMode && appliedCoupon && couponDiscount > 0 && (
+          <p className="text-5xl font-black text-white py-2">Rs.{grandTotal}</p>
+          {appliedCoupon && couponDiscount > 0 && (
             <p className="text-xs font-bold text-emerald-400">
-              🎟️ {appliedCoupon.code}: {appliedCoupon.discountValue || 15}% off − ₹{couponDiscount} saved!
+              🎟️ {appliedCoupon.code}: {appliedCoupon.discountValue || 10}% off − ₹{couponDiscount} saved!
             </p>
           )}
           <p className="text-[11px] text-slate-400">Order #{orderId}</p>
@@ -233,18 +184,7 @@ export const PaymentPage: React.FC = () => {
           <button type="button" disabled={isSubmitting} onClick={() => handleRazorpayPayment()}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-500/30 hover:scale-[1.02] active:scale-95 transition-all text-base flex items-center justify-center gap-3">
             <CreditCard className="w-5 h-5" />
-            <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${effectiveAmount} Securely`}</span>
-          </button>
-
-          {/* Dedicated Instant ₹1 Test Button */}
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleOneRupeeTest}
-            className="w-full bg-amber-50 hover:bg-amber-100 active:scale-95 text-amber-900 border-2 border-amber-300 font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-          >
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            <span>⚡ Test with ₹1 (Live Razorpay & WhatsApp Receipt Test)</span>
+            <span>{isSubmitting ? 'Opening Payment...' : `Pay Rs.${grandTotal} Securely`}</span>
           </button>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -271,10 +211,10 @@ export const PaymentPage: React.FC = () => {
           </summary>
           <div className="bg-gradient-to-b from-orange-50/60 to-amber-50/40 rounded-3xl border-2 border-orange-200/50 p-5 space-y-4 mt-2 text-center">
             <div className="inline-flex items-center gap-1.5 bg-orange-500 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-              <Zap className="w-3.5 h-3.5 fill-white" /><span>Rs.{effectiveAmount} Pre-filled in QR</span>
+              <Zap className="w-3.5 h-3.5 fill-white" /><span>Rs.{grandTotal} Pre-filled in QR</span>
             </div>
             <div className="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-slate-200">
-              <img src={dynamicQrCodeUrl} alt={`UPI QR for Rs.${effectiveAmount}`} className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl mx-auto" />
+              <img src={dynamicQrCodeUrl} alt={`UPI QR for Rs.${grandTotal}`} className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl mx-auto" />
             </div>
             <button type="button"
               onClick={async () => {
@@ -282,7 +222,7 @@ export const PaymentPage: React.FC = () => {
                   const blob = await (await fetch(dynamicQrCodeUrl)).blob();
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
-                  a.href = url; a.download = `PJR-QR-Rs${effectiveAmount}.png`;
+                  a.href = url; a.download = `PJR-QR-Rs${grandTotal}.png`;
                   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
                 } catch { window.open(dynamicQrCodeUrl, '_blank'); }
               }}
@@ -319,7 +259,7 @@ export const PaymentPage: React.FC = () => {
               <div className="bg-emerald-50 rounded-2xl p-4 border-2 border-emerald-300 space-y-3 text-left">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">After paying <strong>Rs.{effectiveAmount}</strong> via QR, tap below to confirm:</p>
+                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">After paying <strong>Rs.{grandTotal}</strong> via QR, tap below to confirm:</p>
                 </div>
                 <button type="button" disabled={isSubmitting} onClick={handleConfirmUpiOrder}
                   className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl shadow-md active:scale-95 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">

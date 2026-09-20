@@ -197,7 +197,7 @@ export const HomePage: React.FC = () => {
               tag: 'Most Popular',
               tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
               img: IMAGES.murukulu,
-              price: 'from ₹88 (250g)',
+              price: 'from ₹90 (250g)',
               items: '7 varieties',
             },
             {
@@ -206,7 +206,7 @@ export const HomePage: React.FC = () => {
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
               img: IMAGES.potharekkalu,
-              price: '₹160 (5 Pcs Pootharekulu)',
+              price: '₹170 (5 Pcs Pootharekulu)',
               items: '5 varieties',
             },
             {
@@ -215,7 +215,7 @@ export const HomePage: React.FC = () => {
               tag: 'All Time Fav',
               tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
               img: IMAGES.laddu,
-              price: 'from ₹95 (250g)',
+              price: 'from ₹98 (250g)',
               items: '3 varieties',
             },
           ].map(cat => (

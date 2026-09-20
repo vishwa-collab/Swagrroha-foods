@@ -103,9 +103,7 @@ For queries, call/WhatsApp us: +91 8125154114
 
 _Thank you for ordering with PJR Swagruha Foods! 🙏_`;
 
-  const rawPhone = (order.customer?.phone || (order as any).phone || '').replace(/\D/g, '');
-  const phone = rawPhone.startsWith('91') ? rawPhone : `91${rawPhone}`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 }
 
 /**

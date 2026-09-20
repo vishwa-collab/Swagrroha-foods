@@ -101,176 +101,48 @@ _Thank you for ordering from PJR Swagruha Foods! 🙏_`;
 }
 
 /**
- * Sends WhatsApp notification to admin via CallMeBot (free).
- *
- * HOW TO SET UP CallMeBot (one-time, free):
- * 1. Save +34 644 59 77 16 in your phone contacts as "CallMeBot"
- * 2. Send this WhatsApp message to that number:
- *    I allow callmebot to send me messages
- * 3. You'll receive an API key (e.g. 123456)
- * 4. Set env vars on Render:
- *    CALLMEBOT_PHONE  = 918125154114   (admin phone with country code, no +)
- *    CALLMEBOT_APIKEY = <your api key>
- *
- * Alternatively, you can still use Meta/Twilio/UltraMsg by setting their env vars.
+ * Sends WhatsApp notification to admin via Fonnte (free).
+ * Set FONNTE_TOKEN env var on Render to enable.
  */
 async function sendWhatsAppNotification(order) {
   const message = formatOrderMessage(order);
 
-  // ── Resolve admin phone & provider ──────────────────────────────────────
   const targetPhone = (
     process.env.OWNER_WHATSAPP_NUMBER ||
-    process.env.WHATSAPP_RECIPIENT ||
-    process.env.CALLMEBOT_PHONE ||
     '918125154114'
   ).replace(/\D/g, '');
 
-  const provider = (process.env.WHATSAPP_PROVIDER || 'auto').toLowerCase();
+  const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
 
   console.log('\n========================================');
   console.log('📲 TRIGGERING WHATSAPP ORDER NOTIFICATION');
-  console.log('Recipient (Admin):', targetPhone);
-  console.log('----------------------------------------');
-  console.log(message);
+  console.log('Recipient (Admin):', cleanPhone);
   console.log('========================================\n');
 
   try {
-    // ── 1. UltraMsg API (Automated Background WhatsApp Delivery) ───────
-    if (provider === 'ultramsg' || (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN)) {
-      const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token = process.env.ULTRAMSG_TOKEN;
-      const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
-
-      const params = new URLSearchParams();
-      params.append('token', token);
-      params.append('to', `+${cleanPhone}`);
-      params.append('body', message);
-
+    if (process.env.FONNTE_TOKEN) {
       const response = await axios.post(
-        `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        params
+        'https://api.fonnte.com/send',
+        { target: cleanPhone, message, countryCode: '91' },
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
       );
-      console.log('✅ WhatsApp sent via UltraMsg to owner:', cleanPhone, response.data);
-      return { success: true, provider: 'ultramsg', data: response.data };
+      console.log('✅ WhatsApp sent via Fonnte to owner:', cleanPhone, response.data);
+      return { success: true, provider: 'fonnte', data: response.data };
     }
 
-    // ── 2. CallMeBot (Free) ─────────────────────────────────────────────
-    if (
-      provider === 'callmebot' ||
-      (provider === 'auto' && process.env.CALLMEBOT_APIKEY)
-    ) {
-      const apiKey = process.env.CALLMEBOT_APIKEY;
-      const phone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
-      const encodedMsg = encodeURIComponent(message);
-
-      const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodedMsg}&apikey=${apiKey}`;
-
-      const response = await axios.get(url, { timeout: 10000 });
-      console.log('✅ WhatsApp sent via CallMeBot to admin:', phone, response.data);
-      return { success: true, provider: 'callmebot', data: response.data };
-    }
-
-    // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
-    if (provider === 'meta' || (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID)) {
-      try {
-        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-        const token = process.env.WHATSAPP_ACCESS_TOKEN;
-        const cleanPhone = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone}`;
-
-        const response = await axios.post(
-          `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-          {
-            messaging_product: 'whatsapp',
-            recipient_type: 'individual',
-            to: cleanPhone,
-            type: 'text',
-            text: { body: message }
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        console.log('✅ WhatsApp sent via Meta Cloud API:', response.data);
-        return { success: true, provider: 'meta', data: response.data };
-      } catch (metaErr) {
-        console.warn('⚠️ Meta Cloud API failed (token expired or blocked):', metaErr.response ? JSON.stringify(metaErr.response.data) : metaErr.message);
-      }
-    }
-
-    // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
-    if (provider === 'twilio' || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
-      try {
-        const sid = process.env.TWILIO_ACCOUNT_SID;
-        const authToken = process.env.TWILIO_AUTH_TOKEN;
-        const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-        const cleanPhone = targetPhone.startsWith('91') ? targetPhone : '91' + targetPhone;
-        const toNumber = `whatsapp:+${cleanPhone}`;
-
-        const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
-        const params = new URLSearchParams();
-        params.append('From', fromNumber);
-        params.append('To', toNumber);
-        params.append('Body', message);
-
-        const response = await axios.post(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-          params.toString(),
-          {
-            headers: {
-              'Authorization': `Basic ${authHeader}`,
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          }
-        );
-        console.log('✅ WhatsApp sent via Twilio:', response.data.sid);
-        return { success: true, provider: 'twilio', data: response.data };
-      } catch (twilioErr) {
-        console.warn('⚠️ Twilio WhatsApp API failed:', twilioErr.message);
-      }
-    }
-
-    // ── 5. Custom Webhook Endpoint ───────────────────────────────────────
-    if (process.env.WHATSAPP_WEBHOOK_URL) {
-      try {
-        const response = await axios.post(process.env.WHATSAPP_WEBHOOK_URL, {
-          event: 'order_paid',
-          recipient: targetPhone,
-          message,
-          order
-        });
-        console.log('✅ WhatsApp notification posted to Webhook:', response.data);
-        return { success: true, provider: 'webhook', data: response.data };
-      } catch (webhookErr) {
-        console.warn('⚠️ WhatsApp webhook failed:', webhookErr.message);
-      }
-    }
-
-    // ── Fallback: Always generate direct wa.me link ─────────────────────
-    const waLink = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
-    console.log('ℹ️ Generated direct owner WhatsApp link:', waLink);
-    return {
-      success: false,
-      provider: 'none',
-      message: 'Automated WhatsApp API not connected or token expired. Use direct WhatsApp link.',
-      waLink
-    };
+    // Fallback: generate wa.me link
+    const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    console.log('ℹ️ FONNTE_TOKEN not set. Add it on Render to enable auto WhatsApp.');
+    return { success: false, provider: 'none', message: 'FONNTE_TOKEN not configured.', waLink };
 
   } catch (err) {
-    console.error('❌ Error sending WhatsApp notification:', err.response ? JSON.stringify(err.response.data) : err.message);
-    const waLink = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
-    return { success: false, error: err.message, waLink };
+    console.error('❌ Error sending WhatsApp to owner:', err.response ? JSON.stringify(err.response.data) : err.message);
+    return { success: false, error: err.message };
   }
 }
 
 /**
- * Sends a WhatsApp order receipt to the CUSTOMER automatically.
- * Uses the same provider cascade as the owner notification.
- * For CallMeBot: the customer must have previously sent "I allow callmebot to send me messages"
- * to +34 644 59 77 16 on WhatsApp (one-time activation).
- * For UltraMsg/Twilio/Meta: works without any prior activation.
+ * Sends a WhatsApp order receipt to the CUSTOMER automatically via Fonnte.
  */
 async function sendCustomerWhatsAppReceipt(order) {
   const customer = order.customer || {};
@@ -281,9 +153,7 @@ async function sendCustomerWhatsAppReceipt(order) {
     return { success: false, message: 'No valid customer phone number' };
   }
 
-  // Normalise: add India country code if missing
   const customerPhone = rawPhone.startsWith('91') ? rawPhone : `91${rawPhone}`;
-
   const message = formatCustomerReceiptMessage(order);
 
   console.log('\n========================================');
@@ -293,109 +163,19 @@ async function sendCustomerWhatsAppReceipt(order) {
   console.log('========================================\n');
 
   try {
-    // ── 1. CallMeBot — customer must have activated CallMeBot first ──────
-    if (process.env.CALLMEBOT_APIKEY && process.env.CALLMEBOT_CUSTOMER_APIKEY) {
-      // Use a separate customer API key if set
-      const apiKey = process.env.CALLMEBOT_CUSTOMER_APIKEY;
-      const encodedMsg = encodeURIComponent(message);
-      const url = `https://api.callmebot.com/whatsapp.php?phone=${customerPhone}&text=${encodedMsg}&apikey=${apiKey}`;
-      const response = await axios.get(url, { timeout: 10000 });
-      console.log('✅ Customer WhatsApp receipt sent via CallMeBot:', customerPhone, response.data);
-      return { success: true, provider: 'callmebot_customer', data: response.data };
-    }
-
-    // ── 1. UltraMsg — works for any WhatsApp number directly ───────────
-    if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
-      const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token = process.env.ULTRAMSG_TOKEN;
-
-      const params = new URLSearchParams();
-      params.append('token', token);
-      params.append('to', `+${customerPhone}`);
-      params.append('body', message);
-
+    if (process.env.FONNTE_TOKEN) {
       const response = await axios.post(
-        `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        params
+        'https://api.fonnte.com/send',
+        { target: customerPhone, message, countryCode: '91' },
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
       );
-      console.log('✅ Customer WhatsApp receipt sent via UltraMsg:', customerPhone, response.data);
-      return { success: true, provider: 'ultramsg', data: response.data };
+      console.log('✅ Customer WhatsApp receipt sent via Fonnte:', customerPhone, response.data);
+      return { success: true, provider: 'fonnte', data: response.data };
     }
 
-    // ── 3. Meta WhatsApp Cloud API ───────────────────────────────────────
-    if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
-      try {
-        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-        const token = process.env.WHATSAPP_ACCESS_TOKEN;
-
-        const response = await axios.post(
-          `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-          {
-            messaging_product: 'whatsapp',
-            recipient_type: 'individual',
-            to: customerPhone,
-            type: 'text',
-            text: { body: message }
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        console.log('✅ Customer WhatsApp receipt sent via Meta Cloud API:', response.data);
-        return { success: true, provider: 'meta', data: response.data };
-      } catch (metaErr) {
-        console.warn('⚠️ Meta Cloud API failed for customer receipt (token expired or blocked):', metaErr.response ? JSON.stringify(metaErr.response.data) : metaErr.message);
-      }
-    }
-
-    // ── 4. Twilio WhatsApp API ───────────────────────────────────────────
-    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      try {
-        const sid = process.env.TWILIO_ACCOUNT_SID;
-        const authToken = process.env.TWILIO_AUTH_TOKEN;
-        const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-        const toNumber = `whatsapp:+${customerPhone}`;
-
-        const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
-        const params = new URLSearchParams();
-        params.append('From', fromNumber);
-        params.append('To', toNumber);
-        params.append('Body', message);
-
-        const response = await axios.post(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-          params.toString(),
-          {
-            headers: {
-              'Authorization': `Basic ${authHeader}`,
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          }
-        );
-        console.log('✅ Customer WhatsApp receipt sent via Twilio:', response.data.sid);
-        return { success: true, provider: 'twilio', data: response.data };
-      } catch (twilioErr) {
-        console.warn('⚠️ Twilio WhatsApp API failed for customer receipt:', twilioErr.message);
-      }
-    }
-
-    // ── No API configured — log wa.me link as fallback info ─────────────
     const waLink = `https://wa.me/${customerPhone}?text=${encodeURIComponent(message)}`;
-    console.log('ℹ️ No WhatsApp API configured for customer receipt.');
-    console.log('   Fallback wa.me link (open manually):', waLink);
-    console.log('   To enable automatic customer WhatsApp receipts, set one of:');
-    console.log('   - ULTRAMSG_INSTANCE_ID + ULTRAMSG_TOKEN (recommended, no opt-in)');
-    console.log('   - WHATSAPP_ACCESS_TOKEN + WHATSAPP_PHONE_NUMBER_ID (Meta Cloud API)');
-    console.log('   - TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN');
-    return {
-      success: false,
-      provider: 'none',
-      message: 'No WhatsApp API configured for customer receipt. Set ULTRAMSG_INSTANCE_ID + ULTRAMSG_TOKEN on Render.',
-      waLink,
-    };
+    console.log('ℹ️ FONNTE_TOKEN not set. Add it on Render to enable auto customer WhatsApp receipts.');
+    return { success: false, provider: 'none', message: 'FONNTE_TOKEN not configured.', waLink };
 
   } catch (err) {
     console.error('❌ Error sending customer WhatsApp receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
@@ -405,8 +185,6 @@ async function sendCustomerWhatsAppReceipt(order) {
 
 /**
  * Formats a delivery receipt message for the CUSTOMER.
- * @param {Object} order - Placed order object
- * @returns {string} Formatted delivered receipt text
  */
 function formatDeliveredReceiptMessage(order) {
   const customer = order.customer || {};
@@ -422,8 +200,6 @@ function formatDeliveredReceiptMessage(order) {
   }).join('\n');
 
   if (!itemsListStr) itemsListStr = '  • Order Items';
-
-  const paymentRef = order.utrNumber || 'UPI Payment';
 
   return `🎉 *Order Delivered — PJR Swagruha Foods*
 
@@ -471,76 +247,19 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
   console.log('========================================\n');
 
   try {
-    if (process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
-      const instanceId = process.env.ULTRAMSG_INSTANCE_ID;
-      const token = process.env.ULTRAMSG_TOKEN;
-
-      const params = new URLSearchParams();
-      params.append('token', token);
-      params.append('to', `+${customerPhone}`);
-      params.append('body', message);
-
+    if (process.env.FONNTE_TOKEN) {
       const response = await axios.post(
-        `https://api.ultramsg.com/${instanceId}/messages/chat`,
-        params
+        'https://api.fonnte.com/send',
+        { target: customerPhone, message, countryCode: '91' },
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
       );
-      console.log('✅ Customer WhatsApp delivery receipt sent via UltraMsg:', customerPhone, response.data);
-      return { success: true, provider: 'ultramsg', data: response.data };
-    }
-
-    if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
-      const response = await axios.post(
-        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: customerPhone,
-          type: 'text',
-          text: { body: message }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      return { success: true, provider: 'meta', data: response.data };
-    }
-
-    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      const sid = process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.TWILIO_AUTH_TOKEN;
-      const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-      const toNumber = `whatsapp:+${customerPhone}`;
-      const authHeader = Buffer.from(`${sid}:${authToken}`).toString('base64');
-      const params = new URLSearchParams();
-      params.append('From', fromNumber);
-      params.append('To', toNumber);
-      params.append('Body', message);
-
-      const response = await axios.post(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-        params.toString(),
-        {
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }
-      );
-      return { success: true, provider: 'twilio', data: response.data };
+      console.log('✅ Customer delivery receipt sent via Fonnte:', customerPhone, response.data);
+      return { success: true, provider: 'fonnte', data: response.data };
     }
 
     const waLink = `https://wa.me/${customerPhone}?text=${encodeURIComponent(message)}`;
-    return {
-      success: false,
-      provider: 'none',
-      message: 'No automatic WhatsApp API configured. Use 1-click wa.me link.',
-      waLink,
-    };
+    return { success: false, provider: 'none', message: 'FONNTE_TOKEN not configured.', waLink };
+
   } catch (err) {
     console.error('❌ Error sending delivered WhatsApp receipt:', err.response ? JSON.stringify(err.response.data) : err.message);
     return { success: false, error: err.message };
@@ -555,4 +274,3 @@ module.exports = {
   sendCustomerWhatsAppReceipt,
   sendCustomerDeliveredWhatsAppReceipt,
 };
-
