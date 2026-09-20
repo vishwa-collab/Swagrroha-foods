@@ -64,9 +64,9 @@ export const HomePage: React.FC = () => {
             </div>
 
             {/* Badge */}
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-50 border border-orange-200 px-3.5 py-1.5 rounded-full mb-5 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-              Start with Fresh Orders · 100% Homemade
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-full mb-5">
+              <Sparkles className="w-3 h-3" />
+              100% Homemade · Batch Fresh
             </span>
 
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight mb-4">
@@ -101,40 +101,39 @@ export const HomePage: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveTab('products')}
-                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 active:scale-95 text-white font-black text-sm px-8 py-4 rounded-2xl transition-all shadow-lg shadow-orange-500/30 hover:scale-105"
+                className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-black text-sm px-7 py-3.5 rounded-2xl transition-all shadow-md shadow-orange-200"
               >
-                <ShoppingBag className="w-4 h-4" /> Start with Fresh Orders
+                <ShoppingBag className="w-4 h-4" /> Order Now
               </button>
               <a
                 href="https://wa.me/918125154114?text=Hi%20PJR%20Swagrooha%20Foods%2C%20I%20want%20to%20order!"
                 target="_blank" rel="noreferrer"
-                className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-sm px-6 py-4 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-sm"
+                className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-sm px-6 py-3.5 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-sm"
               >
                 <MessageCircle className="w-4 h-4 text-emerald-600" /> WhatsApp
               </a>
             </div>
           </div>
 
-          {/* Right — clear rotating food photo with pure white clarity display */}
+          {/* Right — clear rotating food photo */}
           <div className="flex items-center justify-center lg:justify-end">
             <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-[380px] lg:h-[380px]">
-              {/* Pure Crisp White Display Canvas for Crystal Clarity */}
-              <div className="absolute inset-0 rounded-full bg-white border-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden flex items-center justify-center p-3 sm:p-4">
-                <div className="w-full h-full rounded-full bg-white relative overflow-hidden flex items-center justify-center">
-                  {heroSlides.map((s, i) => (
-                    <img
-                      key={s.label}
-                      src={s.img}
-                      alt={s.label}
-                      className={`absolute inset-0 w-full h-full object-contain p-2 transition-all duration-700 ${i === heroIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                        }`}
-                    />
-                  ))}
-                </div>
+              {/* Light orange ring glow */}
+              <div className="absolute inset-0 rounded-full bg-orange-100 border-4 border-orange-200 shadow-xl overflow-hidden">
+                {heroSlides.map((s, i) => (
+                  <img
+                    key={s.label}
+                    src={s.img}
+                    alt={s.label}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    style={{ objectFit: 'cover' }}
+                  />
+                ))}
               </div>
 
-              {/* Floating label — below image with crisp white card */}
-              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-max bg-white border border-slate-200/90 rounded-2xl px-6 py-2.5 shadow-xl text-center">
+              {/* Floating label — below image */}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-max bg-white border border-slate-200 rounded-2xl px-5 py-2.5 shadow-lg text-center">
                 <p className="text-slate-900 font-black text-sm">{heroSlides[heroIndex].label}</p>
                 <p className="text-orange-500 text-xs font-bold">{heroSlides[heroIndex].sub}</p>
               </div>
