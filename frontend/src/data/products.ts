@@ -80,6 +80,17 @@ export const PRODUCTS: Product[] = [
     weightOptions: SNACK_WEIGHTS,
   },
   {
+    id: 'white-sakinalu',
+    name: 'White Sakinalu',
+    teluguName: 'తెల్ల సకినాలు',
+    category: 'Snacks',
+    basePrice: 360,
+    priceUnitText: '₹360 / kg',
+    description: 'Classic plain white sakinalu made with freshly ground rice flour and sesame seeds — light, crispy, and mildly flavoured.',
+    image: IMAGES.whiteSakinalu,
+    weightOptions: SNACK_WEIGHTS,
+  },
+  {
     id: 'chakodi',
     name: 'Crispy Ring Chakodi',
     teluguName: 'చేకోడీలు',

@@ -5,6 +5,7 @@ import logo from '../../assets/logo.png';
 import murukulu from '../../assets/Murkullu hot item.png';
 import redSakinalu from '../../assets/Red Sakinnalu hot item.png';
 import yellowSakinalu from '../../assets/yellow sakinnalu hot item.png';
+import whiteSakinalu from '../../assets/white sakinnallu.png';
 import chakodi from '../../assets/chakodi hot item.png';
 import mixture from '../../assets/mixture hot item.png';
 import ottikaram from '../../assets/ottikaram Karppapullu hot item.jpg';
@@ -23,6 +24,7 @@ export const IMAGES = {
   murukulu,
   redSakinalu,
   yellowSakinalu,
+  whiteSakinalu,
   chakodi,
   mixture,
   ottikaram,
