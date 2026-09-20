@@ -222,12 +222,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('swagrooha_all_orders', JSON.stringify(allOrders));
   }, [allOrders]);
 
-  // Auto-remove coupon if cart subtotal drops below minimum bill requirement (₹300)
+  // Auto-remove coupon if cart subtotal drops below minimum bill requirement (₹200)
   useEffect(() => {
-    if (appliedCoupon && subtotal > 0 && subtotal < 300) {
+    if (appliedCoupon && subtotal > 0 && subtotal < 200) {
       setAppliedCoupon(null);
-      setCouponError('Coupon removed: Minimum bill of ₹300 is required for 10% discount.');
-      showToast('Coupon removed: Minimum bill of ₹300 required');
+      setCouponError('Coupon removed: Minimum bill of ₹200 is required for 5% discount.');
+      showToast('Coupon removed: Minimum bill of ₹200 required');
     }
   }, [subtotal, appliedCoupon]);
 
@@ -355,15 +355,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Local fallback in case backend is offline or sleeping
       if (cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR10-') || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
-        const discountAmount = Math.round((subtotal * 10) / 100);
+        const discountAmount = Math.round((subtotal * 5) / 100);
         setAppliedCoupon({
           code: cleanCode,
           discountAmount,
           discountType: 'percent',
-          discountValue: 10,
+          discountValue: 5,
         });
         setCouponError('');
-        showToast(`🎟️ Coupon applied! 10% OFF (−₹${discountAmount})`);
+        showToast(`🎟️ Coupon applied! 5% OFF (−₹${discountAmount})`);
       } else {
         setCouponError('Could not validate coupon. Please try again.');
       }

@@ -295,27 +295,40 @@ export const CartPage: React.FC = () => {
 
               {/* Coupon Input / Applied Badge */}
               {subtotal < 200 ? (
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-3 text-center space-y-1">
+                <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 border border-dashed border-slate-300 rounded-2xl p-4 text-center space-y-1.5 group">
+                  {/* Shimmer overlay */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
                   <p className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Coupon Locked (Minimum Bill ₹200 Required)</span>
+                    <Tag className="w-3.5 h-3.5 text-slate-400 animate-pulse" />
+                    <span>🔒 Coupon Locked — Minimum Bill ₹200</span>
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Add ₹{200 - subtotal} more items to unlock 1-time 10% OFF coupon entry.
+                    Add ₹{200 - subtotal} more to unlock your <strong className="text-brand-500">5% OFF</strong> coupon!
                   </p>
+                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">
+                    <div
+                      className="h-full bg-gradient-to-r from-brand-400 to-orange-400 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min((subtotal / 200) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">{Math.round((subtotal / 200) * 100)}% towards coupon unlock</p>
                 </div>
               ) : appliedCoupon ? (
-                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl px-4 py-3 shadow-sm animate-fade-up">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-md shadow-emerald-400/30 animate-bounce" style={{animationDuration: '2s'}}>
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    </div>
                     <div>
-                      <p className="text-xs font-black text-emerald-800 font-mono">{appliedCoupon.code}</p>
-                      <p className="text-[10px] text-emerald-700 font-semibold">{appliedCoupon.discountType === 'percent' ? `${appliedCoupon.discountValue}% OFF` : ''} • Saving ₹{appliedCoupon.discountAmount}! (1-Time Use)</p>
+                      <p className="text-xs font-black text-emerald-800 font-mono tracking-wider">{appliedCoupon.code}</p>
+                      <p className="text-[10px] text-emerald-700 font-semibold">
+                        {appliedCoupon.discountType === 'percent' ? `${appliedCoupon.discountValue}% OFF` : ''} • 🎉 Saving ₹{appliedCoupon.discountAmount}! (1-Time)
+                      </p>
                     </div>
                   </div>
                   <button
                     onClick={removeCoupon}
-                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all active:scale-90"
                     title="Remove coupon"
                   >
                     <X className="w-4 h-4" />
@@ -324,7 +337,8 @@ export const CartPage: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   {earnedCouponCode && (
-                    <div className="bg-amber-50 border border-amber-300 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-3 flex items-center justify-between gap-2 shadow-sm">
+                      <div className="absolute inset-0 animate-pulse opacity-20 bg-amber-200 rounded-xl pointer-events-none" />
                       <div>
                         <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wide">🎁 Your Reward Coupon</p>
                         <p className="text-xs font-mono font-black text-amber-950">{earnedCouponCode}</p>
@@ -334,40 +348,40 @@ export const CartPage: React.FC = () => {
                           setCouponInput(earnedCouponCode);
                           setTimeout(() => applyCoupon(), 50);
                         }}
-                        className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow transition-all shrink-0"
+                        className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-md shadow-amber-400/30 transition-all shrink-0 hover:shadow-amber-500/40"
                       >
                         1-Tap Apply
                       </button>
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 group">
                     <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-brand-500 transition-colors" />
                       <input
                         type="text"
                         placeholder="Enter coupon code (e.g. WELCOME10)"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                         onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-mono tracking-widest"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-mono tracking-widest transition-all"
                       />
                     </div>
                     <button
                       onClick={applyCoupon}
                       disabled={couponLoading || !couponInput.trim()}
-                      className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shrink-0"
+                      className="flex items-center gap-1.5 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-md shadow-brand-400/30 hover:shadow-brand-500/40 active:scale-95"
                     >
                       {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
                     </button>
                   </div>
                   {couponError && (
-                    <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1">
+                    <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1 animate-fade-up">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       {couponError}
                     </p>
                   )}
                   <p className="text-[10px] text-slate-500">
-                    🔒 Single-use only (10% OFF) • For each new order, you earn a new coupon!
+                    🔒 Single-use only (5% OFF) • For each new order, you earn a new coupon!
                   </p>
                 </div>
               )}
