@@ -234,10 +234,10 @@ export const CartPage: React.FC = () => {
                   <span className="text-xl animate-bounce">🎟️</span>
                   <div>
                     <p className="text-xs font-black text-emerald-900">
-                      10% OFF Coupon Unlocked! (Min ₹200 reached)
+                      5% OFF Coupon Unlocked! (Min ₹200 reached)
                     </p>
                     <p className="text-[11px] text-emerald-700 font-semibold">
-                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 10%'}
+                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 5%'}
                     </p>
                   </div>
                 </div>
