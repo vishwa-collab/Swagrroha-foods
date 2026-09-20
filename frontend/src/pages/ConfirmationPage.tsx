@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import confetti from 'canvas-confetti';
 import { jsPDF } from 'jspdf';
@@ -285,7 +285,7 @@ export const ConfirmationPage: React.FC = () => {
             Here is your NEW 10% OFF Coupon for your next order!
           </h2>
           <p className="text-xs sm:text-sm text-amber-100 max-w-md mx-auto">
-            As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill â‚¹300).
+            As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill ₹200).
           </p>
           <div className="flex items-center justify-center gap-3 pt-1">
             <div className="font-mono font-black text-2xl sm:text-3xl bg-slate-950/40 border-2 border-dashed border-amber-300 px-5 py-2.5 rounded-2xl tracking-widest text-amber-200 select-all shadow-inner">
@@ -300,7 +300,7 @@ export const ConfirmationPage: React.FC = () => {
             </button>
           </div>
           <p className="text-[11px] text-amber-200/90 font-medium">
-            ðŸ”’ Single-use only â€¢ Valid on minimum bill of â‚¹300 â€¢ Automatically saved in cart for next time!
+            🔒 Single-use only • Valid on minimum bill of ₹200 • Automatically saved in cart for next time!
           </p>
         </div>
       )}

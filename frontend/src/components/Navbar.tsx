@@ -91,10 +91,15 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2 sm:gap-3">
                 <a
                   href="tel:+918125154114"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/70 hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
+                  title="Call Us Directly"
                 >
-                  <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>8125154114</span>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <PhoneCall className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-12 transition-transform" />
+                  <span className="tracking-tight">Call Directly</span>
                 </a>
 
                 <div className="relative" ref={popupRef}>

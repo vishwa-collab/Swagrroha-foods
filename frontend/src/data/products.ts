@@ -179,8 +179,8 @@ export const PRODUCTS: Product[] = [
     name: 'Traditional Pootharekulu (Potharekkallu)',
     teluguName: 'పూతరేకులు',
     category: 'Sweets',
-    basePrice: 170,
-    priceUnitText: '₹170 (5 Pcs)',
+    basePrice: 160,
+    priceUnitText: '₹160 (5 Pcs)',
     description: 'Delicate paper-thin rice starch sheets layered with pure ghee, powdered jaggery, and crushed dry fruits.',
     image: IMAGES.potharekkalu,
     weightOptions: [

@@ -317,9 +317,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCouponError('Please enter a coupon code.');
       return;
     }
-    // "if below 300 not"
-    if (subtotal < 300) {
-      setCouponError(`Coupons are not allowed for bills below ₹300. Please add ₹${300 - subtotal} more!`);
+    // Minimum bill of ₹200 required for coupons
+    if (subtotal < 200) {
+      setCouponError(`Coupons are not allowed for bills below ₹200. Please add ₹${200 - subtotal} more!`);
       return;
     }
 

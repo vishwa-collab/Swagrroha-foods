@@ -75,7 +75,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed mb-8 max-w-md">
-              Fresh traditional sweets, snacks & savouries — made in small batches and delivered every weekend along the Hayathnagar → Ibrahimpatnam route.
+              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
             {/* Real Kitchen Principles — Authentic & Honest */}
@@ -101,16 +101,16 @@ export const HomePage: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveTab('products')}
-                className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-black text-sm px-7 py-3.5 rounded-2xl transition-all shadow-md shadow-orange-200"
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 active:scale-95 text-white font-black text-sm px-8 py-4 rounded-2xl transition-all shadow-lg shadow-orange-500/30 hover:scale-105"
               >
                 <ShoppingBag className="w-4 h-4" /> Order Now
               </button>
               <a
                 href="https://wa.me/918125154114?text=Hi%20PJR%20Swagrooha%20Foods%2C%20I%20want%20to%20order!"
                 target="_blank" rel="noreferrer"
-                className="flex items-center gap-2 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 font-bold text-sm px-6 py-3.5 rounded-2xl transition-all"
+                className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-sm px-6 py-4 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-sm"
               >
-                <MessageCircle className="w-4 h-4" /> WhatsApp
+                <MessageCircle className="w-4 h-4 text-emerald-600" /> WhatsApp
               </a>
             </div>
           </div>
@@ -118,22 +118,34 @@ export const HomePage: React.FC = () => {
           {/* Right — clear rotating food photo */}
           <div className="flex items-center justify-center lg:justify-end">
             <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-[380px] lg:h-[380px]">
+              {/* Floating Realistic HD Badge: Top Left */}
+              <div className="absolute -top-2 -left-2 sm:-top-3 sm:-left-3 z-10 bg-white/95 backdrop-blur-md border border-orange-200/90 text-slate-900 rounded-2xl px-3.5 py-1.5 shadow-xl flex items-center gap-2 text-xs font-black animate-float">
+                <span className="text-sm">⭐</span>
+                <span>Authentic Telugu Taste</span>
+              </div>
+
+              {/* Floating Realistic HD Badge: Bottom Right */}
+              <div className="absolute -bottom-1 -right-2 sm:-bottom-2 sm:-right-3 z-10 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300/80 text-amber-950 rounded-2xl px-3.5 py-1.5 shadow-xl flex items-center gap-2 text-xs font-black animate-float" style={{ animationDelay: '2.5s' }}>
+                <span className="text-sm">🌿</span>
+                <span>Pure Ghee • Zero Preservatives</span>
+              </div>
+
               {/* Light orange ring glow */}
-              <div className="absolute inset-0 rounded-full bg-orange-100 border-4 border-orange-200 shadow-xl overflow-hidden">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-100 via-amber-50 to-orange-200 border-4 border-orange-300/60 shadow-2xl overflow-hidden">
                 {heroSlides.map((s, i) => (
                   <img
                     key={s.label}
                     src={s.img}
                     alt={s.label}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === heroIndex ? 'opacity-100' : 'opacity-0'
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === heroIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                       }`}
                     style={{ objectFit: 'cover' }}
                   />
                 ))}
               </div>
 
-              {/* Floating label — below image, no overlay */}
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-max bg-white border border-slate-200 rounded-2xl px-5 py-2.5 shadow-lg text-center">
+              {/* Floating label — below image */}
+              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-max bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-2xl px-6 py-2.5 shadow-xl text-center">
                 <p className="text-slate-900 font-black text-sm">{heroSlides[heroIndex].label}</p>
                 <p className="text-orange-500 text-xs font-bold">{heroSlides[heroIndex].sub}</p>
               </div>
@@ -204,7 +216,7 @@ export const HomePage: React.FC = () => {
               tag: 'Festival Special',
               tagColor: 'bg-purple-100 text-purple-700 border-purple-200',
               img: IMAGES.potharekkalu,
-              price: '₹170 (5 Pcs Pootharekulu)',
+              price: '₹160 (5 Pcs Pootharekulu)',
               items: '5 varieties',
             },
             {
@@ -406,10 +418,14 @@ export const HomePage: React.FC = () => {
             </button>
             <a
               href="tel:+918125154114"
-              className="flex items-center justify-center gap-2 bg-white/8 hover:bg-white/12 border border-white/10 text-white font-semibold text-sm px-6 py-3 rounded-2xl transition-all"
+              className="flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white font-bold text-sm px-6 py-3 rounded-2xl transition-all shadow-sm active:scale-95 group"
             >
-              <Phone className="w-4 h-4 text-green-400" />
-              8125154114
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <Phone className="w-4 h-4 text-emerald-400 group-hover:rotate-12 transition-transform" />
+              <span>Call Directly</span>
             </a>
           </div>
         </div>

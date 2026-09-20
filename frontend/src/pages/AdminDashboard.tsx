@@ -110,7 +110,7 @@ export const AdminDashboard: React.FC = () => {
   // Coupon state
   const [coupons, setCoupons] = useState<any[]>([]);
   const [couponsLoading, setCouponsLoading] = useState(false);
-  const [couponForm, setCouponForm] = useState({ code: '', discountValue: '15', discountType: 'percent', minOrderValue: '300', expiresAt: '' });
+  const [couponForm, setCouponForm] = useState({ code: '', discountValue: '15', discountType: 'percent', minOrderValue: '200', expiresAt: '' });
   const [couponFormLoading, setCouponFormLoading] = useState(false);
 
   // Track which orders are currently being updated so we can show loading
@@ -609,15 +609,6 @@ export const AdminDashboard: React.FC = () => {
                           <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-0.5 rounded-full uppercase">
                             {order.status.replace(/_/g, ' ')}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setOrderToDelete(order)}
-                            className="text-[11px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2 py-0.5 flex items-center gap-1 transition-all"
-                            title="Mark as wrong order and remove"
-                          >
-                            <XCircle className="w-3 h-3 text-red-500" />
-                            <span>Wrong</span>
-                          </button>
                           {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-bold text-xs px-2 py-0.5 rounded-full">
                               Ref: {order.utrNumber}
@@ -741,15 +732,6 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-black text-slate-900 text-sm">#{order.orderId} — {order.customer.name}</span>
                           <span className="text-slate-500 font-medium">(Phone: {order.customer.phone})</span>
-                          <button
-                            type="button"
-                            onClick={() => setOrderToDelete(order)}
-                            className="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded px-1.5 py-0.5 flex items-center gap-0.5 transition-all"
-                            title="Mark as wrong order and remove"
-                          >
-                            <XCircle className="w-2.5 h-2.5 text-red-500" />
-                            <span>Wrong</span>
-                          </button>
                           {order.utrNumber && !['CUSTOMER_CONFIRMED', 'DIRECT_UPI_PAYMENT', 'SCREENSHOT_PROVED'].includes(order.utrNumber) && (
                             <span className="bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded">
                               Ref: {order.utrNumber}

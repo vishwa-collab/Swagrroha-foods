@@ -227,14 +227,14 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 10% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹300) */}
-            {subtotal >= 300 ? (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+            {/* 10% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹200) */}
+            {subtotal >= 200 ? (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm animate-scale-in">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl">🎟️</span>
+                  <span className="text-xl animate-bounce">🎟️</span>
                   <div>
                     <p className="text-xs font-black text-emerald-900">
-                      10% OFF Coupon Unlocked! (Min ₹300 reached)
+                      10% OFF Coupon Unlocked! (Min ₹200 reached)
                     </p>
                     <p className="text-[11px] text-emerald-700 font-semibold">
                       {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 10%'}
@@ -258,20 +258,20 @@ export const CartPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 font-bold text-amber-900">
                     <span>🚫</span>
-                    <span>Coupons not allowed below ₹300</span>
+                    <span>Coupons not allowed below ₹200</span>
                   </span>
                   <span className="text-[10px] font-black text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">
-                    Add ₹{300 - subtotal} more
+                    Add ₹{200 - subtotal} more
                   </span>
                 </div>
                 <div className="w-full bg-amber-200/60 rounded-full h-1.5 overflow-hidden">
                   <div 
-                    className="bg-amber-500 h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${Math.min(100, (subtotal / 300) * 100)}%` }}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min(100, (subtotal / 200) * 100)}%` }}
                   />
                 </div>
                 <p className="text-[11px] text-amber-800/90 font-medium">
-                  Add items worth <strong>₹{300 - subtotal}</strong> more to reach the minimum bill of ₹300 and use your 1-time 10% OFF coupon.
+                  Add items worth <strong>₹{200 - subtotal}</strong> more to reach the minimum bill of ₹200 and use your 1-time 10% OFF coupon.
                 </p>
               </div>
             )}
@@ -294,14 +294,14 @@ export const CartPage: React.FC = () => {
               </div>
 
               {/* Coupon Input / Applied Badge */}
-              {subtotal < 300 ? (
+              {subtotal < 200 ? (
                 <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-3 text-center space-y-1">
                   <p className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5">
                     <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Coupon Locked (Minimum Bill ₹300 Required)</span>
+                    <span>Coupon Locked (Minimum Bill ₹200 Required)</span>
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Add ₹{300 - subtotal} more items to unlock 1-time 10% OFF coupon entry.
+                    Add ₹{200 - subtotal} more items to unlock 1-time 10% OFF coupon entry.
                   </p>
                 </div>
               ) : appliedCoupon ? (

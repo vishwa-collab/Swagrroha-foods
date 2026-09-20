@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useCart, PlacedOrder } from '../context/CartContext';
 import {
   ArrowLeft, ShieldCheck, Sparkles, AlertCircle, CreditCard,
-  Zap, Lock, CheckCircle2, QrCode, Download, Copy, Check, Smartphone,
-  MapPin, Clock,
+  Lock, MapPin, Clock, PhoneCall,
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
@@ -15,25 +14,7 @@ export const PaymentPage: React.FC = () => {
   const chosenDeliveryDate = (customerDetails as any)._deliveryDate || deliveryDateInfo;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState('');
-  const [copiedNumber, setCopiedNumber] = useState(false);
-  const [hasTappedUpi, setHasTappedUpi] = useState(false);
-  const upiId = '8125154114@ybl';
-  const payeeName = 'Ganji Vishwateja';
-  const upiNumber = '8125154114';
   const [orderId] = useState(() => 'PJR-' + Math.floor(100000 + Math.random() * 900000));
-  const rawUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('PJR Order ' + orderId)}`;
-  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&data=${encodeURIComponent(rawUpiUri)}`;
-
-  const copyToClipboard = (text: string) => {
-    try {
-      const el = document.createElement('textarea');
-      el.value = text; el.setAttribute('readonly', '');
-      el.style.position = 'fixed'; el.style.left = '-9999px';
-      document.body.appendChild(el); el.select();
-      document.execCommand('copy'); document.body.removeChild(el);
-    } catch (e) { console.warn('copy error', e); }
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).catch(() => {});
-  };
 
   const buildOrder = (paymentMethod: string, utrNumber: string, actualPaidAmount?: number): PlacedOrder => ({
     orderId, customer: customerDetails, area: selectedArea, items: cart,
@@ -119,23 +100,10 @@ export const PaymentPage: React.FC = () => {
     rzp.open();
   };
 
-  const handleConfirmUpiOrder = async () => {
-    setIsSubmitting(true); setOrderError('');
-    await finalizeOrder(buildOrder('Direct UPI QR', 'DIRECT_UPI_PAYMENT', grandTotal));
-  };
-
-  const openUpiApp = (app: 'phonepe' | 'gpay' | 'paytm' | 'any') => {
-    setHasTappedUpi(true); copyToClipboard(upiNumber);
-    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { showToast('Scan the QR code on your phone.'); return; }
-    if (app === 'any') { window.location.href = rawUpiUri; return; }
-    const pkg = app === 'phonepe' ? 'com.phonepe.app' : app === 'gpay' ? 'com.google.android.apps.nbu.paisa.user' : 'net.one97.paytm';
-    window.location.href = `intent://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${grandTotal}&cu=INR#Intent;scheme=upi;package=${pkg};end`;
-  };
-
   if (cart.length === 0) { setActiveTab('cart'); return null; }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-up">
       <div className="flex items-center justify-between">
         <button onClick={() => setActiveTab('checkout')} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-amber-600 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Address Details
@@ -172,7 +140,7 @@ export const PaymentPage: React.FC = () => {
           {chosenDeliveryDate && (
             <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 pt-0.5">
               <Clock className="w-3 h-3 text-emerald-600" />
-              Delivery: {chosenDeliveryDate.formattedDate || chosenDeliveryDate.dayOfWeekName || 'Upcoming Weekend'}
+              Delivery: {chosenDeliveryDate.formattedDate || chosenDeliveryDate.dayOfWeekName || 'Upcoming Delivery'}
             </p>
           )}
         </div>
@@ -217,7 +185,7 @@ export const PaymentPage: React.FC = () => {
           </div>
           <p className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
             <Lock className="w-3 h-3 text-emerald-500" />
-            <span>256-bit SSL encrypted - Order saved only after verified payment</span>
+            <span>256-bit SSL encrypted • Instant verification</span>
           </p>
 
           {/* Try Once Free */}
@@ -243,78 +211,17 @@ export const PaymentPage: React.FC = () => {
           </p>
         </div>
 
-        <details className="group">
-          <summary className="cursor-pointer list-none">
-            <div className="flex items-center gap-2 py-1">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none">
-                <QrCode className="w-3.5 h-3.5" /> Or Scan QR (manual fallback)
-                <span className="text-slate-300 group-open:rotate-180 transition-transform inline-block">v</span>
-              </span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
-          </summary>
-          <div className="bg-gradient-to-b from-orange-50/60 to-amber-50/40 rounded-3xl border-2 border-orange-200/50 p-5 space-y-4 mt-2 text-center">
-            <div className="inline-flex items-center gap-1.5 bg-orange-500 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-              <Zap className="w-3.5 h-3.5 fill-white" /><span>Rs.{grandTotal} Pre-filled in QR</span>
-            </div>
-            <div className="bg-white p-3 rounded-2xl shadow-lg inline-block border-2 border-slate-200">
-              <img src={dynamicQrCodeUrl} alt={`UPI QR for Rs.${grandTotal}`} className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl mx-auto" />
-            </div>
-            <button type="button"
-              onClick={async () => {
-                try {
-                  const blob = await (await fetch(dynamicQrCodeUrl)).blob();
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url; a.download = `PJR-QR-Rs${grandTotal}.png`;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                } catch { window.open(dynamicQrCodeUrl, '_blank'); }
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-sm rounded-2xl shadow-md transition-all">
-              <Download className="w-4 h-4" /> Download QR to Gallery
-            </button>
-            <div className="bg-purple-50 border border-purple-200 rounded-2xl px-3 py-2.5 text-left text-[11px] text-purple-800 font-semibold">
-              PhonePe: Download QR then PhonePe then Scanner then Upload from Gallery then Select then Pay!
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: 'PhonePe', app: 'phonepe' as const, bg: 'bg-[#5f259f] hover:bg-[#4d1d82]' },
-                { label: 'GPay', app: 'gpay' as const, bg: 'bg-[#1a73e8] hover:bg-[#1557b0]' },
-                { label: 'Paytm', app: 'paytm' as const, bg: 'bg-[#002970] hover:bg-[#001d52]' },
-              ].map(({ label, app, bg }) => (
-                <button key={app} type="button" onClick={() => openUpiApp(app)} className={`${bg} py-3 px-2 text-white rounded-2xl text-xs font-extrabold flex flex-col items-center gap-1 shadow-md active:scale-95 transition-all`}>
-                  <Smartphone className="w-4 h-4" /><span>{label}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-3 py-2 text-left">
-              <div>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">UPI / Mobile</span>
-                <span className="text-xs font-black font-mono text-slate-800">{upiNumber} ({payeeName})</span>
-              </div>
-              <button type="button"
-                onClick={() => { copyToClipboard(upiNumber); setCopiedNumber(true); setHasTappedUpi(true); showToast(`Copied ${upiNumber}!`); setTimeout(() => setCopiedNumber(false), 3000); }}
-                className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl text-xs font-bold flex items-center gap-1 transition-all">
-                {copiedNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedNumber ? 'Copied!' : 'Copy'}</span>
-              </button>
-            </div>
-            {hasTappedUpi && (
-              <div className="bg-emerald-50 rounded-2xl p-4 border-2 border-emerald-300 space-y-3 text-left">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">After paying <strong>Rs.{grandTotal}</strong> via QR, tap below to confirm:</p>
-                </div>
-                <button type="button" disabled={isSubmitting} onClick={handleConfirmUpiOrder}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl shadow-md active:scale-95 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
-                  {isSubmitting ? 'Placing Order...' : 'I Have Paid - Confirm Order'}
-                </button>
-              </div>
-            )}
-            {!hasTappedUpi && <p className="text-[11px] text-slate-400 text-center animate-pulse">Scan QR or tap app button above, then confirm</p>}
-          </div>
-        </details>
+        {/* Direct Call Assistance Card */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>Need help with your order?</span>
+          <a
+            href="tel:+918125154114"
+            className="flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 transition-colors"
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Call Directly</span>
+          </a>
+        </div>
       </div>
     </div>
   );

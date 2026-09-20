@@ -94,7 +94,7 @@ ${itemsList}
 
 📍 Delivery Address: ${address}, ${areaName}
 📅 Scheduled Delivery: ${deliveryDateStr}
-${order.rewardCouponCode ? `\n🎟️ *Your Next Order Gift:* Code *${order.rewardCouponCode}* for *10% OFF* (Min bill ₹300 • 1-time use)` : ''}
+${order.rewardCouponCode ? `\n🎟️ *Your Next Order Gift:* Code *${order.rewardCouponCode}* for *10% OFF* (Min bill ₹200 • 1-time use)` : ''}
 
 Track your order anytime:
 https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}

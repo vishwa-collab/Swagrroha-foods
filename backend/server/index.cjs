@@ -105,15 +105,15 @@ const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 // ── Public & Loyalty coupon reward settings
 const LOYALTY_COUPON_DISCOUNT_VALUE = 10;  // 10% off
 const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
-const LOYALTY_COUPON_MIN_ORDER = 300;       // Minimum bill of ₹300 required
+const LOYALTY_COUPON_MIN_ORDER = 200;       // Minimum bill of ₹200 required
 const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
 
-// Pre-seeded 1-time welcome coupon (10% off on min bill ₹300)
+// Pre-seeded 1-time welcome coupon (10% off on min bill ₹200)
 const WELCOME_COUPON = {
   code: 'WELCOME10',
   discountType: 'percent',
   discountValue: 10,
-  minOrderValue: 300,
+  minOrderValue: 200,
   isActive: true,
   isUsed: false,
   isSingleUse: true,
@@ -160,7 +160,7 @@ async function generateNewOrderCoupon(orderObj) {
       coupons.unshift(newCoupon);
     }
 
-    console.log(`🎟️ New order coupon generated: ${code} (10% off, min order ₹300, 1-time use)`);
+    console.log(`🎟️ New order coupon generated: ${code} (10% off, min order ₹200, 1-time use)`);
     return newCoupon;
   } catch (e) {
     console.error('❌ Error generating new order coupon:', e.message);
@@ -311,7 +311,7 @@ if (mongoUri) {
             code: 'WELCOME10',
             discountType: 'percent',
             discountValue: 10,
-            minOrderValue: 300,
+            minOrderValue: 200,
             isActive: true,
             isUsed: false,
             isSingleUse: true,
@@ -1032,11 +1032,11 @@ app.post('/api/coupons/validate', async (req, res) => {
     const { code, orderTotal } = req.body;
     if (!code) return res.status(400).json({ success: false, error: 'Coupon code is required.' });
 
-    // Strict minimum bill check: If below 300, not allowed
-    if (!orderTotal || orderTotal < 300) {
+    // Strict minimum bill check: If below 200, not allowed
+    if (!orderTotal || orderTotal < 200) {
       return res.status(400).json({
         success: false,
-        error: 'Coupons are not allowed for bills below ₹300. Minimum bill of ₹300 is required.'
+        error: 'Coupons are not allowed for bills below ₹200. Minimum bill of ₹200 is required.'
       });
     }
 
