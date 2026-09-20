@@ -354,7 +354,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <span>📦 New Orders</span>
+          <span>📦 Start with Fresh Orders</span>
           {newOrders.length > 0 && (
             <span className="bg-amber-400 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black animate-pulse">
               {newOrders.length} NEW
@@ -441,9 +441,9 @@ export const AdminDashboard: React.FC = () => {
       {activeTabSection === 'new' && (
         <div className="space-y-6">
           <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <span>📦 Incoming New Orders</span>
+            <span>📦 Start with Fresh Orders</span>
             <span className="text-xs bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full">
-              Review and Accept Orders
+              Review and Start Fresh Orders
             </span>
           </h2>
 
@@ -455,8 +455,8 @@ export const AdminDashboard: React.FC = () => {
           ) : newOrders.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-2 border border-slate-100 shadow-sm">
               <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
-              <p className="font-extrabold text-slate-700 text-base">No New Orders</p>
-              <p className="text-xs">All incoming orders accepted. Auto-refreshing every 10 s.</p>
+              <p className="font-extrabold text-slate-700 text-base">No Fresh Orders Pending</p>
+              <p className="text-xs">All incoming fresh orders accepted. Auto-refreshing every 10 s.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -470,7 +470,7 @@ export const AdminDashboard: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="bg-brand-100 text-brand-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded">
-                            NEW ORDER #{order.orderId}
+                            FRESH ORDER #{order.orderId}
                           </span>
                           <button
                             type="button"
@@ -555,7 +555,7 @@ export const AdminDashboard: React.FC = () => {
                       >
                         {isUpdating
                           ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Saving…</span></>
-                          : <><CheckCircle2 className="w-4 h-4" /><span>Accept Order &amp; Start Preparing</span></>
+                          : <><CheckCircle2 className="w-4 h-4" /><span>Accept &amp; Start with Fresh Order</span></>
                         }
                       </button>
 
