@@ -191,7 +191,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [couponLoading, setCouponLoading] = useState(false);
   const [earnedCouponCode, setEarnedCouponCode] = useState<string | null>(() => localStorage.getItem('swagrooha_earned_coupon'));
 
-  // Dynamic 15% discount calculation based on subtotal (re-computes if items change)
+  // Dynamic 10% discount calculation based on subtotal (re-computes if items change)
   const couponDiscount = appliedCoupon
     ? (appliedCoupon.discountType === 'percent'
         ? Math.round((subtotal * appliedCoupon.discountValue) / 100)
@@ -226,7 +226,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (appliedCoupon && subtotal > 0 && subtotal < 300) {
       setAppliedCoupon(null);
-      setCouponError('Coupon removed: Minimum bill of ₹300 is required for 15% discount.');
+      setCouponError('Coupon removed: Minimum bill of ₹300 is required for 10% discount.');
       showToast('Coupon removed: Minimum bill of ₹300 required');
     }
   }, [subtotal, appliedCoupon]);
@@ -347,23 +347,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           discountValue: data.discountValue,
         });
         setCouponError('');
-        showToast(`🎟️ Coupon applied! 15% OFF (−₹${data.discountAmount})`);
+        showToast(`🎟️ Coupon applied! ${data.discountType === 'percent' ? data.discountValue : 10}% OFF (−₹${data.discountAmount})`);
       } else {
         setCouponError(data.error || 'Invalid or expired coupon code.');
         setAppliedCoupon(null);
       }
     } catch {
       // Local fallback in case backend is offline or sleeping
-      if (cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
-        const discountAmount = Math.round((subtotal * 15) / 100);
+      if (cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR10-') || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
+        const discountAmount = Math.round((subtotal * 10) / 100);
         setAppliedCoupon({
           code: cleanCode,
           discountAmount,
           discountType: 'percent',
-          discountValue: 15,
+          discountValue: 10,
         });
         setCouponError('');
-        showToast(`🎟️ Coupon applied! 15% OFF (−₹${discountAmount})`);
+        showToast(`🎟️ Coupon applied! 10% OFF (−₹${discountAmount})`);
       } else {
         setCouponError('Could not validate coupon. Please try again.');
       }

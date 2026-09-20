@@ -380,7 +380,7 @@ export const HomePage: React.FC = () => {
                 <Clock className="w-3.5 h-3.5 text-slate-500" /> Every Saturday & Sunday
               </span>
               <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5 text-slate-500" /> ₹20 – ₹50 delivery charge
+                <Package className="w-3.5 h-3.5 text-slate-500" /> ₹20 – ₹40 delivery charge
               </span>
             </div>
           </div>

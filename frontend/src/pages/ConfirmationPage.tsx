@@ -291,7 +291,7 @@ export const ConfirmationPage: React.FC = () => {
             <span>New Order Reward Unlocked!</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black">
-            Here is your NEW 15% OFF Coupon for your next order!
+            Here is your NEW 10% OFF Coupon for your next order!
           </h2>
           <p className="text-xs sm:text-sm text-amber-100 max-w-md mx-auto">
             As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill ₹300).

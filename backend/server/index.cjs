@@ -103,16 +103,16 @@ const couponSchema = new mongoose.Schema({
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 
 // ── Public & Loyalty coupon reward settings
-const LOYALTY_COUPON_DISCOUNT_VALUE = 15;  // 15% off
+const LOYALTY_COUPON_DISCOUNT_VALUE = 10;  // 10% off
 const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
 const LOYALTY_COUPON_MIN_ORDER = 300;       // Minimum bill of ₹300 required
 const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
 
-// Pre-seeded 1-time welcome coupon (15% off on min bill ₹300)
+// Pre-seeded 1-time welcome coupon (10% off on min bill ₹300)
 const WELCOME_COUPON = {
-  code: 'WELCOME15',
+  code: 'WELCOME10',
   discountType: 'percent',
-  discountValue: 15,
+  discountValue: 10,
   minOrderValue: 300,
   isActive: true,
   isUsed: false,
@@ -127,10 +127,10 @@ let coupons = [WELCOME_COUPON];
 function generateCouponCode(phone) {
   const suffix = phone ? phone.slice(-4) : Math.floor(1000 + Math.random() * 9000);
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `PJR15-${suffix}${rand}`;
+  return `PJR10-${suffix}${rand}`;
 }
 
-// Auto-generate a brand-new 15% 1-time coupon for every new order placed
+// Auto-generate a brand-new 10% 1-time coupon for every new order placed
 async function generateNewOrderCoupon(orderObj) {
   try {
     const customerPhone = (orderObj.customer?.phone || orderObj.phone || '').trim();
@@ -160,7 +160,7 @@ async function generateNewOrderCoupon(orderObj) {
       coupons.unshift(newCoupon);
     }
 
-    console.log(`🎟️ New order coupon generated: ${code} (15% off, min order ₹300, 1-time use)`);
+    console.log(`🎟️ New order coupon generated: ${code} (10% off, min order ₹300, 1-time use)`);
     return newCoupon;
   } catch (e) {
     console.error('❌ Error generating new order coupon:', e.message);
@@ -303,14 +303,14 @@ if (mongoUri) {
     .then(() => {
       isMongoConnected = true;
       console.log('✅ MongoDB Database connected and orders collection ready');
-      // Ensure default WELCOME15 1-time coupon exists in DB
+      // Ensure default WELCOME10 1-time coupon exists in DB
       Coupon.findOneAndUpdate(
-        { code: 'WELCOME15' },
+        { code: 'WELCOME10' },
         {
           $setOnInsert: {
-            code: 'WELCOME15',
+            code: 'WELCOME10',
             discountType: 'percent',
-            discountValue: 15,
+            discountValue: 10,
             minOrderValue: 300,
             isActive: true,
             isUsed: false,
@@ -319,7 +319,7 @@ if (mongoUri) {
           }
         },
         { upsert: true, new: true }
-      ).catch(e => console.warn('WELCOME15 seed notice:', e.message));
+      ).catch(e => console.warn('WELCOME10 seed notice:', e.message));
     })
     .catch((err) => {
       console.error('❌ MongoDB connection error:', err.message);
@@ -611,7 +611,7 @@ app.post('/api/orders', async (req, res) => {
       }
     }
 
-    // "if new order new cupon": Generate a new 15% coupon for the customer's next order
+    // "if new order new cupon": Generate a new 10% coupon for the customer's next order
     const nextOrderCoupon = await generateNewOrderCoupon(finalOrder);
     if (nextOrderCoupon) {
       finalOrder.rewardCouponCode = nextOrderCoupon.code;
@@ -1049,8 +1049,8 @@ app.post('/api/coupons/validate', async (req, res) => {
       coupon = coupons.find(c => c.code === cleanCode) || null;
     }
 
-    if (cleanCode === 'WELCOME15' && !coupon) {
-      coupon = WELCOME_COUPON;
+    if ((cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15') && !coupon) {
+      coupon = { ...WELCOME_COUPON, code: cleanCode };
     }
 
     if (!coupon) return res.status(404).json({ success: false, error: 'Invalid coupon code. Please check and try again.' });

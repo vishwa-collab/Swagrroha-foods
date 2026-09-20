@@ -225,7 +225,7 @@ export const CartPage: React.FC = () => {
                   ))}
                 </optgroup>
 
-                <optgroup label="Far Zone (₹50 Delivery)">
+                <optgroup label="Far Zone (₹40 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Far').map(area => (
                     <option key={area.id} value={area.id}>
                       📍 {area.name} — Far Zone (₹{area.charge} Delivery)
@@ -240,17 +240,17 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 15% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹300) */}
+            {/* 10% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹300) */}
             {subtotal >= 300 ? (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl">🎟️</span>
                   <div>
                     <p className="text-xs font-black text-emerald-900">
-                      15% OFF Coupon Unlocked! (Min ₹300 reached)
+                      10% OFF Coupon Unlocked! (Min ₹300 reached)
                     </p>
                     <p className="text-[11px] text-emerald-700 font-semibold">
-                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 15%'}
+                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 10%'}
                     </p>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export const CartPage: React.FC = () => {
                   />
                 </div>
                 <p className="text-[11px] text-amber-800/90 font-medium">
-                  Add items worth <strong>₹{300 - subtotal}</strong> more to reach the minimum bill of ₹300 and use your 1-time 15% OFF coupon.
+                  Add items worth <strong>₹{300 - subtotal}</strong> more to reach the minimum bill of ₹300 and use your 1-time 10% OFF coupon.
                 </p>
               </div>
             )}
@@ -314,7 +314,7 @@ export const CartPage: React.FC = () => {
                     <span>Coupon Locked (Minimum Bill ₹300 Required)</span>
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Add ₹{300 - subtotal} more items to unlock 1-time 15% OFF coupon entry.
+                    Add ₹{300 - subtotal} more items to unlock 1-time 10% OFF coupon entry.
                   </p>
                 </div>
               ) : appliedCoupon ? (
@@ -323,7 +323,7 @@ export const CartPage: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <p className="text-xs font-black text-emerald-800 font-mono">{appliedCoupon.code}</p>
-                      <p className="text-[10px] text-emerald-700 font-semibold">15% OFF • Saving ₹{appliedCoupon.discountAmount}! (1-Time Use)</p>
+                      <p className="text-[10px] text-emerald-700 font-semibold">{appliedCoupon.discountType === 'percent' ? `${appliedCoupon.discountValue}% OFF` : ''} • Saving ₹{appliedCoupon.discountAmount}! (1-Time Use)</p>
                     </div>
                   </div>
                   <button
@@ -358,7 +358,7 @@ export const CartPage: React.FC = () => {
                       <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="Enter coupon code (e.g. WELCOME15)"
+                        placeholder="Enter coupon code (e.g. WELCOME10)"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                         onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
@@ -380,7 +380,7 @@ export const CartPage: React.FC = () => {
                     </p>
                   )}
                   <p className="text-[10px] text-slate-500">
-                    🔒 Single-use only (15% OFF) • For each new order, you earn a new coupon!
+                    🔒 Single-use only (10% OFF) • For each new order, you earn a new coupon!
                   </p>
                 </div>
               )}

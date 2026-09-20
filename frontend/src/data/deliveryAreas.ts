@@ -22,10 +22,10 @@ export const DELIVERY_AREAS: DeliveryArea[] = [
   { id: 'turkayamjal', name: 'Turkayamjal', tier: 'Medium', charge: 30, estimatedDeliveryText: 'Weekend Delivery (₹30)' },
   { id: 'injapur', name: 'Injapur', tier: 'Medium', charge: 30, estimatedDeliveryText: 'Weekend Delivery (₹30)' },
 
-  // --- FAR AREAS (₹50) ---
-  { id: 'manneguda', name: 'Manneguda', tier: 'Far', charge: 50, estimatedDeliveryText: 'Weekend Delivery (₹50)' },
-  { id: 'bongloor', name: 'Bongloor', tier: 'Far', charge: 50, estimatedDeliveryText: 'Weekend Delivery (₹50)' },
-  { id: 'mangalpally', name: 'Mangalpally', tier: 'Far', charge: 50, estimatedDeliveryText: 'Weekend Delivery (₹50)' },
-  { id: 'sheriguda', name: 'Sheriguda', tier: 'Far', charge: 50, estimatedDeliveryText: 'Weekend Delivery (₹50)' },
-  { id: 'ibrahimpatnam', name: 'Ibrahimpatnam', tier: 'Far', charge: 50, estimatedDeliveryText: 'Weekend Delivery (₹50)' },
+  // --- FAR AREAS (₹40) ---
+  { id: 'manneguda', name: 'Manneguda', tier: 'Far', charge: 40, estimatedDeliveryText: 'Weekend Delivery (₹40)' },
+  { id: 'bongloor', name: 'Bongloor', tier: 'Far', charge: 40, estimatedDeliveryText: 'Weekend Delivery (₹40)' },
+  { id: 'mangalpally', name: 'Mangalpally', tier: 'Far', charge: 40, estimatedDeliveryText: 'Weekend Delivery (₹40)' },
+  { id: 'sheriguda', name: 'Sheriguda', tier: 'Far', charge: 40, estimatedDeliveryText: 'Weekend Delivery (₹40)' },
+  { id: 'ibrahimpatnam', name: 'Ibrahimpatnam', tier: 'Far', charge: 40, estimatedDeliveryText: 'Weekend Delivery (₹40)' },
 ];
