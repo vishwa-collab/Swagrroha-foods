@@ -92,7 +92,7 @@ const couponSchema = new mongoose.Schema({
   isUsed: { type: Boolean, default: false },
   usedInOrderId: String,
   usedAt: Date,
-  // Loyalty coupon: tied to customer after 1 completed order
+  isSingleUse: { type: Boolean, default: true },
   createdForPhone: String,
   createdForEmail: String,
   createdForOrderId: String,
@@ -102,20 +102,70 @@ const couponSchema = new mongoose.Schema({
 
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 
-// In-memory coupon fallback
-let coupons = [];
-
-// ── Loyalty coupon reward settings
-const LOYALTY_COUPON_DISCOUNT_VALUE = 10;  // 10% off
+// ── Public & Loyalty coupon reward settings
+const LOYALTY_COUPON_DISCOUNT_VALUE = 15;  // 15% off
 const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
-const LOYALTY_COUPON_MIN_ORDER = 0;        // no minimum order required
+const LOYALTY_COUPON_MIN_ORDER = 300;       // Minimum bill of ₹300 required
 const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
+
+// Pre-seeded 1-time welcome coupon (15% off on min bill ₹300)
+const WELCOME_COUPON = {
+  code: 'WELCOME15',
+  discountType: 'percent',
+  discountValue: 15,
+  minOrderValue: 300,
+  isActive: true,
+  isUsed: false,
+  isSingleUse: true,
+  createdAt: new Date(),
+};
+
+// In-memory coupon fallback
+let coupons = [WELCOME_COUPON];
 
 // Generate a unique coupon code
 function generateCouponCode(phone) {
   const suffix = phone ? phone.slice(-4) : Math.floor(1000 + Math.random() * 9000);
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `THANK${suffix}${rand}`;
+  return `PJR15-${suffix}${rand}`;
+}
+
+// Auto-generate a brand-new 15% 1-time coupon for every new order placed
+async function generateNewOrderCoupon(orderObj) {
+  try {
+    const customerPhone = (orderObj.customer?.phone || orderObj.phone || '').trim();
+    const customerEmail = (orderObj.customer?.email || '').trim();
+    const code = generateCouponCode(customerPhone);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + LOYALTY_COUPON_VALIDITY_DAYS);
+
+    const newCoupon = {
+      code,
+      discountType: LOYALTY_COUPON_DISCOUNT_TYPE,
+      discountValue: LOYALTY_COUPON_DISCOUNT_VALUE,
+      minOrderValue: LOYALTY_COUPON_MIN_ORDER,
+      isActive: true,
+      isUsed: false,
+      isSingleUse: true,
+      createdForPhone: customerPhone,
+      createdForEmail: customerEmail,
+      createdForOrderId: orderObj.orderId,
+      expiresAt,
+      createdAt: new Date(),
+    };
+
+    if (isMongoConnected) {
+      await Coupon.create(newCoupon);
+    } else {
+      coupons.unshift(newCoupon);
+    }
+
+    console.log(`🎟️ New order coupon generated: ${code} (15% off, min order ₹300, 1-time use)`);
+    return newCoupon;
+  } catch (e) {
+    console.error('❌ Error generating new order coupon:', e.message);
+    return null;
+  }
 }
 
 // Auto-generate and send loyalty coupon when order is DELIVERED
@@ -253,6 +303,23 @@ if (mongoUri) {
     .then(() => {
       isMongoConnected = true;
       console.log('✅ MongoDB Database connected and orders collection ready');
+      // Ensure default WELCOME15 1-time coupon exists in DB
+      Coupon.findOneAndUpdate(
+        { code: 'WELCOME15' },
+        {
+          $setOnInsert: {
+            code: 'WELCOME15',
+            discountType: 'percent',
+            discountValue: 15,
+            minOrderValue: 300,
+            isActive: true,
+            isUsed: false,
+            isSingleUse: true,
+            createdAt: new Date(),
+          }
+        },
+        { upsert: true, new: true }
+      ).catch(e => console.warn('WELCOME15 seed notice:', e.message));
     })
     .catch((err) => {
       console.error('❌ MongoDB connection error:', err.message);
@@ -525,7 +592,7 @@ app.post('/api/orders', async (req, res) => {
 
     await persistOrder(finalOrder);
 
-    // If a coupon code was used, mark it as used (single-use enforcement)
+    // If a coupon code was used, mark it as used immediately (strictly one-time use)
     if (finalOrder.couponCode) {
       const cleanCode = finalOrder.couponCode.trim().toUpperCase();
       if (isMongoConnected) {
@@ -544,6 +611,12 @@ app.post('/api/orders', async (req, res) => {
       }
     }
 
+    // "if new order new cupon": Generate a new 15% coupon for the customer's next order
+    const nextOrderCoupon = await generateNewOrderCoupon(finalOrder);
+    if (nextOrderCoupon) {
+      finalOrder.rewardCouponCode = nextOrderCoupon.code;
+    }
+
     // Fire all three automatically in parallel:
     //  1. WhatsApp notification to OWNER (via CallMeBot)
     //  2. WhatsApp receipt to CUSTOMER (via UltraMsg / Meta / Twilio)
@@ -557,6 +630,7 @@ app.post('/api/orders', async (req, res) => {
     return res.status(201).json({
       success: true,
       orderId: finalOrder.orderId,
+      rewardCouponCode: nextOrderCoupon ? nextOrderCoupon.code : null,
       ownerWhatsapp: ownerWhatsappResult.value || ownerWhatsappResult.reason?.message,
       customerWhatsapp: customerWhatsappResult.value || customerWhatsappResult.reason?.message,
       email: emailResult.value || emailResult.reason?.message,
@@ -958,6 +1032,14 @@ app.post('/api/coupons/validate', async (req, res) => {
     const { code, orderTotal } = req.body;
     if (!code) return res.status(400).json({ success: false, error: 'Coupon code is required.' });
 
+    // Strict minimum bill check: If below 300, not allowed
+    if (!orderTotal || orderTotal < 300) {
+      return res.status(400).json({
+        success: false,
+        error: 'Coupons are not allowed for bills below ₹300. Minimum bill of ₹300 is required.'
+      });
+    }
+
     const cleanCode = code.trim().toUpperCase();
     let coupon = null;
 
@@ -967,14 +1049,26 @@ app.post('/api/coupons/validate', async (req, res) => {
       coupon = coupons.find(c => c.code === cleanCode) || null;
     }
 
+    if (cleanCode === 'WELCOME15' && !coupon) {
+      coupon = WELCOME_COUPON;
+    }
+
     if (!coupon) return res.status(404).json({ success: false, error: 'Invalid coupon code. Please check and try again.' });
     if (!coupon.isActive) return res.status(400).json({ success: false, error: 'This coupon is no longer active.' });
-    if (coupon.isUsed) return res.status(400).json({ success: false, error: 'This coupon has already been used.' });
+
+    // Strict one-time use enforcement
+    if (coupon.isUsed) {
+      return res.status(400).json({
+        success: false,
+        error: 'This coupon has already been used. Each coupon is valid for one-time use only.'
+      });
+    }
+
     if (coupon.expiresAt && new Date() > new Date(coupon.expiresAt)) {
       return res.status(400).json({ success: false, error: 'This coupon has expired.' });
     }
     if (coupon.minOrderValue && orderTotal < coupon.minOrderValue) {
-      return res.status(400).json({ success: false, error: `This coupon requires a minimum order of ₹${coupon.minOrderValue}.` });
+      return res.status(400).json({ success: false, error: `This coupon requires a minimum bill of ₹${coupon.minOrderValue}.` });
     }
 
     const discountAmount = coupon.discountType === 'percent'

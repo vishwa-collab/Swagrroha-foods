@@ -44,6 +44,7 @@ export const CartPage: React.FC = () => {
     couponLoading,
     applyCoupon,
     removeCoupon,
+    earnedCouponCode,
   } = useCart();
 
   if (cart.length === 0) {
@@ -239,24 +240,52 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Free Delivery Banner / Progress */}
-            {isFreeDelivery ? (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 flex items-center gap-2.5 text-xs font-bold shadow-sm">
-                <span className="text-base">🎉</span>
-                <span>You unlocked <strong>FREE Delivery</strong> on this order!</span>
+            {/* 15% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹300) */}
+            {subtotal >= 300 ? (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🎟️</span>
+                  <div>
+                    <p className="text-xs font-black text-emerald-900">
+                      15% OFF Coupon Unlocked! (Min ₹300 reached)
+                    </p>
+                    <p className="text-[11px] text-emerald-700 font-semibold">
+                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 15%'}
+                    </p>
+                  </div>
+                </div>
+                {!appliedCoupon && earnedCouponCode && (
+                  <button
+                    onClick={() => {
+                      setCouponInput(earnedCouponCode);
+                      setTimeout(() => applyCoupon(), 50);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black px-3 py-1.5 rounded-xl shadow transition-all shrink-0"
+                  >
+                    Apply {earnedCouponCode}
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3 space-y-1.5 text-xs font-semibold">
+              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3.5 space-y-2 text-xs font-semibold">
                 <div className="flex items-center justify-between">
-                  <span>Add <strong>₹{500 - subtotal}</strong> more for <strong>FREE Delivery</strong></span>
-                  <span className="text-[10px] font-extrabold text-amber-700">{Math.round((subtotal / 500) * 100)}%</span>
+                  <span className="flex items-center gap-1.5 font-bold text-amber-900">
+                    <span>🚫</span>
+                    <span>Coupons not allowed below ₹300</span>
+                  </span>
+                  <span className="text-[10px] font-black text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">
+                    Add ₹{300 - subtotal} more
+                  </span>
                 </div>
                 <div className="w-full bg-amber-200/60 rounded-full h-1.5 overflow-hidden">
                   <div 
-                    className="bg-brand-500 h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${Math.min(100, (subtotal / 500) * 100)}%` }}
+                    className="bg-amber-500 h-full rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min(100, (subtotal / 300) * 100)}%` }}
                   />
                 </div>
+                <p className="text-[11px] text-amber-800/90 font-medium">
+                  Add items worth <strong>₹{300 - subtotal}</strong> more to reach the minimum bill of ₹300 and use your 1-time 15% OFF coupon.
+                </p>
               </div>
             )}
 
@@ -274,24 +303,27 @@ export const CartPage: React.FC = () => {
                   <Truck className="w-3.5 h-3.5 text-brand-500" />
                   Delivery Charge ({selectedArea.name})
                 </span>
-                {isFreeDelivery ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="line-through text-slate-400">₹{originalDeliveryCharge}</span>
-                    <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE</span>
-                  </div>
-                ) : (
-                  <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
-                )}
+                <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
               </div>
 
               {/* Coupon Input / Applied Badge */}
-              {appliedCoupon ? (
+              {subtotal < 300 ? (
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-3 text-center space-y-1">
+                  <p className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Coupon Locked (Minimum Bill ₹300 Required)</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Add ₹{300 - subtotal} more items to unlock 1-time 15% OFF coupon entry.
+                  </p>
+                </div>
+              ) : appliedCoupon ? (
                 <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <p className="text-xs font-black text-emerald-800 font-mono">{appliedCoupon.code}</p>
-                      <p className="text-[10px] text-emerald-700 font-semibold">Saving ₹{appliedCoupon.discountAmount}!</p>
+                      <p className="text-[10px] text-emerald-700 font-semibold">15% OFF • Saving ₹{appliedCoupon.discountAmount}! (1-Time Use)</p>
                     </div>
                   </div>
                   <button
@@ -303,13 +335,30 @@ export const CartPage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
+                  {earnedCouponCode && (
+                    <div className="bg-amber-50 border border-amber-300 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wide">🎁 Your Reward Coupon</p>
+                        <p className="text-xs font-mono font-black text-amber-950">{earnedCouponCode}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setCouponInput(earnedCouponCode);
+                          setTimeout(() => applyCoupon(), 50);
+                        }}
+                        className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow transition-all shrink-0"
+                      >
+                        1-Tap Apply
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
                       <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="Enter coupon code"
+                        placeholder="Enter coupon code (e.g. WELCOME15)"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                         onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
@@ -330,7 +379,9 @@ export const CartPage: React.FC = () => {
                       {couponError}
                     </p>
                   )}
-                  <p className="text-[10px] text-slate-400">🎟️ Complete 1 order to earn a coupon code!</p>
+                  <p className="text-[10px] text-slate-500">
+                    🔒 Single-use only (15% OFF) • For each new order, you earn a new coupon!
+                  </p>
                 </div>
               )}
 

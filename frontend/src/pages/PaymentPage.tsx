@@ -211,7 +211,7 @@ export const PaymentPage: React.FC = () => {
           )}
           {!isOneRupeeMode && appliedCoupon && couponDiscount > 0 && (
             <p className="text-xs font-bold text-emerald-400">
-              🎟️ {appliedCoupon.code}: 10% off − ₹{couponDiscount} saved!
+              🎟️ {appliedCoupon.code}: {appliedCoupon.discountValue || 15}% off − ₹{couponDiscount} saved!
             </p>
           )}
           <p className="text-[11px] text-slate-400">Order #{orderId}</p>

@@ -26,6 +26,17 @@ import { getWhatsAppPlacedReceiptLink, getWhatsAppOwnerReceiptLink } from '../ut
 export const ConfirmationPage: React.FC = () => {
   const { currentOrder, setActiveTab } = useCart();
 
+  const [copiedCoupon, setCopiedCoupon] = React.useState(false);
+  const rewardCoupon = currentOrder?.rewardCouponCode || localStorage.getItem('swagrooha_earned_coupon');
+
+  const handleCopyCoupon = () => {
+    if (rewardCoupon) {
+      navigator.clipboard.writeText(rewardCoupon);
+      setCopiedCoupon(true);
+      setTimeout(() => setCopiedCoupon(false), 2500);
+    }
+  };
+
   // Fire confetti on mount
   useEffect(() => {
     confetti({
@@ -271,6 +282,37 @@ export const ConfirmationPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 🎁 REWARD: New Order Coupon Card */}
+      {rewardCoupon && (
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 sm:p-7 text-white shadow-xl space-y-3.5 text-center border-2 border-amber-300">
+          <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+            <span>🎁</span>
+            <span>New Order Reward Unlocked!</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black">
+            Here is your NEW 15% OFF Coupon for your next order!
+          </h2>
+          <p className="text-xs sm:text-sm text-amber-100 max-w-md mx-auto">
+            As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill ₹300).
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <div className="font-mono font-black text-2xl sm:text-3xl bg-slate-950/40 border-2 border-dashed border-amber-300 px-5 py-2.5 rounded-2xl tracking-widest text-amber-200 select-all shadow-inner">
+              {rewardCoupon}
+            </div>
+            <button
+              onClick={handleCopyCoupon}
+              className="flex items-center gap-1.5 bg-white text-slate-900 hover:bg-amber-100 active:scale-95 font-black text-xs px-4 py-3 rounded-2xl shadow-md transition-all"
+            >
+              {copiedCoupon ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+              <span>{copiedCoupon ? 'Copied!' : 'Copy Code'}</span>
+            </button>
+          </div>
+          <p className="text-[11px] text-amber-200/90 font-medium">
+            🔒 Single-use only • Valid on minimum bill of ₹300 • Automatically saved in cart for next time!
+          </p>
+        </div>
+      )}
 
       {/* WhatsApp Receipt Action Center */}
       <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-2 border-[#25D366] rounded-3xl p-6 shadow-md space-y-4">

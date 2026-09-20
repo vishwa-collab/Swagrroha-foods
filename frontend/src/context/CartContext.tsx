@@ -46,6 +46,7 @@ export interface PlacedOrder {
   receiptEmailSentAt?: string | null;
   receiptEmailStatus?: string | null;
   receiptEmailError?: string | null;
+  rewardCouponCode?: string;
   review?: { rating: number; comment?: string; submittedAt?: string };
 }
 
@@ -74,6 +75,8 @@ interface CartContextType {
   couponLoading: boolean;
   applyCoupon: () => Promise<void>;
   removeCoupon: () => void;
+  earnedCouponCode: string | null;
+  setEarnedCouponCode: (c: string | null) => void;
   
   activeTab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin';
   setActiveTab: (tab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin') => void;
@@ -175,12 +178,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCartToast, setIsCartToast] = useState<boolean>(false);
 
+  // Calculation of Subtotal & Delivery (Free delivery on ₹500 removed)
+  const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
+  const isFreeDelivery = false; // Bill 500 free delivery rule removed
+  const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
+  const deliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
+
   // Coupon state
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number; discountType: string; discountValue: number } | null>(null);
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
-  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const [earnedCouponCode, setEarnedCouponCode] = useState<string | null>(() => localStorage.getItem('swagrooha_earned_coupon'));
+
+  // Dynamic 15% discount calculation based on subtotal (re-computes if items change)
+  const couponDiscount = appliedCoupon
+    ? (appliedCoupon.discountType === 'percent'
+        ? Math.round((subtotal * appliedCoupon.discountValue) / 100)
+        : appliedCoupon.discountAmount)
+    : 0;
+
+  const grandTotal = Math.max(0, subtotal + deliveryCharge - couponDiscount);
 
   // Owner Auth State
   const [adminToken, setAdminToken] = useState<string | null>(() => localStorage.getItem('swagrooha_admin_token'));
@@ -203,6 +221,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem('swagrooha_all_orders', JSON.stringify(allOrders));
   }, [allOrders]);
+
+  // Auto-remove coupon if cart subtotal drops below minimum bill requirement (₹300)
+  useEffect(() => {
+    if (appliedCoupon && subtotal > 0 && subtotal < 300) {
+      setAppliedCoupon(null);
+      setCouponError('Coupon removed: Minimum bill of ₹300 is required for 15% discount.');
+      showToast('Coupon removed: Minimum bill of ₹300 required');
+    }
+  }, [subtotal, appliedCoupon]);
 
   // Secret keyboard shortcut (Ctrl + Shift + A) to open Owner Panel
   useEffect(() => {
@@ -285,17 +312,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Coupon functions
   const applyCoupon = async () => {
-    if (!couponInput.trim()) {
+    const cleanCode = couponInput.trim().toUpperCase();
+    if (!cleanCode) {
       setCouponError('Please enter a coupon code.');
       return;
     }
+    // "if below 300 not"
+    if (subtotal < 300) {
+      setCouponError(`Coupons are not allowed for bills below ₹300. Please add ₹${300 - subtotal} more!`);
+      return;
+    }
+
+    // Strict one-time use client guard
+    const usedList: string[] = JSON.parse(localStorage.getItem('swagrooha_used_coupons') || '[]');
+    if (usedList.includes(cleanCode)) {
+      setCouponError('This coupon has already been used. Each coupon is valid for one-time use only.');
+      return;
+    }
+
     setCouponLoading(true);
     setCouponError('');
     try {
       const res = await fetch(`${API_BASE}/api/coupons/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponInput.trim(), orderTotal: subtotal + deliveryCharge }),
+        body: JSON.stringify({ code: cleanCode, orderTotal: subtotal }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -306,13 +347,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           discountValue: data.discountValue,
         });
         setCouponError('');
-        showToast(`🎟️ Coupon applied! You save ₹${data.discountAmount}`);
+        showToast(`🎟️ Coupon applied! 15% OFF (−₹${data.discountAmount})`);
       } else {
-        setCouponError(data.error || 'Invalid coupon code.');
+        setCouponError(data.error || 'Invalid or expired coupon code.');
         setAppliedCoupon(null);
       }
     } catch {
-      setCouponError('Could not validate coupon. Please try again.');
+      // Local fallback in case backend is offline or sleeping
+      if (cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
+        const discountAmount = Math.round((subtotal * 15) / 100);
+        setAppliedCoupon({
+          code: cleanCode,
+          discountAmount,
+          discountType: 'percent',
+          discountValue: 15,
+        });
+        setCouponError('');
+        showToast(`🎟️ Coupon applied! 15% OFF (−₹${discountAmount})`);
+      } else {
+        setCouponError('Could not validate coupon. Please try again.');
+      }
     } finally {
       setCouponLoading(false);
     }
@@ -365,10 +419,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Backend confirmed order saved to DB successfully
       const savedBackendOrder = await res.json().catch(() => null);
+      const rewardCouponCode = savedBackendOrder?.rewardCouponCode || null;
+
+      // Mark applied coupon as used locally so this device cannot reuse it
+      if (fullOrder.couponCode) {
+        const usedList: string[] = JSON.parse(localStorage.getItem('swagrooha_used_coupons') || '[]');
+        if (!usedList.includes(fullOrder.couponCode.toUpperCase())) {
+          usedList.push(fullOrder.couponCode.toUpperCase());
+          localStorage.setItem('swagrooha_used_coupons', JSON.stringify(usedList));
+        }
+      }
+
+      // If a new coupon was earned for the next order, store it
+      if (rewardCouponCode) {
+        localStorage.setItem('swagrooha_earned_coupon', rewardCouponCode);
+        setEarnedCouponCode(rewardCouponCode);
+      }
+
       const finalSavedOrder = savedBackendOrder && savedBackendOrder.orderId ? {
         ...fullOrder,
-        orderId: savedBackendOrder.orderId
-      } : fullOrder;
+        orderId: savedBackendOrder.orderId,
+        rewardCouponCode: rewardCouponCode || undefined
+      } : {
+        ...fullOrder,
+        rewardCouponCode: rewardCouponCode || undefined
+      };
 
       setCurrentOrder(finalSavedOrder);
       setAllOrders(prev => {
@@ -675,11 +750,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-  const isFreeDelivery = subtotal >= 500;
-  const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
-  const deliveryCharge = cart.length > 0 ? (isFreeDelivery ? 0 : selectedArea.charge) : 0;
-  const grandTotal = Math.max(0, subtotal + deliveryCharge - couponDiscount);
+
 
   return (
     <CartContext.Provider value={{
@@ -703,6 +774,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       couponLoading,
       applyCoupon,
       removeCoupon,
+      earnedCouponCode,
+      setEarnedCouponCode,
       activeTab,
       setActiveTab,
       customerDetails,

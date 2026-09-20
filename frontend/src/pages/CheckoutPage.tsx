@@ -337,14 +337,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Delivery Charge ({selectedArea.name})</span>
-              {isFreeDelivery ? (
-                <div className="flex items-center gap-1.5">
-                  <span className="line-through text-slate-400">₹{originalDeliveryCharge}</span>
-                  <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE (₹500+ order)</span>
-                </div>
-              ) : (
-                <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
-              )}
+              <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
             </div>
             {appliedCoupon && couponDiscount > 0 && (
               <div className="flex justify-between text-emerald-700">
