@@ -1226,7 +1226,7 @@ export const AdminDashboard: React.FC = () => {
             <ol className="list-decimal pl-4 space-y-0.5 font-semibold">
               <li>Generates a unique coupon code (e.g., <code className="font-mono bg-amber-100 px-1 rounded">THANK4114ABCD</code>)</li>
               <li>Sends it to the customer via email with instructions</li>
-              <li>Gives <strong>10% off</strong> their next order (min bill ₹300) — single use only</li>
+              <li>Gives <strong>5% off</strong> their next order (min bill ₹200) — single use only</li>
               <li>Expires in 60 days</li>
             </ol>
           </div>
@@ -1299,7 +1299,7 @@ export const AdminDashboard: React.FC = () => {
                       const data = await res.json();
                       if (res.ok && data.success) {
                         showToast(`🎟️ Coupon ${couponForm.code} created!`);
-                        setCouponForm({ code: '', discountValue: '10', discountType: 'percent', minOrderValue: '0', expiresAt: '' });
+                        setCouponForm({ code: '', discountValue: '5', discountType: 'percent', minOrderValue: '0', expiresAt: '' });
                         // Refresh list
                         const r2 = await fetch(`${API_BASE}/api/coupons`);
                         setCoupons(await r2.json());

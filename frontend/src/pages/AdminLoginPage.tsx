@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { IMAGES } from '../assets/images';
-import { Lock, Mail, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const { loginAdmin, setActiveTab } = useCart();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showEmail, setShowEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -58,19 +60,28 @@ export const AdminLoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Email */}
+          {/* Email — masked like password */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 block">Owner Email Address</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input 
-                type="email"
-                placeholder="Enter owner email"
+              <input
+                type={showEmail ? 'email' : 'password'}
+                placeholder="••••••••••••"
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-10 pr-10 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowEmail(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showEmail ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -79,14 +90,22 @@ export const AdminLoginPage: React.FC = () => {
             <label className="text-xs font-bold text-slate-700 block">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input 
-                type="password"
+              <input
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-10 pr-10 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
