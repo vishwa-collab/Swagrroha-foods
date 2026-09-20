@@ -64,7 +64,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span><strong className="text-slate-200">Weekend Delivery:</strong> Orders dispatched every Saturday on scooty route.</span>
+                <span><strong className="text-slate-200">Scheduled Delivery:</strong> Orders prepared fresh within 4–5 days of placing.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>

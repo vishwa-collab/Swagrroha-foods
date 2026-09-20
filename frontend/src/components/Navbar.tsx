@@ -40,7 +40,7 @@ export const Navbar: React.FC = () => {
         {/* Top Announcement Bar */}
         <div style={{ background: 'linear-gradient(90deg, #FF6B35 0%, #E63946 50%, #FF6B35 100%)', backgroundSize: '200% auto', animation: 'shimmerText 4s linear infinite' }} className="text-white text-center py-1.5 px-4">
           <p className="text-[11px] font-bold tracking-wide">
-            🏠 100% Homemade Food &nbsp;•&nbsp; 🛵 Weekend Delivery &nbsp;•&nbsp; 📍 Hayathnagar ➔ LB Nagar ➔ Ibrahimpatnam
+            🏠 100% Homemade Food &nbsp;•&nbsp; 🛵 Scheduled Delivery (4–5 Days) &nbsp;•&nbsp; 📍 Hayathnagar ➔ LB Nagar ➔ Ibrahimpatnam
           </p>
         </div>
 

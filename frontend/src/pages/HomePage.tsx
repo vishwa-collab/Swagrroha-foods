@@ -36,7 +36,7 @@ export const HomePage: React.FC = () => {
     { emoji: '🏡', title: 'Own Kitchen', desc: 'Made fresh in our home', bg: 'bg-orange-50', border: 'border-orange-200' },
     { emoji: '🚫', title: 'No Preservatives', desc: 'Pure, natural ingredients', bg: 'bg-green-50', border: 'border-green-200' },
     { emoji: '📦', title: 'Flexible Packs', desc: '250g · 500g · 1kg · 2kg+', bg: 'bg-blue-50', border: 'border-blue-200' },
-    { emoji: '🛵', title: 'Weekend Delivery', desc: 'Sat & Sun to your door', bg: 'bg-purple-50', border: 'border-purple-200' },
+    { emoji: '🛵', title: 'Scheduled Delivery', desc: '4–5 day fresh prep & deliver', bg: 'bg-purple-50', border: 'border-purple-200' },
   ];
 
   return (
@@ -163,7 +163,7 @@ export const HomePage: React.FC = () => {
             { icon: '✅', text: 'No Preservatives' },
             { icon: '🏡', text: 'Made in Our Home Kitchen' },
             { icon: '📦', text: '250g – 2kg+ Packs' },
-            { icon: '🛵', text: 'Weekend Delivery' },
+            { icon: '🛵', text: 'Scheduled Delivery (4–5 Days)' },
           ].map(t => (
             <div key={t.text} className="flex items-center gap-2 text-xs font-bold text-white">
               <span>{t.icon}</span>
