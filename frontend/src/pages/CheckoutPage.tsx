@@ -111,27 +111,11 @@ export const CheckoutPage: React.FC = () => {
         <form onSubmit={validateAndProceed} className="md:col-span-7 space-y-6">
           
           <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="border-b border-slate-100 pb-3">
               <h2 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
                 <User className="w-5 h-5 text-brand-500" />
                 Customer Information
               </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomerDetails(prev => ({
-                    ...prev,
-                    name: prev.name || 'PJR Test Customer',
-                    phone: prev.phone || '8125154114',
-                    email: prev.email || 'vishwa81251@gmail.com',
-                    address: prev.address || 'Flat 402, Sai Residency, Hayathnagar, Hyderabad',
-                  }));
-                  showToast('Filled test customer details!');
-                }}
-                className="text-[11px] font-extrabold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2.5 py-1 rounded-xl transition-all shadow-xs flex items-center gap-1"
-              >
-                <span>⚡ Fill Test Info</span>
-              </button>
             </div>
 
             {/* Name Input */}
