@@ -78,25 +78,6 @@ export const HomePage: React.FC = () => {
               Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
-            {/* Real Kitchen Principles — Authentic & Honest */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mb-8 pb-8 border-b border-slate-100">
-              <div className="bg-orange-50/70 border border-orange-200/70 rounded-2xl p-3 text-center">
-                <span className="text-base sm:text-lg block mb-1">🏡</span>
-                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Home Kitchen</p>
-                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Hayathnagar Home</p>
-              </div>
-              <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-2xl p-3 text-center">
-                <span className="text-base sm:text-lg block mb-1">🌿</span>
-                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Pure Ghee</p>
-                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Zero Preservatives</p>
-              </div>
-              <div className="bg-amber-50/70 border border-amber-200/70 rounded-2xl p-3 text-center">
-                <span className="text-base sm:text-lg block mb-1">🔥</span>
-                <p className="text-slate-900 font-black text-xs sm:text-sm leading-tight">Made to Order</p>
-                <p className="text-slate-500 text-[10px] font-semibold mt-0.5">Fresh Small Batches</p>
-              </div>
-            </div>
-
             {/* CTAs */}
             <div className="flex flex-wrap gap-3">
               <button

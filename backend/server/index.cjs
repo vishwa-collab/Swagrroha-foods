@@ -103,16 +103,16 @@ const couponSchema = new mongoose.Schema({
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 
 // ── Public & Loyalty coupon reward settings
-const LOYALTY_COUPON_DISCOUNT_VALUE = 10;  // 10% off
+const LOYALTY_COUPON_DISCOUNT_VALUE = 5;   // 5% off
 const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
 const LOYALTY_COUPON_MIN_ORDER = 200;       // Minimum bill of ₹200 required
 const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
 
-// Pre-seeded 1-time welcome coupon (10% off on min bill ₹200)
+// Pre-seeded 1-time welcome coupon (5% off on min bill ₹200)
 const WELCOME_COUPON = {
   code: 'WELCOME10',
   discountType: 'percent',
-  discountValue: 10,
+  discountValue: 5,
   minOrderValue: 200,
   isActive: true,
   isUsed: false,
@@ -127,10 +127,10 @@ let coupons = [WELCOME_COUPON];
 function generateCouponCode(phone) {
   const suffix = phone ? phone.slice(-4) : Math.floor(1000 + Math.random() * 9000);
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `PJR10-${suffix}${rand}`;
+  return `PJR5-${suffix}${rand}`;
 }
 
-// Auto-generate a brand-new 10% 1-time coupon for every new order placed
+// Auto-generate a brand-new 5% 1-time coupon for every new order placed
 async function generateNewOrderCoupon(orderObj) {
   try {
     const customerPhone = (orderObj.customer?.phone || orderObj.phone || '').trim();
@@ -310,7 +310,7 @@ if (mongoUri) {
           $setOnInsert: {
             code: 'WELCOME10',
             discountType: 'percent',
-            discountValue: 10,
+            discountValue: 5,
             minOrderValue: 200,
             isActive: true,
             isUsed: false,
