@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import confetti from 'canvas-confetti';
 import { jsPDF } from 'jspdf';
@@ -55,7 +55,7 @@ export const ConfirmationPage: React.FC = () => {
     const contentW = pageW - margin * 2;
     let y = 14;
 
-    // ── 1. Top Brand Header Banner ──
+    // â”€â”€ 1. Top Brand Header Banner â”€â”€
     doc.setFillColor(15, 23, 42); // slate-900
     doc.roundedRect(margin, y, contentW, 24, 3, 3, 'F');
 
@@ -82,7 +82,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += 30;
 
-    // ── 2. Two-Column Metadata Box ──
+    // â”€â”€ 2. Two-Column Metadata Box â”€â”€
     const colW = (contentW - 6) / 2;
     const boxH = 42;
 
@@ -139,7 +139,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += boxH + 8;
 
-    // ── 3. Ordered Items Table ──
+    // â”€â”€ 3. Ordered Items Table â”€â”€
     // Table Header
     doc.setFillColor(241, 245, 249);
     doc.setDrawColor(203, 213, 225);
@@ -183,7 +183,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += 4;
 
-    // ── 4. Financial Summary Calculation Box ──
+    // â”€â”€ 4. Financial Summary Calculation Box â”€â”€
     const summaryW = 85;
     const summaryX = pageW - margin - summaryW;
 
@@ -216,7 +216,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += 38;
 
-    // ── 5. Clean Simple Footer ──
+    // â”€â”€ 5. Clean Simple Footer â”€â”€
     doc.setDrawColor(226, 232, 240);
     doc.line(margin, y, pageW - margin, y);
     y += 5;
@@ -258,7 +258,7 @@ export const ConfirmationPage: React.FC = () => {
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black">
-          Order Placed Successfully! 🎉
+          Order Placed Successfully! ðŸŽ‰
         </h1>
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
@@ -274,18 +274,18 @@ export const ConfirmationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 🎁 REWARD: New Order Coupon Card */}
+      {/* ðŸŽ REWARD: New Order Coupon Card */}
       {rewardCoupon && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 sm:p-7 text-white shadow-xl space-y-3.5 text-center border-2 border-amber-300">
           <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-            <span>🎁</span>
+            <span>ðŸŽ</span>
             <span>New Order Reward Unlocked!</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black">
             Here is your NEW 10% OFF Coupon for your next order!
           </h2>
           <p className="text-xs sm:text-sm text-amber-100 max-w-md mx-auto">
-            As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill ₹300).
+            As a thank-you for this order, use this 1-time coupon code when placing your next order (Min. bill â‚¹300).
           </p>
           <div className="flex items-center justify-center gap-3 pt-1">
             <div className="font-mono font-black text-2xl sm:text-3xl bg-slate-950/40 border-2 border-dashed border-amber-300 px-5 py-2.5 rounded-2xl tracking-widest text-amber-200 select-all shadow-inner">
@@ -300,64 +300,23 @@ export const ConfirmationPage: React.FC = () => {
             </button>
           </div>
           <p className="text-[11px] text-amber-200/90 font-medium">
-            🔒 Single-use only • Valid on minimum bill of ₹300 • Automatically saved in cart for next time!
+            ðŸ”’ Single-use only â€¢ Valid on minimum bill of â‚¹300 â€¢ Automatically saved in cart for next time!
           </p>
         </div>
       )}
 
-      {/* Auto-sent WhatsApp receipt notice */}
-      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-2 border-[#25D366] rounded-3xl p-6 shadow-md">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 bg-[#25D366] text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
-            <MessageCircle className="w-6 h-6 fill-white" />
-          </div>
-          <div className="space-y-1 text-left">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-black text-slate-900">WhatsApp Receipt Sent! ✅</h3>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-300">Auto</span>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Your order receipt has been automatically sent to your WhatsApp number. Check your messages!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* AUTO-DISPATCHED NOTIFICATIONS TO OWNER */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {/* ORDER CONFIRMED CARD */}
-        <div className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-300 shadow-md text-center space-y-3">
-          <div className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">
-            <PackageCheck className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ Order Logged
-            </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Order Registered & Verified</h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Your order has been logged. Track anytime using Order ID <strong className="text-blue-800 font-mono">{currentOrder.orderId}</strong>.
-            </p>
-          </div>
-        </div>
-
-        {/* OWNER AUTO-NOTIFICATION CARD */}
-        <div className="bg-emerald-50 rounded-3xl p-6 border-2 border-emerald-300 shadow-md text-center space-y-3">
-          <div className="w-12 h-12 bg-emerald-600/10 rounded-full flex items-center justify-center mx-auto">
-            <MessageCircle className="w-6 h-6 text-emerald-600" />
-          </div>
-          <div>
-            <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ✅ Auto Notified
-            </span>
-            <h3 className="font-extrabold text-slate-900 text-sm">Store Notified Automatically</h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Owner has been instantly notified of your order via WhatsApp. We'll start preparing soon!
-            </p>
-          </div>
-        </div>
-
+      {/* Warm Thank You Greeting */}
+      <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 border-2 border-amber-200 rounded-3xl p-8 shadow-md text-center space-y-3">
+        <div className="text-5xl">🙏</div>
+        <h3 className="text-xl font-black text-slate-900">
+          Thank you for choosing <span className="text-brand-600">PJR Swagruha Foods!</span>
+        </h3>
+        <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
+          We're so grateful for your order. Our kitchen will prepare your meal with love and care. Have a wonderful day!
+        </p>
+        <p className="text-xs text-amber-700 font-semibold">
+          The PJR Swagruha Foods Family
+        </p>
       </div>
 
       {/* Order Receipt Summary Card */}
@@ -365,7 +324,7 @@ export const ConfirmationPage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base">Order Summary</h3>
-            <p className="text-xs text-slate-400">PJR Swagruha Foods • Scheduled Homemade Delivery</p>
+            <p className="text-xs text-slate-400">PJR Swagruha Foods â€¢ Scheduled Homemade Delivery</p>
           </div>
           <span className="bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1 rounded-lg">
             Delivery: {currentOrder.deliveryDate.dayOfWeekName}
@@ -377,15 +336,15 @@ export const ConfirmationPage: React.FC = () => {
           <div>
             <span className="text-slate-400 font-medium block">Customer Details</span>
             <p className="font-bold text-slate-900 text-sm mt-0.5">{currentOrder.customer.name}</p>
-            <p className="text-slate-600 font-medium">📞 {currentOrder.customer.phone}</p>
-            <p className="text-blue-700 font-medium">✉️ {currentOrder.customer.email || 'N/A'}</p>
+            <p className="text-slate-600 font-medium">ðŸ“ž {currentOrder.customer.phone}</p>
+            <p className="text-blue-700 font-medium">âœ‰ï¸ {currentOrder.customer.email || 'N/A'}</p>
           </div>
           <div>
             <span className="text-slate-400 font-medium block">Delivery Route & Address</span>
             <p className="font-bold text-brand-600 text-xs mt-0.5">{currentOrder.area.name} Zone</p>
             <p className="text-slate-700 leading-relaxed font-medium">{currentOrder.customer.address}</p>
             <p className="text-amber-700 font-bold text-xs mt-1">
-              📅 {currentOrder.deliveryDate.formattedDate}
+              ðŸ“… {currentOrder.deliveryDate.formattedDate}
             </p>
           </div>
         </div>
@@ -395,12 +354,12 @@ export const ConfirmationPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <span className="font-extrabold text-emerald-950 block">Payment Confirmed ✅</span>
+              <span className="font-extrabold text-emerald-950 block">Payment Confirmed âœ…</span>
               <span className="text-emerald-800 text-[11px]">Payment Mode: <strong>{currentOrder.paymentMethod || 'Online Payment'}</strong></span>
             </div>
           </div>
           <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-            {currentOrder.paymentMethod ? 'Paid ✅' : 'Paid via UPI ✅'}
+            {currentOrder.paymentMethod ? 'Paid âœ…' : 'Paid via UPI âœ…'}
           </span>
         </div>
 
@@ -412,9 +371,9 @@ export const ConfirmationPage: React.FC = () => {
               <div key={item.cartItemId} className="py-2.5 flex justify-between items-center">
                 <div>
                   <span className="font-bold text-slate-900 text-sm">{item.product.name}</span>
-                  <span className="ml-2 text-slate-500 font-semibold">({item.selectedWeightLabel}) × {item.quantity}</span>
+                  <span className="ml-2 text-slate-500 font-semibold">({item.selectedWeightLabel}) Ã— {item.quantity}</span>
                 </div>
-                <span className="font-bold text-slate-900 text-sm">₹{item.unitPrice * item.quantity}</span>
+                <span className="font-bold text-slate-900 text-sm">â‚¹{item.unitPrice * item.quantity}</span>
               </div>
             ))}
           </div>
@@ -424,19 +383,19 @@ export const ConfirmationPage: React.FC = () => {
         <div className="border-t border-slate-100 pt-4 space-y-2 text-xs">
           <div className="flex justify-between text-slate-600">
             <span>Items Total</span>
-            <span className="font-bold text-slate-900">₹{currentOrder.subtotal}</span>
+            <span className="font-bold text-slate-900">â‚¹{currentOrder.subtotal}</span>
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Delivery Charge ({currentOrder.area.name})</span>
             {currentOrder.deliveryCharge === 0 ? (
               <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE</span>
             ) : (
-              <span className="font-bold text-slate-900">₹{currentOrder.deliveryCharge}</span>
+              <span className="font-bold text-slate-900">â‚¹{currentOrder.deliveryCharge}</span>
             )}
           </div>
           <div className="flex justify-between text-slate-900 font-black text-lg pt-2 border-t border-slate-200">
             <span>Total Amount Paid</span>
-            <span className="text-brand-600">₹{currentOrder.totalAmount}</span>
+            <span className="text-brand-600">â‚¹{currentOrder.totalAmount}</span>
           </div>
         </div>
 
