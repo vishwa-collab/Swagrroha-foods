@@ -387,13 +387,13 @@ export const HomePage: React.FC = () => {
             </button>
             <a
               href="tel:+918125154114"
-              className="flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white font-bold text-sm px-6 py-3 rounded-2xl transition-all shadow-sm active:scale-95 group"
+              className="flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95 group"
             >
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
               </span>
-              <Phone className="w-4 h-4 text-emerald-400 group-hover:rotate-12 transition-transform" />
+              <Phone className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
               <span>Call Directly</span>
             </a>
           </div>

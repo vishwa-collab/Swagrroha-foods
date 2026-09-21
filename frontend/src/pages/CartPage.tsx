@@ -227,8 +227,8 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 10% OFF Coupon Offer Banner & Progress (Strict Min Bill ₹200) */}
-            {subtotal >= 200 ? (
+            {/* 10% OFF Coupon Offer Banner (Strict Min Bill ₹200) */}
+            {subtotal >= 200 && (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm animate-scale-in">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl animate-bounce">🎟️</span>
@@ -252,27 +252,6 @@ export const CartPage: React.FC = () => {
                     Apply {earnedCouponCode}
                   </button>
                 )}
-              </div>
-            ) : (
-              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3.5 space-y-2 text-xs font-semibold">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 font-bold text-amber-900">
-                    <span>🚫</span>
-                    <span>Coupons not allowed below ₹200</span>
-                  </span>
-                  <span className="text-[10px] font-black text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">
-                    Add ₹{200 - subtotal} more
-                  </span>
-                </div>
-                <div className="w-full bg-amber-200/60 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${Math.min(100, (subtotal / 200) * 100)}%` }}
-                  />
-                </div>
-                <p className="text-[11px] text-amber-800/90 font-medium">
-                  Add items worth <strong>₹{200 - subtotal}</strong> more to reach the minimum bill of ₹200 and use your 1-time 10% OFF coupon.
-                </p>
               </div>
             )}
 
