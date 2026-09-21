@@ -55,7 +55,7 @@ export const HomePage: React.FC = () => {
               <img
                 src={IMAGES.logo}
                 alt="PJR Swagruha Foods"
-                className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm"
+                className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm"
               />
               <div>
                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Est. Home Kitchen</p>

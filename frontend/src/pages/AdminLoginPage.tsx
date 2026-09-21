@@ -35,7 +35,7 @@ export const AdminLoginPage: React.FC = () => {
         <img 
           src={IMAGES.logo} 
           alt="PJR Swagruha Foods Logo" 
-          className="w-20 h-20 rounded-2xl mx-auto border-2 border-brand-500 p-1 shadow-lg object-cover"
+          className="w-20 h-20 rounded-full mx-auto border-2 border-brand-500 p-1 shadow-lg object-cover"
         />
         <div>
           <span className="bg-brand-100 text-brand-700 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
