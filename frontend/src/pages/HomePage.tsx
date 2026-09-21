@@ -51,15 +51,15 @@ export const HomePage: React.FC = () => {
           {/* Left — text */}
           <div>
             {/* Brand mark */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3.5 mb-6">
               <img
                 src={IMAGES.logo}
                 alt="PJR Swagruha Foods"
-                className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-contain p-0.5 bg-white border-2 border-brand-400/80 shadow-md ring-2 ring-brand-100/70"
               />
               <div>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Est. Home Kitchen</p>
-                <p className="text-slate-800 font-black text-base leading-tight">PJR Swagruha Foods</p>
+                <p className="text-amber-700 text-[10px] font-black uppercase tracking-widest">Est. Home Kitchen</p>
+                <p className="text-slate-900 font-black text-lg leading-tight">PJR Swagruha Foods</p>
               </div>
             </div>
 

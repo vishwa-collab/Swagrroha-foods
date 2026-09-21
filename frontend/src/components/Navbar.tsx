@@ -52,11 +52,11 @@ export const Navbar: React.FC = () => {
               {/* Logo */}
               <div onClick={() => setActiveTab('home')} className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-md group-hover:bg-brand-500/30 transition-all" />
+                  <div className="absolute inset-0 bg-brand-500/25 rounded-full blur-md group-hover:bg-brand-500/40 transition-all" />
                   <img
                     src={IMAGES.logo}
                     alt="PJR Swagruha Foods"
-                    className="relative w-11 h-11 sm:w-13 sm:h-13 object-cover rounded-full border-2 border-brand-400/60 shadow-md group-hover:scale-105 transition-transform duration-300"
+                    className="relative w-12 h-12 sm:w-14 sm:h-14 object-contain rounded-full p-0.5 bg-white border-2 border-amber-400/90 shadow-md ring-2 ring-amber-100 group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <div>
