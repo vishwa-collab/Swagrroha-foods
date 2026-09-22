@@ -17,6 +17,8 @@ export const Footer: React.FC = () => {
               <img
                 src={IMAGES.logo}
                 alt="PJR Swagruha Foods"
+                loading="lazy"
+                onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.opacity = '0'; }}
                 className="w-14 h-14 rounded-full border-2 border-amber-400 p-0.5 bg-white object-contain shadow-md"
               />
               <div>
@@ -57,10 +59,6 @@ export const Footer: React.FC = () => {
               <li className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>
                 <span><strong className="text-slate-200">Own Manufacturing:</strong> Prepared fresh in bulk after you order.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
-                <span><strong className="text-slate-200">Scheduled Delivery:</strong> 4–5 day preparation gap for maximum freshness.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">✓</span>

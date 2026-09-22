@@ -55,6 +55,8 @@ export const HomePage: React.FC = () => {
               <img
                 src={IMAGES.logo}
                 alt="PJR Swagruha Foods"
+                loading="eager"
+                onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.opacity = '0'; }}
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-contain p-0.5 bg-white border-2 border-brand-400/80 shadow-md ring-2 ring-brand-100/70"
               />
               <div>
@@ -201,13 +203,14 @@ export const HomePage: React.FC = () => {
             <button
               key={cat.label}
               onClick={() => setActiveTab('products')}
-              className="group bg-white border border-slate-150 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left"
+              className="group bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left"
             >
               {/* Clear image — NO dark overlay */}
               <div className="h-52 sm:h-56 overflow-hidden bg-white">
                 <img
                   src={cat.img}
                   alt={cat.label}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -277,13 +280,14 @@ export const HomePage: React.FC = () => {
             return (
               <div
                 key={product.id}
-                className="bg-white rounded-2xl overflow-hidden border border-slate-150 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group flex flex-col"
+                className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group flex flex-col"
               >
                 {/* Clear image — white bg, NO dark overlay */}
                 <div className="h-40 sm:h-44 bg-white overflow-hidden relative">
                   <img
                     src={product.image}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {/* Only a small badge, not full overlay */}
@@ -314,7 +318,7 @@ export const HomePage: React.FC = () => {
                       <div className="flex items-center gap-1 bg-orange-50 border border-orange-300 rounded-xl p-0.5 shadow-sm">
                         <button
                           onClick={() => updateQuantity(cartItemId, quantity - 1)}
-                          className="w-6 h-6 rounded-lg bg-white shadow-xs flex items-center justify-center text-slate-700 hover:bg-orange-100 hover:text-orange-600 font-black text-xs transition-all active:scale-90"
+                          className="w-6 h-6 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-700 hover:bg-orange-100 hover:text-orange-600 font-black text-xs transition-all active:scale-90"
                           title="Decrease"
                         >
                           <Minus className="w-3 h-3" />
@@ -324,7 +328,7 @@ export const HomePage: React.FC = () => {
                         </span>
                         <button
                           onClick={() => updateQuantity(cartItemId, quantity + 1)}
-                          className="w-6 h-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white shadow-xs flex items-center justify-center font-black text-xs transition-all active:scale-90"
+                          className="w-6 h-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white shadow-sm flex items-center justify-center font-black text-xs transition-all active:scale-90"
                           title="Add +1"
                         >
                           <Plus className="w-3 h-3" />

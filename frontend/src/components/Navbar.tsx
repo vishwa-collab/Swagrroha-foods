@@ -56,6 +56,8 @@ export const Navbar: React.FC = () => {
                   <img
                     src={IMAGES.logo}
                     alt="PJR Swagruha Foods"
+                    loading="eager"
+                    onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.opacity = '0'; }}
                     className="relative w-12 h-12 sm:w-14 sm:h-14 object-contain rounded-full p-0.5 bg-white border-2 border-amber-400/90 shadow-md ring-2 ring-amber-100 group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
