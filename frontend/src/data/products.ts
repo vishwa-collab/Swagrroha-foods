@@ -135,8 +135,32 @@ export const PRODUCTS: Product[] = [
     image: IMAGES.pachikaram,
     weightOptions: SNACK_WEIGHTS,
   },
+  {
+    id: 'sana-karapusa',
+    name: 'Crispy Sanna Karapusa',
+    teluguName: 'సన్న కారప్పూస',
+    category: 'Snacks',
+    basePrice: 360,
+    priceUnitText: '₹360 / kg',
+    description: 'Crispy and delicate thin gram flour sev infused with aromatic spices, carom seeds, and a touch of chilli.',
+    image: IMAGES.sanaKarapusa,
+    weightOptions: SNACK_WEIGHTS,
+    isPopular: true,
+  },
 
   // --- SWEETS (₹390 / kg) ---
+  {
+    id: 'badusha',
+    name: 'Traditional Sweet Badusha',
+    teluguName: 'బాదుషా',
+    category: 'Sweets',
+    basePrice: 390,
+    priceUnitText: '₹390 / kg',
+    description: 'Classic rich, flaky golden sweet rounds soaked in fragrant sugar syrup with a soft melt-in-mouth core.',
+    image: IMAGES.badusha,
+    weightOptions: SWEET_WEIGHTS,
+    isPopular: true,
+  },
   {
     id: 'gujiya',
     name: 'Sweet Gujiya (Kajjikayalu)',

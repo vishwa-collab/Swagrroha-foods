@@ -17,6 +17,8 @@ import palliladdu from '../../assets/palliladdu sweets.png';
 import potharekkalu from '../../assets/potharekkalu sweets.png';
 import chickenPickle from '../../assets/Chicken Pickle.png';
 import muttonPickle from '../../assets/Mutton Pickle.jpeg';
+import badusha from '../../assets/Badusha Sweet.png';
+import sanaKarapusa from '../../assets/sana Karpusa.png';
 import qrCode from '../../assets/QR code.jpeg';
 
 export const IMAGES = {
@@ -29,11 +31,13 @@ export const IMAGES = {
   mixture,
   ottikaram,
   pachikaram,
+  sanaKarapusa,
   gujiya,
   harshallu,
   laddu,
   palliladdu,
   potharekkalu,
+  badusha,
   chickenPickle,
   muttonPickle,
   qrCode,
