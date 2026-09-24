@@ -1,30 +1,23 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { DELIVERY_AREAS } from '../data/deliveryAreas';
 import { getDeliverySlotOptions } from '../utils/deliveryCalculator';
 import { 
   User, 
   Phone, 
   Mail,
-  MapPin, 
   Home, 
   Calendar, 
-  ShieldCheck, 
   ArrowRight, 
   ArrowLeft,
   Clock,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
   const { 
     cart, 
-    selectedArea, 
-    setSelectedAreaById, 
     subtotal, 
-    deliveryCharge, 
-    originalDeliveryCharge,
-    isFreeDelivery,
+    deliveryCharge,
     grandTotal, 
     setActiveTab, 
     customerDetails, 
@@ -32,6 +25,7 @@ export const CheckoutPage: React.FC = () => {
     showToast,
     appliedCoupon,
     couponDiscount,
+    selectedArea,
   } = useCart();
 
   const slotOptions = getDeliverySlotOptions();
@@ -179,29 +173,7 @@ export const CheckoutPage: React.FC = () => {
               {errors.email && <p className="text-[11px] text-red-500 font-semibold">{errors.email}</p>}
             </div>
 
-            {/* Area Dropdown */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">
-                Selected Area Zone <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 text-brand-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
-                <select
-                  value={selectedArea.id}
-                  onChange={(e) => {
-                    setSelectedAreaById(e.target.value);
-                    handleInputChange('areaId', e.target.value);
-                  }}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  {DELIVERY_AREAS.map(area => (
-                    <option key={area.id} value={area.id}>
-                      {area.name} — {area.tier} Zone (₹{area.charge} Delivery)
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+
 
             {/* Address Textarea */}
             <div className="space-y-1.5">

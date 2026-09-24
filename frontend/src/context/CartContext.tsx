@@ -3,6 +3,7 @@ import { Product } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
+
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'https://swagrroha-foods.onrender.com';
 
 export interface CartItem {
@@ -50,6 +51,8 @@ export interface PlacedOrder {
   review?: { rating: number; comment?: string; submittedAt?: string };
 }
 
+
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, weightLabel: string, qty?: number) => void;
@@ -59,6 +62,8 @@ interface CartContextType {
   
   selectedArea: DeliveryArea;
   setSelectedAreaById: (areaId: string) => void;
+
+
   
   subtotal: number;
   deliveryCharge: number;
@@ -177,6 +182,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [trackedOrder, setTrackedOrder] = useState<PlacedOrder | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCartToast, setIsCartToast] = useState<boolean>(false);
+
+
 
   // Calculation of Subtotal & Delivery (Free delivery on ₹500 removed)
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
@@ -761,6 +768,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart,
       selectedArea,
       setSelectedAreaById,
+
       subtotal,
       deliveryCharge,
       originalDeliveryCharge,
