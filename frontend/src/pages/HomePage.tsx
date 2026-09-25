@@ -3,8 +3,8 @@ import { useCart } from '../context/CartContext';
 import { PRODUCTS } from '../data/products';
 import { IMAGES } from '../assets/images';
 import {
-  ShoppingBag, ChevronRight, Phone, MessageCircle,
-  MapPin, CheckCircle, Clock, Package, Zap, ArrowRight, Sparkles, Plus, Minus
+  ShoppingBag, ChevronRight, MessageCircle,
+  CheckCircle, Zap, ArrowRight, Sparkles, Plus, Minus
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
@@ -343,66 +343,7 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          DELIVERY ROUTE BANNER
-      ═══════════════════════════════════════ */}
-      <section className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-8">
-        <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-orange-400 text-[11px] font-black uppercase tracking-widest">Delivery Route</span>
-            </div>
-            <h2 className="text-white font-black text-xl sm:text-2xl leading-snug">
-              Hayathnagar → LB Nagar<br className="hidden sm:block" /> → Ibrahimpatnam
-            </h2>
-            <div className="flex flex-wrap gap-4 mt-3">
-              <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-500" /> Every Saturday & Sunday
-              </span>
-              <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5 text-slate-500" /> ₹20 – ₹40 delivery charge
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4 text-[11px] text-slate-300">
-              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                <strong className="text-amber-400 block font-bold">Near Zone (₹20)</strong>
-                Hayathnagar, Bhagyalatha, Panama, Vanasthalipuram
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                <strong className="text-amber-400 block font-bold">Medium Zone (₹30)</strong>
-                LB Nagar, Sagar Ring Road, Hasthinapuram, BN Reddy, Turkayamjal
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                <strong className="text-amber-400 block font-bold">Far Zone (₹40)</strong>
-                Manneguda, Bongloor, Mangalpally, Sheriguda, Ibrahimpatnam
-              </div>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-2.5 shrink-0 w-full sm:w-auto">
-            <button
-              onClick={() => setActiveTab('products')}
-              className="bg-orange-500 hover:bg-orange-400 text-white font-black text-sm px-8 py-3.5 rounded-2xl transition-all active:scale-95 text-center shadow-md shadow-orange-900/30"
-            >
-              Order Now
-            </button>
-            <a
-              href="tel:+918125154114"
-              className="flex items-center justify-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95 group"
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-              </span>
-              <Phone className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
-              <span>Call Directly</span>
-            </a>
-          </div>
-        </div>
-      </section>
 
       <div className="h-8 md:h-4" />
     </div>
