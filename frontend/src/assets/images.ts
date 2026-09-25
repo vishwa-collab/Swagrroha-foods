@@ -17,7 +17,7 @@ import palliladdu from '../../assets/palliladdu sweets.png';
 import potharekkalu from '../../assets/potharekkalu sweets.png';
 import chickenPickle from '../../assets/Chicken Pickle.png';
 import muttonPickle from '../../assets/Mutton Pickle.jpeg';
-import badusha from '../../assets/Badusha Sweet.png';
+import badusha from '../../assets/badusha_sweet_full.png';
 import sanaKarapusa from '../../assets/sana Karpusa.png';
 import qrCode from '../../assets/QR code.jpeg';
 
