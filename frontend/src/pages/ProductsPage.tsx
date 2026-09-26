@@ -62,8 +62,8 @@ export const ProductsPage: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'Snacks', price: 'From ₹380/kg', color: 'text-amber-300 border-amber-500/40 bg-amber-500/10' },
-              { label: 'Sweets', price: 'From ₹430/kg', color: 'text-purple-300 border-purple-500/40 bg-purple-500/10' },
+              { label: 'Snacks', price: 'From ₹400/kg', color: 'text-amber-300 border-amber-500/40 bg-amber-500/10' },
+              { label: 'Sweets', price: 'From ₹460/kg', color: 'text-purple-300 border-purple-500/40 bg-purple-500/10' },
               { label: 'Chicken', price: 'From ₹400', color: 'text-red-300 border-red-500/40 bg-red-500/10' },
               { label: 'Mutton', price: 'From ₹600', color: 'text-rose-300 border-rose-500/40 bg-rose-500/10' },
             ].map(b => (

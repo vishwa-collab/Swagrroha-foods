@@ -146,7 +146,7 @@ export const TrackingPage: React.FC = () => {
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           📡 Live Automatic Order Status Tracker
         </span>
-        <h1 className="text-2xl sm:text-4xl font-black text-slate-900">Track Your Swagrooha Order</h1>
+        <h1 className="text-2xl sm:text-4xl font-black text-slate-900">Track your Swagruha order</h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
           {activeOrder 
             ? `Showing live status updates for Order #${activeOrder.orderId}`
