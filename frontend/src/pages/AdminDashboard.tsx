@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 import { AdminLoginPage } from './AdminLoginPage';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
-import { PRODUCTS } from '../data/products';
 import { OrderPipeline } from '../components/OrderPipeline';
 import {
   Truck,
@@ -508,44 +507,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Low Stock / Out of Stock ── */}
-        {(() => {
-          // Products with no stock field are shown as "available"; we track top-ordered items
-          const itemCounts: Record<string, number> = {};
-          orders.forEach(o => (o.items || []).forEach(it => {
-            const n = it.product?.name || 'Item';
-            itemCounts[n] = (itemCounts[n] || 0) + (it.quantity || 1);
-          }));
-          const topItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-          const outOfStockProducts = PRODUCTS.filter(p => (p as any).outOfStock === true);
-          if (outOfStockProducts.length === 0 && topItems.length === 0) return null;
-          return (
-            <div className="border-t border-slate-100 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-black text-slate-900 text-sm">🔥 Top Ordered Today</h3>
-                {outOfStockProducts.length > 0 && (
-                  <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
-                    {outOfStockProducts.length} out of stock
-                  </span>
-                )}
-              </div>
-              <div className="space-y-2">
-                {topItems.map(([name, qty]) => (
-                  <div key={name} className="flex items-center justify-between text-xs bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                    <span className="font-bold text-slate-800">{name}</span>
-                    <span className="font-black text-brand-600">{qty} units</span>
-                  </div>
-                ))}
-                {outOfStockProducts.map(p => (
-                  <div key={p.id} className="flex items-center justify-between text-xs bg-red-50 rounded-xl px-3 py-2 border border-red-200">
-                    <span className="font-bold text-red-800">{p.name}</span>
-                    <span className="font-black text-red-600 uppercase text-[10px] tracking-wider">Out of Stock</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
+
 
       </div>
       {/* ══ END DASHBOARD OVERVIEW ══ */}
