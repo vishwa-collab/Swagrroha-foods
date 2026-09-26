@@ -173,7 +173,7 @@ async function generateLoyaltyCoupon(orderObj) {
   try {
     const customerPhone = (orderObj.customer?.phone || orderObj.phone || '').trim();
     const customerEmail = (orderObj.customer?.email || '').trim();
-    const customerName  = (orderObj.customer?.name || 'Valued Customer').trim();
+    const customerName = (orderObj.customer?.name || 'Valued Customer').trim();
 
     if (!customerPhone && !customerEmail) {
       console.log('\u26a0\ufe0f No phone/email on order, skipping loyalty coupon');
