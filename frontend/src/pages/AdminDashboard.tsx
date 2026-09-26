@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 import { AdminLoginPage } from './AdminLoginPage';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
+import { PRODUCTS } from '../data/products';
 import { OrderPipeline } from '../components/OrderPipeline';
 import {
   Truck,
@@ -270,6 +271,47 @@ export const AdminDashboard: React.FC = () => {
   const activeOrders  = orders.filter(o => ['CONFIRMED', 'PAYMENT_VERIFIED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
   const historyOrders = orders.filter(o => o.status === 'DELIVERED');
 
+  // ── Dashboard overview computations ──
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  const todayOrders = orders.filter(o => new Date(o.createdAt || 0) >= todayStart);
+  const yesterdayOrders = orders.filter(o => {
+    const d = new Date(o.createdAt || 0);
+    return d >= yesterdayStart && d < todayStart;
+  });
+  const todayRevenue = todayOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+  const yesterdayRevenue = yesterdayOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+  const todayCustomers = new Set(todayOrders.map(o => o.customer?.phone || o.orderId)).size;
+  const yesterdayCustomers = new Set(yesterdayOrders.map(o => o.customer?.phone || o.orderId)).size;
+  const avgOrderToday = todayOrders.length > 0 ? Math.round(todayRevenue / todayOrders.length) : 0;
+  const avgOrderYesterday = yesterdayOrders.length > 0 ? Math.round(yesterdayRevenue / yesterdayOrders.length) : 0;
+  const pctChange = (curr: number, prev: number) => {
+    if (prev === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - prev) / prev) * 100);
+  };
+
+  // Build hourly buckets for SVG line chart (0..23)
+  const buildHourlyBuckets = (orderList: typeof orders) => {
+    const buckets = new Array(24).fill(0);
+    orderList.forEach(o => {
+      const h = new Date(o.createdAt || 0).getHours();
+      buckets[h] += o.totalAmount || 0;
+    });
+    return buckets;
+  };
+  const todayBuckets = buildHourlyBuckets(todayOrders);
+  const yesterdayBuckets = buildHourlyBuckets(yesterdayOrders);
+  const maxBucketVal = Math.max(...todayBuckets, ...yesterdayBuckets, 1);
+  const chartW = 340; const chartH = 100;
+  const bucketToPoint = (buckets: number[], idx: number) => ({
+    x: (idx / 23) * chartW,
+    y: chartH - (buckets[idx] / maxBucketVal) * chartH,
+  });
+  const buildPath = (buckets: number[]) =>
+    buckets.map((_, i) => { const p = bucketToPoint(buckets, i); return `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ');
+  const todayPath = buildPath(todayBuckets);
+  const yesterdayPath = buildPath(yesterdayBuckets);
+
   if (!adminToken) return <AdminLoginPage />;
 
   return (
@@ -342,6 +384,171 @@ export const AdminDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ══════════════════════════════════════════════════
+           DASHBOARD OVERVIEW  (Crusant-style)
+      ══════════════════════════════════════════════════ */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+
+        {/* ── 4 KPI Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-100">
+          {/* Customers */}
+          <div className="p-5 space-y-0.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-2xl">👥</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customers</span>
+            </div>
+            <p className="text-2xl font-black text-slate-900">{todayCustomers}</p>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${
+              pctChange(todayCustomers, yesterdayCustomers) >= 0 ? 'text-emerald-600' : 'text-red-500'
+            }`}>
+              {pctChange(todayCustomers, yesterdayCustomers) >= 0 ? '↑' : '↓'}
+              {Math.abs(pctChange(todayCustomers, yesterdayCustomers))}% vs yesterday
+            </p>
+          </div>
+
+          {/* Orders */}
+          <div className="p-5 space-y-0.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-2xl">🛍️</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Orders</span>
+            </div>
+            <p className="text-2xl font-black text-slate-900">{todayOrders.length}</p>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${
+              pctChange(todayOrders.length, yesterdayOrders.length) >= 0 ? 'text-emerald-600' : 'text-red-500'
+            }`}>
+              {pctChange(todayOrders.length, yesterdayOrders.length) >= 0 ? '↑' : '↓'}
+              {Math.abs(pctChange(todayOrders.length, yesterdayOrders.length))}% vs yesterday
+            </p>
+          </div>
+
+          {/* Avg Order Value */}
+          <div className="p-5 space-y-0.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-2xl">📈</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg Order</span>
+            </div>
+            <p className="text-2xl font-black text-slate-900">₹{avgOrderToday}</p>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${
+              pctChange(avgOrderToday, avgOrderYesterday) >= 0 ? 'text-emerald-600' : 'text-red-500'
+            }`}>
+              {pctChange(avgOrderToday, avgOrderYesterday) >= 0 ? '↑' : '↓'}
+              {Math.abs(pctChange(avgOrderToday, avgOrderYesterday))}% vs yesterday
+            </p>
+          </div>
+
+          {/* Revenue */}
+          <div className="p-5 space-y-0.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-2xl">💰</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Revenue</span>
+            </div>
+            <p className="text-2xl font-black text-slate-900">
+              {todayRevenue >= 1000 ? `₹${(todayRevenue / 1000).toFixed(1)}K` : `₹${todayRevenue}`}
+            </p>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${
+              pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
+            }`}>
+              {pctChange(todayRevenue, yesterdayRevenue) >= 0 ? '↑' : '↓'}
+              {Math.abs(pctChange(todayRevenue, yesterdayRevenue))}% vs yesterday
+            </p>
+          </div>
+        </div>
+
+        {/* ── Website URL strip ── */}
+        <div className="flex items-center gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50">
+          <span className="text-lg">🏪</span>
+          <a href="https://pjrswagrooha.in" target="_blank" rel="noopener noreferrer"
+             className="text-sm font-bold text-blue-600 hover:underline flex-1">www.pjrswagrooha.in</a>
+          <a href="https://pjrswagrooha.in" target="_blank" rel="noopener noreferrer"
+             className="text-xs bg-white border border-slate-200 text-slate-600 font-bold px-3 py-1 rounded-xl hover:bg-slate-100 transition-all">↗ Open Site</a>
+        </div>
+
+        {/* ── Total Sales Chart ── */}
+        <div className="p-5 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-black text-slate-900 text-sm">Total Sales</h3>
+              <p className="text-2xl font-black text-slate-900 mt-0.5">
+                {todayRevenue >= 1000 ? `₹${(todayRevenue / 1000).toFixed(1)}K` : `₹${todayRevenue}`}
+                {yesterdayRevenue > 0 && (
+                  <span className={`text-sm font-bold ml-2 ${
+                    pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
+                  }`}>
+                    {pctChange(todayRevenue, yesterdayRevenue) >= 0 ? '↑' : '↓'} +{Math.abs(pctChange(todayRevenue, yesterdayRevenue))}% vs yesterday
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+              <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-0.5 bg-blue-600 rounded"></span>Today</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-0.5 border-t-2 border-dashed border-slate-400"></span>Yesterday</span>
+            </div>
+          </div>
+
+          {/* SVG Line Chart */}
+          <div className="w-full overflow-x-auto">
+            <svg viewBox={`0 0 ${chartW} ${chartH + 20}`} className="w-full" style={{ minWidth: 260, height: 130 }}>
+              {/* Grid lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map(t => (
+                <line key={t} x1={0} y1={chartH * (1 - t)} x2={chartW} y2={chartH * (1 - t)}
+                  stroke="#f1f5f9" strokeWidth="1" />
+              ))}
+              {/* Yesterday dashed line */}
+              <path d={yesterdayPath} fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 3" />
+              {/* Today solid line */}
+              <path d={todayPath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              {/* X-axis labels */}
+              {[0, 4, 8, 12, 16, 20, 23].map(h => {
+                const p = bucketToPoint(todayBuckets, h);
+                const label = h === 0 ? '12AM' : h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
+                return <text key={h} x={p.x} y={chartH + 15} textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{label}</text>;
+              })}
+            </svg>
+          </div>
+        </div>
+
+        {/* ── Low Stock / Out of Stock ── */}
+        {(() => {
+          // Products with no stock field are shown as "available"; we track top-ordered items
+          const itemCounts: Record<string, number> = {};
+          orders.forEach(o => (o.items || []).forEach(it => {
+            const n = it.product?.name || 'Item';
+            itemCounts[n] = (itemCounts[n] || 0) + (it.quantity || 1);
+          }));
+          const topItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+          const outOfStockProducts = PRODUCTS.filter(p => (p as any).outOfStock === true);
+          if (outOfStockProducts.length === 0 && topItems.length === 0) return null;
+          return (
+            <div className="border-t border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-slate-900 text-sm">🔥 Top Ordered Today</h3>
+                {outOfStockProducts.length > 0 && (
+                  <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
+                    {outOfStockProducts.length} out of stock
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                {topItems.map(([name, qty]) => (
+                  <div key={name} className="flex items-center justify-between text-xs bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                    <span className="font-bold text-slate-800">{name}</span>
+                    <span className="font-black text-brand-600">{qty} units</span>
+                  </div>
+                ))}
+                {outOfStockProducts.map(p => (
+                  <div key={p.id} className="flex items-center justify-between text-xs bg-red-50 rounded-xl px-3 py-2 border border-red-200">
+                    <span className="font-bold text-red-800">{p.name}</span>
+                    <span className="font-black text-red-600 uppercase text-[10px] tracking-wider">Out of Stock</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+      </div>
+      {/* ══ END DASHBOARD OVERVIEW ══ */}
 
       {/* ── Navigation Tabs ── */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
