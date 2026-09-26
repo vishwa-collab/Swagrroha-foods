@@ -145,6 +145,14 @@ async function run() {
   const p180 = path.join(publicDir, 'apple-touch-icon.png');
   await sharp(finalEmblem).resize(180, 180, { fit: 'contain' }).png().toFile(p180);
 
+  // 96x96 PNG (multiple of 48 for Google Search)
+  const p96 = path.join(publicDir, 'favicon-96x96.png');
+  await sharp(finalEmblem).resize(96, 96, { fit: 'contain' }).png().toFile(p96);
+
+  // 48x48 PNG (standard Google Search favicon size)
+  const p48 = path.join(publicDir, 'favicon-48x48.png');
+  await sharp(finalEmblem).resize(48, 48, { fit: 'contain' }).png().toFile(p48);
+
   // 32x32 PNG (browser tab)
   const p32 = path.join(publicDir, 'favicon-32x32.png');
   await sharp(finalEmblem).resize(32, 32, { fit: 'contain' }).png().toFile(p32);
