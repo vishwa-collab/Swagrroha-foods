@@ -11,6 +11,7 @@ if (typeof global.crypto === 'undefined') {
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 const { sendWhatsAppNotification, sendCustomerWhatsAppReceipt, sendCustomerDeliveredWhatsAppReceipt } = require('./whatsappService.cjs');
 const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./emailService.cjs');
 
@@ -36,8 +37,29 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// ── Rate Limiting (protects server under high load)
+// General limiter: 100 requests per 15 minutes per IP
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again after 15 minutes.' },
+});
+
+// Strict limiter for order placement: 10 orders per 15 minutes per IP
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many order attempts. Please try again after 15 minutes.' },
+});
+
+app.use(generalLimiter);
 
 // ── MongoDB Schema & Connection Setup
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
@@ -567,7 +589,7 @@ app.post('/api/verify-razorpay-payment', (req, res) => {
 });
 
 // ── POST /api/orders — place new order via Direct Scanner / UPI & trigger notifications
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', orderLimiter, async (req, res) => {
   try {
     const order = req.body;
     if (!order || !order.orderId) {
