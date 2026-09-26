@@ -183,13 +183,15 @@ export const ConfirmationPage: React.FC = () => {
 
     y += 4;
 
-    // â”€â”€ 4. Financial Summary Calculation Box â”€â”€
+    // ── 4. Financial Summary Calculation Box ──
+    const hasCoupon = Boolean(currentOrder.couponDiscount && currentOrder.couponDiscount > 0);
+    const summaryH = hasCoupon ? 36 : 30;
     const summaryW = 85;
     const summaryX = pageW - margin - summaryW;
 
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(summaryX, y, summaryW, 30, 2, 2, 'FD');
+    doc.roundedRect(summaryX, y, summaryW, summaryH, 2, 2, 'FD');
 
     let sumY = y + 6;
     doc.setFont('helvetica', 'normal');
@@ -203,6 +205,12 @@ export const ConfirmationPage: React.FC = () => {
     doc.text(`Delivery Charge (${currentOrder.area.name}):`, summaryX + 4, sumY);
     doc.text(currentOrder.deliveryCharge === 0 ? 'FREE (Discount)' : `Rs. ${currentOrder.deliveryCharge}`, summaryX + summaryW - 4, sumY, { align: 'right' });
 
+    if (hasCoupon) {
+      sumY += 6;
+      doc.text(`Coupon Discount (${currentOrder.couponCode || 'Code'}):`, summaryX + 4, sumY);
+      doc.text(`- Rs. ${currentOrder.couponDiscount}`, summaryX + summaryW - 4, sumY, { align: 'right' });
+    }
+
     sumY += 4;
     doc.setDrawColor(203, 213, 225);
     doc.line(summaryX + 4, sumY, summaryX + summaryW - 4, sumY);
@@ -214,7 +222,7 @@ export const ConfirmationPage: React.FC = () => {
     doc.text('TOTAL PAID:', summaryX + 4, sumY);
     doc.text(`Rs. ${currentOrder.totalAmount}`, summaryX + summaryW - 4, sumY, { align: 'right' });
 
-    y += 38;
+    y += summaryH + 8;
 
     // â”€â”€ 5. Clean Simple Footer â”€â”€
     doc.setDrawColor(226, 232, 240);
@@ -383,19 +391,25 @@ export const ConfirmationPage: React.FC = () => {
         <div className="border-t border-slate-100 pt-4 space-y-2 text-xs">
           <div className="flex justify-between text-slate-600">
             <span>Items Total</span>
-            <span className="font-bold text-slate-900">â‚¹{currentOrder.subtotal}</span>
+            <span className="font-bold text-slate-900">₹{currentOrder.subtotal}</span>
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Delivery Charge ({currentOrder.area.name})</span>
             {currentOrder.deliveryCharge === 0 ? (
               <span className="font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">FREE</span>
             ) : (
-              <span className="font-bold text-slate-900">â‚¹{currentOrder.deliveryCharge}</span>
+              <span className="font-bold text-slate-900">₹{currentOrder.deliveryCharge}</span>
             )}
           </div>
+          {currentOrder.couponDiscount && currentOrder.couponDiscount > 0 ? (
+            <div className="flex justify-between text-emerald-700">
+              <span className="font-bold">🎟️ Coupon Discount {currentOrder.couponCode ? `(${currentOrder.couponCode})` : ''}</span>
+              <span className="font-black">− ₹{currentOrder.couponDiscount}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between text-slate-900 font-black text-lg pt-2 border-t border-slate-200">
             <span>Total Amount Paid</span>
-            <span className="text-brand-600">â‚¹{currentOrder.totalAmount}</span>
+            <span className="text-brand-600">₹{currentOrder.totalAmount}</span>
           </div>
         </div>
 

@@ -198,14 +198,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [couponLoading, setCouponLoading] = useState(false);
   const [earnedCouponCode, setEarnedCouponCode] = useState<string | null>(() => localStorage.getItem('swagrooha_earned_coupon'));
 
-  // Dynamic 10% discount calculation based on subtotal (re-computes if items change)
+  // Dynamic discount calculation based on total WITH delivery charge (not individual items only)
+  const billTotalWithDelivery = subtotal + deliveryCharge;
   const couponDiscount = appliedCoupon
     ? (appliedCoupon.discountType === 'percent'
-        ? Math.round((subtotal * appliedCoupon.discountValue) / 100)
-        : appliedCoupon.discountAmount)
+        ? Math.round((billTotalWithDelivery * appliedCoupon.discountValue) / 100)
+        : Math.min(appliedCoupon.discountAmount, billTotalWithDelivery))
     : 0;
 
-  const grandTotal = Math.max(0, subtotal + deliveryCharge - couponDiscount);
+  const grandTotal = Math.max(0, billTotalWithDelivery - couponDiscount);
 
   // Owner Auth State
   const [adminToken, setAdminToken] = useState<string | null>(() => localStorage.getItem('swagrooha_admin_token'));
@@ -229,14 +230,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('swagrooha_all_orders', JSON.stringify(allOrders));
   }, [allOrders]);
 
-  // Auto-remove coupon if cart subtotal drops below minimum bill requirement (₹200)
+  // Auto-remove coupon if total bill (with delivery charge) drops below minimum requirement (₹200)
   useEffect(() => {
-    if (appliedCoupon && subtotal > 0 && subtotal < 200) {
+    const totalWithDelivery = subtotal + deliveryCharge;
+    if (appliedCoupon && totalWithDelivery > 0 && totalWithDelivery < 200) {
       setAppliedCoupon(null);
-      setCouponError('Coupon removed: Minimum bill of ₹200 is required for 5% discount.');
+      setCouponError('Coupon removed: Minimum bill of ₹200 (including delivery) is required.');
       showToast('Coupon removed: Minimum bill of ₹200 required');
     }
-  }, [subtotal, appliedCoupon]);
+  }, [subtotal, deliveryCharge, appliedCoupon]);
 
   // Secret keyboard shortcut (Ctrl + Shift + A) to open Owner Panel
   useEffect(() => {
@@ -324,9 +326,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCouponError('Please enter a coupon code.');
       return;
     }
-    // Minimum bill of ₹200 required for coupons
-    if (subtotal < 200) {
-      setCouponError(`Coupons are not allowed for bills below ₹200. Please add ₹${200 - subtotal} more!`);
+    const billTotal = subtotal + deliveryCharge;
+    // Minimum bill of ₹200 required for coupons (with delivery charge included, not individual)
+    if (billTotal < 200) {
+      setCouponError(`Coupons are not allowed for bills below ₹200. Please add ₹${200 - billTotal} more!`);
       return;
     }
 
@@ -343,7 +346,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch(`${API_BASE}/api/coupons/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: cleanCode, orderTotal: subtotal }),
+        body: JSON.stringify({ code: cleanCode, orderTotal: billTotal }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -354,7 +357,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           discountValue: data.discountValue,
         });
         setCouponError('');
-        showToast(`🎟️ Coupon applied! ${data.discountType === 'percent' ? data.discountValue : 10}% OFF (−₹${data.discountAmount})`);
+        showToast(`🎟️ Coupon applied! ${data.discountType === 'percent' ? data.discountValue : 5}% OFF (−₹${data.discountAmount})`);
       } else {
         setCouponError(data.error || 'Invalid or expired coupon code.');
         setAppliedCoupon(null);
@@ -362,7 +365,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Local fallback in case backend is offline or sleeping
       if (cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR10-') || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
-        const discountAmount = Math.round((subtotal * 5) / 100);
+        const discountAmount = Math.round((billTotal * 5) / 100);
         setAppliedCoupon({
           code: cleanCode,
           discountAmount,

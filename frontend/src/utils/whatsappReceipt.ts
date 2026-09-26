@@ -29,7 +29,7 @@ Hi ${customerName}! Your delicious homemade food order has been successfully *DE
 ${itemsList}
 ━━━━━━━━━━━━━━━━━━━━━━━
 💵 Subtotal: ₹${order.subtotal || 0}
-🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
+🚚 Delivery Charge: ₹${order.deliveryCharge || 0}${order.couponDiscount && order.couponDiscount > 0 ? `\n🎟️ Coupon Discount: −₹${order.couponDiscount}` : ''}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
 💳 Payment: Paid via UPI ✅
 
@@ -88,7 +88,7 @@ Hi ${customerName}! Your order has been confirmed! 🎉
 ${itemsList}
 ━━━━━━━━━━━━━━━━━━━━━━━
 💵 Subtotal: ₹${order.subtotal || 0}
-🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
+🚚 Delivery Charge: ₹${order.deliveryCharge || 0}${order.couponDiscount && order.couponDiscount > 0 ? `\n🎟️ Coupon Discount: −₹${order.couponDiscount}` : ''}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
 💳 Payment: Paid via UPI ✅
 
@@ -146,7 +146,7 @@ export function getWhatsAppOwnerReceiptLink(order: PlacedOrder): string {
 ${itemsList}
 ━━━━━━━━━━━━━━━━━━━━━━━
 💵 Subtotal: ₹${order.subtotal || 0}
-🚚 Delivery Charge: ₹${order.deliveryCharge || 0}
+🚚 Delivery Charge: ₹${order.deliveryCharge || 0}${order.couponDiscount && order.couponDiscount > 0 ? `\n🎟️ Coupon Discount: −₹${order.couponDiscount}` : ''}
 💰 *Total Paid: ₹${order.totalAmount || 0} (PAID ✅)*
 💳 Payment Method: ${order.paymentMethod || 'Online UPI'} (Ref: ${utr})
 

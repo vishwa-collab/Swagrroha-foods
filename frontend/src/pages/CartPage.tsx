@@ -227,8 +227,8 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 10% OFF Coupon Offer Banner (Strict Min Bill ₹200) */}
-            {subtotal >= 200 && (
+            {/* 5% OFF Coupon Offer Banner (Strict Min Bill ₹200 with delivery charge) */}
+            {(subtotal + deliveryCharge) >= 200 && (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm animate-scale-in">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl animate-bounce">🎟️</span>
@@ -273,7 +273,7 @@ export const CartPage: React.FC = () => {
               </div>
 
               {/* Coupon Input / Applied Badge */}
-              {subtotal < 200 ? (
+              {(subtotal + deliveryCharge) < 200 ? (
                 <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 border border-dashed border-slate-300 rounded-2xl p-4 text-center space-y-1.5 group">
                   {/* Shimmer overlay */}
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
@@ -282,15 +282,15 @@ export const CartPage: React.FC = () => {
                     <span>🔒 Coupon Locked — Minimum Bill ₹200</span>
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Add ₹{200 - subtotal} more to unlock your <strong className="text-brand-500">5% OFF</strong> coupon!
+                    Add ₹{200 - (subtotal + deliveryCharge)} more to unlock your <strong className="text-brand-500">5% OFF</strong> coupon!
                   </p>
                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">
                     <div
                       className="h-full bg-gradient-to-r from-brand-400 to-orange-400 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((subtotal / 200) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((subtotal + deliveryCharge) / 200) * 100, 100)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400">{Math.round((subtotal / 200) * 100)}% towards coupon unlock</p>
+                  <p className="text-[10px] text-slate-400">{Math.round(((subtotal + deliveryCharge) / 200) * 100)}% towards coupon unlock</p>
                 </div>
               ) : appliedCoupon ? (
                 <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl px-4 py-3 shadow-sm animate-fade-up">
@@ -301,7 +301,7 @@ export const CartPage: React.FC = () => {
                     <div>
                       <p className="text-xs font-black text-emerald-800 font-mono tracking-wider">{appliedCoupon.code}</p>
                       <p className="text-[10px] text-emerald-700 font-semibold">
-                        {appliedCoupon.discountType === 'percent' ? `${appliedCoupon.discountValue}% OFF` : ''} • 🎉 Saving ₹{appliedCoupon.discountAmount}! (1-Time)
+                        {appliedCoupon.discountType === 'percent' ? `${appliedCoupon.discountValue}% OFF` : ''} • 🎉 Saving ₹{couponDiscount}! (1-Time)
                       </p>
                     </div>
                   </div>

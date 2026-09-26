@@ -188,27 +188,7 @@ export const PaymentPage: React.FC = () => {
             <span>256-bit SSL encrypted • Instant verification</span>
           </p>
 
-          {/* Try Once Free */}
-          <div className="flex items-center gap-2 pt-1">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">First Timer?</span>
-            <div className="h-px flex-1 bg-slate-200" />
-          </div>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={async () => {
-              setIsSubmitting(true); setOrderError('');
-              await finalizeOrder(buildOrder('Free Trial', 'FREE_TRIAL_ORDER', 0));
-            }}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/25 hover:scale-[1.02] active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>{isSubmitting ? 'Placing Order...' : '🎁 Try Once Free — First Order on Us!'}</span>
-          </button>
-          <p className="text-center text-[11px] text-amber-600 font-semibold">
-            ⚡ One-time offer for new customers only • Pay from your 2nd order
-          </p>
+
         </div>
 
         {/* Direct Call Assistance Card */}
