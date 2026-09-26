@@ -178,7 +178,7 @@ export const HomePage: React.FC = () => {
               tag: 'Most Popular',
               tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
               img: IMAGES.murukulu,
-              price: 'from ₹95 (250g)',
+              price: 'from ₹100 (250g)',
               items: '7 varieties',
             },
             {
@@ -196,7 +196,7 @@ export const HomePage: React.FC = () => {
               tag: 'All Time Fav',
               tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
               img: IMAGES.laddu,
-              price: 'from ₹108 (250g)',
+              price: 'from ₹115 (250g)',
               items: '3 varieties',
             },
           ].map(cat => (

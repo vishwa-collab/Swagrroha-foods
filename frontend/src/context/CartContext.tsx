@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Product } from '../data/products';
+import { Product, PRODUCTS } from '../data/products';
 import { DELIVERY_AREAS, DeliveryArea } from '../data/deliveryAreas';
 import { getNextDeliverySaturday, CalculatedDeliveryDate } from '../utils/deliveryCalculator';
 
@@ -123,10 +123,59 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Helper to re-sync cart items to current PRODUCTS prices
+function syncCartItemWithProducts(item: CartItem): CartItem {
+  const liveProd = PRODUCTS.find(p => p.id === item.product?.id || p.name.toLowerCase() === item.product?.name?.toLowerCase());
+  if (!liveProd) return item;
+  const weightOpt = liveProd.weightOptions.find(w => w.label === item.selectedWeightLabel) || liveProd.weightOptions[0];
+  const multiplier = weightOpt ? weightOpt.multiplier : 1;
+  const newUnitPrice = Math.round(liveProd.basePrice * multiplier);
+  return {
+    ...item,
+    product: liveProd,
+    unitPrice: newUnitPrice,
+  };
+}
+
+// Helper to re-sync order items and recalculate total
+function syncOrderWithProducts(order: PlacedOrder): PlacedOrder {
+  if (!order || !Array.isArray(order.items)) return order;
+  let subtotal = 0;
+  const syncedItems = order.items.map(item => {
+    const pName = item.product?.name || (item as any).name || (item as any).productName || '';
+    const liveProd = PRODUCTS.find(p => p.id === item.product?.id || p.name.toLowerCase() === pName.toLowerCase());
+    const weightOpt = liveProd?.weightOptions?.find(w => w.label === item.selectedWeightLabel) || liveProd?.weightOptions?.[0];
+    const multiplier = weightOpt ? weightOpt.multiplier : 1;
+    const unitPrice = liveProd ? Math.round(liveProd.basePrice * multiplier) : (item.unitPrice || 0);
+    const qty = item.quantity || 1;
+    subtotal += unitPrice * qty;
+    return {
+      ...item,
+      product: liveProd || item.product,
+      unitPrice,
+    };
+  });
+  const deliveryCharge = order.deliveryCharge || 0;
+  const couponDiscount = order.couponDiscount || 0;
+  const totalAmount = Math.max(0, subtotal + deliveryCharge - couponDiscount);
+  return {
+    ...order,
+    items: syncedItems,
+    subtotal,
+    totalAmount,
+  };
+}
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('swagrooha_cart');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed: CartItem[] = JSON.parse(saved);
+      return parsed.map(syncCartItemWithProducts);
+    } catch {
+      return [];
+    }
   });
 
   const [selectedArea, setSelectedArea] = useState<DeliveryArea>(() => {
@@ -163,20 +212,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentOrder, setCurrentOrder] = useState<PlacedOrder | null>(null);
 
   // Persistent Store for All Placed Orders
-  // Bump version to v8_fresh_start so old order history is completely purged and app starts fresh
   const [allOrders, setAllOrders] = useState<PlacedOrder[]>(() => {
-    const VERSION = 'v8_fresh_start';
-    const versionKey = 'swagrooha_orders_version';
-    if (localStorage.getItem(versionKey) !== VERSION) {
-      // Wipe old cached orders, current order, and cart to start completely fresh
-      localStorage.removeItem('swagrooha_all_orders');
-      localStorage.removeItem('swagrooha_cart');
-      localStorage.removeItem('swagrooha_customer');
-      localStorage.setItem(versionKey, VERSION);
+    const saved = localStorage.getItem('swagrooha_all_orders');
+    if (!saved) return [];
+    try {
+      const parsed: PlacedOrder[] = JSON.parse(saved);
+      return parsed.map(syncOrderWithProducts);
+    } catch {
       return [];
     }
-    const saved = localStorage.getItem('swagrooha_all_orders');
-    return saved ? JSON.parse(saved) : [];
   });
 
   const [trackedOrder, setTrackedOrder] = useState<PlacedOrder | null>(null);
@@ -275,20 +319,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addToCart = (product: Product, weightLabel: string, qty: number = 1) => {
-    const weightOpt = product.weightOptions.find(w => w.label === weightLabel) || product.weightOptions[0];
-    const unitPrice = Math.round(product.basePrice * weightOpt.multiplier);
-    const cartItemId = `${product.id}-${weightLabel}`;
+    const liveProd = PRODUCTS.find(p => p.id === product.id) || product;
+    const weightOpt = liveProd.weightOptions.find(w => w.label === weightLabel) || liveProd.weightOptions[0];
+    const unitPrice = Math.round(liveProd.basePrice * weightOpt.multiplier);
+    const cartItemId = `${liveProd.id}-${weightLabel}`;
 
     setCart(prev => {
       const existingIndex = prev.findIndex(item => item.cartItemId === cartItemId);
       if (existingIndex > -1) {
         const updated = [...prev];
         updated[existingIndex].quantity += qty;
+        updated[existingIndex].unitPrice = unitPrice;
+        updated[existingIndex].product = liveProd;
         return updated;
       } else {
         return [...prev, {
           cartItemId,
-          product,
+          product: liveProd,
           selectedWeightLabel: weightLabel,
           unitPrice,
           quantity: qty,
@@ -666,13 +713,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         const data = await res.json();
         if (data && data.orderId) {
-          setTrackedOrder(data);
+          const synced = syncOrderWithProducts(data);
+          setTrackedOrder(synced);
           // Sync with local allOrders
           setAllOrders(prev => {
-            const filtered = prev.filter(o => o.orderId !== data.orderId);
-            return [data, ...filtered];
+            const filtered = prev.filter(o => o.orderId !== synced.orderId);
+            return [synced, ...filtered];
           });
-          return data;
+          return synced;
         }
       }
     } catch (e) {
@@ -688,16 +736,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     if (foundLocal) {
-      setTrackedOrder(foundLocal);
-      return foundLocal;
+      const synced = syncOrderWithProducts(foundLocal);
+      setTrackedOrder(synced);
+      return synced;
     }
 
     if (currentOrder && (
       (currentOrder.orderId && currentOrder.orderId.toLowerCase() === q) || 
       (currentOrder.customer && currentOrder.customer.phone && currentOrder.customer.phone.toLowerCase() === q)
     )) {
-      setTrackedOrder(currentOrder);
-      return currentOrder;
+      const synced = syncOrderWithProducts(currentOrder);
+      setTrackedOrder(synced);
+      return synced;
     }
     return null;
   };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCart, PlacedOrder, OrderStageStatus } from '../context/CartContext';
 import { AdminLoginPage } from './AdminLoginPage';
 import { DELIVERY_AREAS } from '../data/deliveryAreas';
+import { PRODUCTS } from '../data/products';
 import { OrderPipeline } from '../components/OrderPipeline';
 import {
   Truck,
@@ -38,27 +39,41 @@ const POLL_INTERVAL_MS = 10000;
 // ── Normalize flat backend Order into the nested PlacedOrder shape ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeOrder(raw: any): PlacedOrder {
+  let computedSubtotal = 0;
   const normItems = (raw.items || []).map((it: any) => {
     const pName = it.product?.name || it.productName || it.name || 'Food Item';
     const wLabel = it.selectedWeightLabel || it.weightLabel || (it.product?.weightOptions?.[0]?.label) || 'Standard';
+    const liveProd = PRODUCTS.find(p => p.id === it.product?.id || p.name.toLowerCase() === pName.toLowerCase());
+    const weightOpt = liveProd?.weightOptions?.find(w => w.label === wLabel) || liveProd?.weightOptions?.[0];
+    const multiplier = weightOpt ? weightOpt.multiplier : 1;
+    const unitPrice = liveProd ? Math.round(liveProd.basePrice * multiplier) : (it.unitPrice || it.product?.basePrice || 0);
+    const qty = it.quantity || 1;
+    computedSubtotal += unitPrice * qty;
+
     return {
       cartItemId: String(it.cartItemId || it.id || pName),
-      product: {
+      product: liveProd || {
         id: String(it.product?.id || it.id || pName),
         name: pName,
-        basePrice: it.product?.basePrice || it.unitPrice || 0,
-        weightOptions: it.product?.weightOptions || [{ label: wLabel, multiplier: 1 }],
+        basePrice: unitPrice,
+        weightOptions: [{ label: wLabel, multiplier: 1 }],
         category: it.product?.category || '',
         image: it.product?.image || '',
         description: it.product?.description || '',
       },
       selectedWeightLabel: wLabel,
-      unitPrice: it.unitPrice || it.product?.basePrice || 0,
-      quantity: it.quantity || 1,
+      unitPrice,
+      quantity: qty,
     };
   });
 
   const cust = typeof raw.customer === 'object' && raw.customer !== null ? raw.customer : {};
+  const deliveryCharge = raw.deliveryCharge || 0;
+  const subtotal = computedSubtotal > 0 ? computedSubtotal : (raw.subtotal || 0);
+  const couponDiscount = raw.couponDiscount || 0;
+  const totalAmount = computedSubtotal > 0
+    ? Math.max(0, computedSubtotal + deliveryCharge - couponDiscount)
+    : (raw.totalAmount || subtotal + deliveryCharge);
 
   return {
     orderId: raw.orderId || '',
@@ -73,13 +88,13 @@ function normalizeOrder(raw: any): PlacedOrder {
       id: raw.deliveryArea || '',
       name: raw.deliveryArea || 'Standard Area',
       tier: 'Near',
-      charge: raw.deliveryCharge || 0,
+      charge: deliveryCharge,
       estimatedDeliveryText: '',
     },
     items: normItems,
-    subtotal: raw.subtotal || 0,
-    deliveryCharge: raw.deliveryCharge || 0,
-    totalAmount: raw.totalAmount || 0,
+    subtotal,
+    deliveryCharge,
+    totalAmount,
     deliveryDate: raw.deliveryDate
       ? (typeof raw.deliveryDate === 'string'
           ? { formattedDate: raw.deliveryDate, dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' }
