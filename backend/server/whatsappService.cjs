@@ -124,7 +124,7 @@ async function sendWhatsAppNotification(order) {
       const response = await axios.post(
         'https://api.fonnte.com/send',
         { target: cleanPhone, message, countryCode: '91' },
-        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN }, timeout: 8000 }
       );
       console.log('✅ WhatsApp sent via Fonnte to owner:', cleanPhone, response.data);
       return { success: true, provider: 'fonnte', data: response.data };
@@ -167,7 +167,7 @@ async function sendCustomerWhatsAppReceipt(order) {
       const response = await axios.post(
         'https://api.fonnte.com/send',
         { target: customerPhone, message, countryCode: '91' },
-        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN }, timeout: 8000 }
       );
       console.log('✅ Customer WhatsApp receipt sent via Fonnte:', customerPhone, response.data);
       return { success: true, provider: 'fonnte', data: response.data };
@@ -251,7 +251,7 @@ async function sendCustomerDeliveredWhatsAppReceipt(order) {
       const response = await axios.post(
         'https://api.fonnte.com/send',
         { target: customerPhone, message, countryCode: '91' },
-        { headers: { 'Authorization': process.env.FONNTE_TOKEN } }
+        { headers: { 'Authorization': process.env.FONNTE_TOKEN }, timeout: 8000 }
       );
       console.log('✅ Customer delivery receipt sent via Fonnte:', customerPhone, response.data);
       return { success: true, provider: 'fonnte', data: response.data };

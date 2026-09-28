@@ -46,7 +46,7 @@ export const HomePage: React.FC = () => {
           HERO — white bg, split layout
       ═══════════════════════════════════════ */}
       <section className="bg-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-12 sm:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pt-10 pb-28 sm:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
           {/* Left — text */}
           <div>

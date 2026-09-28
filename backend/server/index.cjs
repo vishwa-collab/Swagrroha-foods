@@ -17,6 +17,17 @@ const { sendCustomerEmailReceipt, sendDeliveredReceiptEmail } = require('./email
 
 const app = express();
 
+// Trust reverse proxy (Render, Vercel, Cloudflare) so real client IPs are used in rate limiting
+app.set('trust proxy', 1);
+
+// Prevent server crash from unhandled async rejections or exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Promise Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Uncaught Exception:', err);
+});
+
 // Allow requests from Vercel frontend (and localhost for dev)
 const allowedOrigins = [
   'http://localhost:5173',
@@ -40,20 +51,21 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// ── Rate Limiting (protects server under high load)
-// General limiter: 100 requests per 15 minutes per IP
+// ── Rate Limiting (protects server under high load without blocking concurrent legitimate users)
+// General limiter: 2500 requests per 15 minutes per client IP
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 2500,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/api/health' || req.path === '/',
   message: { error: 'Too many requests. Please try again after 15 minutes.' },
 });
 
-// Strict limiter for order placement: 10 orders per 15 minutes per IP
+// Order placement limiter: 30 orders per 15 minutes per IP
 const orderLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many order attempts. Please try again after 15 minutes.' },
@@ -676,38 +688,51 @@ app.get('/api/orders', async (req, res) => {
   return res.json(orders);
 });
 
+// Helper to safely escape special regex chars to avoid crashes
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // GET /api/orders/:query — track order by orderId / phone / UTR
 app.get('/api/orders/:query', async (req, res) => {
-  const q = req.params.query.trim();
-  const qRegex = new RegExp(`^${q}$`, 'i');
+  try {
+    const q = (req.params.query || '').trim();
+    if (!q) return res.status(400).json({ error: 'Search query is required' });
 
-  if (isMongoConnected) {
-    try {
-      const mongoOrder = await Order.findOne({
-        $or: [
-          { orderId: { $regex: qRegex } },
-          { phone: { $regex: qRegex } },
-          { 'customer.phone': { $regex: qRegex } },
-          { utrNumber: { $regex: qRegex } },
-        ],
-      }).lean();
-      if (mongoOrder) {
-        return res.json(mongoOrder);
+    const safeQ = escapeRegex(q);
+    const qRegex = new RegExp(`^${safeQ}$`, 'i');
+
+    if (isMongoConnected) {
+      try {
+        const mongoOrder = await Order.findOne({
+          $or: [
+            { orderId: { $regex: qRegex } },
+            { phone: { $regex: qRegex } },
+            { 'customer.phone': { $regex: qRegex } },
+            { utrNumber: { $regex: qRegex } },
+          ],
+        }).lean();
+        if (mongoOrder) {
+          return res.json(mongoOrder);
+        }
+      } catch (e) {
+        console.error('Error querying MongoDB:', e);
       }
-    } catch (e) {
-      console.error('Error querying MongoDB:', e);
     }
-  }
 
-  const qLower = q.toLowerCase();
-  const found = orders.find(o =>
-    (o.orderId && o.orderId.toLowerCase() === qLower) ||
-    (o.customer && o.customer.phone && o.customer.phone.toLowerCase() === qLower) ||
-    (o.phone && o.phone.toLowerCase() === qLower) ||
-    (o.utrNumber && o.utrNumber.toLowerCase() === qLower)
-  );
-  if (!found) return res.status(404).json({ error: 'Order not found' });
-  res.json(found);
+    const qLower = q.toLowerCase();
+    const found = orders.find(o =>
+      (o.orderId && o.orderId.toLowerCase() === qLower) ||
+      (o.customer && o.customer.phone && o.customer.phone.toLowerCase() === qLower) ||
+      (o.phone && o.phone.toLowerCase() === qLower) ||
+      (o.utrNumber && o.utrNumber.toLowerCase() === qLower)
+    );
+    if (!found) return res.status(404).json({ error: 'Order not found' });
+    return res.json(found);
+  } catch (err) {
+    console.error('Error in /api/orders/:query:', err);
+    return res.status(500).json({ error: 'Server error processing order lookup' });
+  }
 });
 
 // PUT /api/orders/:orderId/status — owner updates status, sends receipt email on DELIVERED

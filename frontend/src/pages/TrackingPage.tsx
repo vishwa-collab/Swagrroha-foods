@@ -67,7 +67,12 @@ export const TrackingPage: React.FC = () => {
     const orderId = activeOrder?.orderId;
     if (!orderId) return;
 
+    const isDelivered = activeOrder?.status === 'DELIVERED';
+    if (isDelivered) return;
+
     const pollLiveStatus = async () => {
+      // Don't poll if the tab is hidden or order is already delivered
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}`, {
           headers: { 'Cache-Control': 'no-cache' },
@@ -81,19 +86,23 @@ export const TrackingPage: React.FC = () => {
             }
             return prev;
           });
+          if (fresh.status === 'DELIVERED' && pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
         }
       } catch {
         // Render may be sleeping — silently skip, next poll will retry
       }
     };
 
-    // Poll immediately, then every 5 seconds
+    // Poll immediately, then every 8 seconds while active
     pollLiveStatus();
-    pollingRef.current = setInterval(pollLiveStatus, 5000);
+    pollingRef.current = setInterval(pollLiveStatus, 8000);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [activeOrder?.orderId]);
+  }, [activeOrder?.orderId, activeOrder?.status]);
 
   const handleSearch = async (showLoadingSpinner: boolean = true) => {
     if (!searchQuery.trim()) return;
