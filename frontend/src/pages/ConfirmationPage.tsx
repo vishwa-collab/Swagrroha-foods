@@ -55,7 +55,7 @@ export const ConfirmationPage: React.FC = () => {
     const contentW = pageW - margin * 2;
     let y = 14;
 
-    // â”€â”€ 1. Top Brand Header Banner â”€â”€
+    // ── 1. Top Brand Header Banner ──
     doc.setFillColor(15, 23, 42); // slate-900
     doc.roundedRect(margin, y, contentW, 24, 3, 3, 'F');
 
@@ -82,7 +82,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += 30;
 
-    // â”€â”€ 2. Two-Column Metadata Box â”€â”€
+    // ── 2. Two-Column Metadata Box ──
     const colW = (contentW - 6) / 2;
     const boxH = 42;
 
@@ -139,7 +139,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += boxH + 8;
 
-    // â”€â”€ 3. Ordered Items Table â”€â”€
+    // ── 3. Ordered Items Table ──
     // Table Header
     doc.setFillColor(241, 245, 249);
     doc.setDrawColor(203, 213, 225);
@@ -224,7 +224,7 @@ export const ConfirmationPage: React.FC = () => {
 
     y += summaryH + 8;
 
-    // â”€â”€ 5. Clean Simple Footer â”€â”€
+    // ── 5. Clean Simple Footer ──
     doc.setDrawColor(226, 232, 240);
     doc.line(margin, y, pageW - margin, y);
     y += 5;
@@ -266,7 +266,7 @@ export const ConfirmationPage: React.FC = () => {
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black">
-          Order Placed Successfully! ðŸŽ‰
+          Thank You! Your Order is Confirmed 🎉
         </h1>
         <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
           Order ID: <strong className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">{currentOrder.orderId}</strong>
@@ -282,11 +282,11 @@ export const ConfirmationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ðŸŽ REWARD: New Order Coupon Card */}
+      {/* 🎁 REWARD: New Order Coupon Card */}
       {rewardCoupon && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 sm:p-7 text-white shadow-xl space-y-3.5 text-center border-2 border-amber-300">
           <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-            <span>ðŸŽ</span>
+            <span>🎁</span>
             <span>New Order Reward Unlocked!</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black">
@@ -332,7 +332,7 @@ export const ConfirmationPage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base">Order Summary</h3>
-            <p className="text-xs text-slate-400">PJR Swagruha Foods â€¢ Scheduled Homemade Delivery</p>
+            <p className="text-xs text-slate-400">PJR Swagruha Foods • Scheduled Homemade Delivery</p>
           </div>
           <span className="bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1 rounded-lg">
             Delivery: {currentOrder.deliveryDate.dayOfWeekName}
@@ -344,15 +344,15 @@ export const ConfirmationPage: React.FC = () => {
           <div>
             <span className="text-slate-400 font-medium block">Customer Details</span>
             <p className="font-bold text-slate-900 text-sm mt-0.5">{currentOrder.customer.name}</p>
-            <p className="text-slate-600 font-medium">ðŸ“ž {currentOrder.customer.phone}</p>
-            <p className="text-blue-700 font-medium">âœ‰ï¸ {currentOrder.customer.email || 'N/A'}</p>
+            <p className="text-slate-600 font-medium">📞 {currentOrder.customer.phone}</p>
+            <p className="text-blue-700 font-medium">✉️ {currentOrder.customer.email || 'N/A'}</p>
           </div>
           <div>
             <span className="text-slate-400 font-medium block">Delivery Route & Address</span>
             <p className="font-bold text-brand-600 text-xs mt-0.5">{currentOrder.area.name} Zone</p>
             <p className="text-slate-700 leading-relaxed font-medium">{currentOrder.customer.address}</p>
             <p className="text-amber-700 font-bold text-xs mt-1">
-              ðŸ“… {currentOrder.deliveryDate.formattedDate}
+              📅 {currentOrder.deliveryDate.formattedDate}
             </p>
           </div>
         </div>
@@ -362,12 +362,12 @@ export const ConfirmationPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <span className="font-extrabold text-emerald-950 block">Payment Confirmed âœ…</span>
+              <span className="font-extrabold text-emerald-950 block">Payment Confirmed ✅</span>
               <span className="text-emerald-800 text-[11px]">Payment Mode: <strong>{currentOrder.paymentMethod || 'Online Payment'}</strong></span>
             </div>
           </div>
           <span className="bg-emerald-200 text-emerald-950 font-black text-[10px] uppercase px-2.5 py-1 rounded-full shrink-0">
-            {currentOrder.paymentMethod ? 'Paid âœ…' : 'Paid via UPI âœ…'}
+            {currentOrder.paymentMethod ? 'Paid ✅' : 'Paid via UPI ✅'}
           </span>
         </div>
 
@@ -379,9 +379,9 @@ export const ConfirmationPage: React.FC = () => {
               <div key={item.cartItemId} className="py-2.5 flex justify-between items-center">
                 <div>
                   <span className="font-bold text-slate-900 text-sm">{item.product.name}</span>
-                  <span className="ml-2 text-slate-500 font-semibold">({item.selectedWeightLabel}) Ã— {item.quantity}</span>
+                  <span className="ml-2 text-slate-500 font-semibold">({item.selectedWeightLabel}) × {item.quantity}</span>
                 </div>
-                <span className="font-bold text-slate-900 text-sm">â‚¹{item.unitPrice * item.quantity}</span>
+                <span className="font-bold text-slate-900 text-sm">₹{item.unitPrice * item.quantity}</span>
               </div>
             ))}
           </div>
