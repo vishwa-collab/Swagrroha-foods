@@ -227,6 +227,31 @@ export const PRODUCTS: Product[] = [
     isPopular: true,
     isBestseller: true,
   },
+  {
+    id: 'sunnundallu',
+    name: 'Traditional Ghee Sunnundallu',
+    teluguName: 'సున్నుండలు',
+    category: 'Sweets',
+    basePrice: 580,
+    priceUnitText: '₹580 / kg',
+    description: 'Authentic Andhra & Telangana urad dal laddus made with roasted black gram dal, rich desi cow ghee, and aromatic cardamom.',
+    image: IMAGES.sunnundallu,
+    weightOptions: SWEET_WEIGHTS,
+    isPopular: true,
+    isBestseller: true,
+  },
+  {
+    id: 'rava-laddu',
+    name: 'Delicious Ghee Rava Laddu',
+    teluguName: 'రవ్వ లడ్డు',
+    category: 'Sweets',
+    basePrice: 410,
+    priceUnitText: '₹410 / kg',
+    description: 'Fragrant roasted semolina (sooji) laddus prepared with pure desi ghee, golden roasted cashews, plump raisins, and cardamom.',
+    image: IMAGES.ravaLaddu,
+    weightOptions: SWEET_WEIGHTS,
+    isPopular: true,
+  },
 
   // --- PICKLES (Chicken ₹400/250g, Mutton ₹600/250g) — unchanged, starts from 250g ---
   {
