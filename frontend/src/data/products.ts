@@ -253,20 +253,20 @@ export const PRODUCTS: Product[] = [
     isPopular: true,
   },
 
-  // --- PICKLES (Chicken ₹400/250g, Mutton ₹600/250g) — unchanged, starts from 250g ---
+  // --- PICKLES (Chicken ₹750/500g, Mutton ₹1150/500g) — starts from 500g ---
   {
     id: 'chicken-pickle',
     name: 'Spicy Homemade Chicken Pickle',
     teluguName: 'చికెన్ పచ్చడి',
     category: 'Pickles',
-    basePrice: 400, // ₹400 for 250g
-    priceUnitText: '₹400 (250g)',
+    basePrice: 750, // ₹750 for 500g
+    priceUnitText: '₹750 (500g)',
     description: 'Boneless tender chicken pieces marinated in authentic homemade Telangana spice mix and lemon juice.',
     image: IMAGES.chickenPickle,
     weightOptions: [
-      { label: '250g', multiplier: 1.0 },   // ₹400
-      { label: '500g', multiplier: 1.875 },  // ₹750
-      { label: '1 kg', multiplier: 3.5 },    // ₹1400
+      { label: '500g', multiplier: 1.0 },   // ₹750
+      { label: '1 kg', multiplier: 1.867 },  // ₹1400
+      { label: '2 kg', multiplier: 3.733 },  // ₹2800
     ],
     isBestseller: true,
     isPopular: true,
@@ -276,15 +276,16 @@ export const PRODUCTS: Product[] = [
     name: 'Royal Spicy Mutton Pickle',
     teluguName: 'మటన్ పచ్చడి',
     category: 'Pickles',
-    basePrice: 600, // ₹600 for 250g
-    priceUnitText: '₹600 (250g)',
+    basePrice: 1150, // ₹1150 for 500g
+    priceUnitText: '₹1,150 (500g)',
     description: 'Premium boneless mutton fried crisp and steeped in rich aromatic ginger-garlic pickle gravy.',
     image: IMAGES.muttonPickle,
     weightOptions: [
-      { label: '250g', multiplier: 1.0 },    // ₹600
-      { label: '500g', multiplier: 1.916 },  // ₹1150
-      { label: '1 kg', multiplier: 3.666 },  // ₹2200
+      { label: '500g', multiplier: 1.0 },    // ₹1150
+      { label: '1 kg', multiplier: 1.913 },  // ₹2200
+      { label: '2 kg', multiplier: 3.826 },  // ₹4400
     ],
     isBestseller: true,
   },
 ];
+

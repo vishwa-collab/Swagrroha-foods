@@ -19,8 +19,8 @@ import chickenPickle from '../../assets/Chicken Pickle.png';
 import muttonPickle from '../../assets/Mutton Pickle.jpeg';
 import badusha from '../../assets/badusha_sweet_full.png';
 import sanaKarapusa from '../../assets/sana Karpusa.png';
-import sunnundallu from '../../assets/sunnundallu sweet.png';
-import ravaLaddu from '../../assets/ravva laddu sweets.png';
+import sunnundallu from '../../assets/sunnundallu.png';
+import ravaLaddu from '../../assets/ravva laddu.png';
 import qrCode from '../../assets/QR code.jpeg';
 
 export const IMAGES = {
