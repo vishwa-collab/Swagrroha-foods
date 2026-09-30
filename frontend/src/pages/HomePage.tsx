@@ -71,7 +71,7 @@ export const HomePage: React.FC = () => {
               100% Homemade · Batch Fresh
             </span>
 
-            <h1 className="bubble-title text-[40px] sm:text-[54px] lg:text-[62px] font-black text-slate-900 leading-[1.08] tracking-tight mb-4 drop-shadow-sm">
+            <h1 className="font-sans text-[40px] sm:text-[54px] lg:text-[62px] font-black text-slate-900 leading-[1.08] tracking-tight mb-4 drop-shadow-sm">
               Authentic Telugu<br />
               <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent font-black">
                 Homemade Flavours
@@ -79,7 +79,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="bubble-subtitle text-slate-700 text-[15px] sm:text-base font-bold leading-relaxed mb-8 max-w-lg">
-              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the <span className="text-orange-600 font-extrabold underline decoration-orange-300 decoration-2 underline-offset-4">Hayathnagar → Ibrahimpatnam</span> route.
+              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
             {/* CTAs */}
