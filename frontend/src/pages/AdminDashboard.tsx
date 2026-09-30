@@ -114,13 +114,15 @@ function normalizeOrder(raw: any): PlacedOrder {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast, deleteOrder } = useCart();
+  const { adminToken, logoutAdmin, updateOrderStatus, resendReceiptEmail, allOrders, showToast, deleteOrder, clearAllOrders } = useCart();
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
   const [activeTabSection, setActiveTabSection] = useState<'new' | 'active' | 'history' | 'route-grouping' | 'analytics' | 'coupons'>('new');
   const [loading, setLoading] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   const [orderToDelete, setOrderToDelete] = useState<PlacedOrder | null>(null);
   const [isDeletingOrder, setIsDeletingOrder] = useState(false);
+  const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
 
   // Coupon state
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -140,6 +142,19 @@ export const AdminDashboard: React.FC = () => {
   // Use a ref to control polling — we pause it during status updates
   const pollPausedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleClearAllData = async () => {
+    setIsClearingAll(true);
+    const result = await clearAllOrders(adminToken || undefined);
+    setIsClearingAll(false);
+    setShowClearConfirmModal(false);
+    if (result.success) {
+      setOrders([]);
+      showToast('🧹 All orders cleared. Fresh start!');
+    } else {
+      showToast(`❌ ${result.message}`);
+    }
+  };
 
   const handleDeleteSingleOrder = async (orderId: string) => {
     setIsDeletingOrder(true);
@@ -390,6 +405,14 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowClearConfirmModal(true)}
+            className="flex items-center gap-1.5 bg-slate-800 hover:bg-red-950 text-red-300 hover:text-red-200 border border-red-800/40 hover:border-red-600 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all shadow-sm"
+            title="Clear all orders for a fresh start"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            Clear All Orders
+          </button>
+          <button
             onClick={logoutAdmin}
             className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition-all"
           >
@@ -398,6 +421,42 @@ export const AdminDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ── Clear All Confirmation Modal ── */}
+      {showClearConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full space-y-4 shadow-2xl border border-red-100 animate-scale-up">
+            <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-xl font-black text-slate-900">Start Fresh?</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                This will delete all past orders from MongoDB database and local storage. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowClearConfirmModal(false)}
+                disabled={isClearingAll}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearAllData}
+                disabled={isClearingAll}
+                className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
+              >
+                {isClearingAll ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isClearingAll ? 'Clearing…' : 'Yes, Delete All'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════
            DASHBOARD OVERVIEW  (Crusant-style)
