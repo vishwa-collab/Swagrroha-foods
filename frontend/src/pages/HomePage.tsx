@@ -71,13 +71,15 @@ export const HomePage: React.FC = () => {
               100% Homemade · Batch Fresh
             </span>
 
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight mb-4">
+            <h1 className="bubble-title text-[40px] sm:text-[54px] lg:text-[62px] font-black text-slate-900 leading-[1.08] tracking-tight mb-4 drop-shadow-sm">
               Authentic Telugu<br />
-              <span className="text-orange-500">Homemade Flavours</span>
+              <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent font-black">
+                Homemade Flavours
+              </span>
             </h1>
 
-            <p className="text-slate-500 text-sm sm:text-base font-medium leading-relaxed mb-8 max-w-md">
-              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
+            <p className="bubble-subtitle text-slate-700 text-[15px] sm:text-base font-bold leading-relaxed mb-8 max-w-lg">
+              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the <span className="text-orange-600 font-extrabold underline decoration-orange-300 decoration-2 underline-offset-4">Hayathnagar → Ibrahimpatnam</span> route.
             </p>
 
             {/* CTAs */}
@@ -178,7 +180,7 @@ export const HomePage: React.FC = () => {
               tag: 'Most Popular',
               tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
               img: IMAGES.murukulu,
-              price: 'from ₹100 (250g)',
+              price: 'from ₹103 (250g)',
               items: '7 varieties',
             },
             {
@@ -196,7 +198,7 @@ export const HomePage: React.FC = () => {
               tag: 'All Time Fav',
               tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
               img: IMAGES.laddu,
-              price: 'from ₹115 (250g)',
+              price: 'from ₹118 (250g)',
               items: '3 varieties',
             },
           ].map(cat => (
