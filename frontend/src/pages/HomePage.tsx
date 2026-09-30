@@ -71,18 +71,15 @@ export const HomePage: React.FC = () => {
               100% Homemade · Batch Fresh
             </span>
 
-            <h1 className="text-[40px] sm:text-[54px] lg:text-[62px] text-slate-900 leading-[1.1] tracking-tight mb-4 drop-shadow-sm">
-              <span className="font-playfair font-bold sm:font-extrabold">
-                Authentic Telugu
-              </span>
-              <br />
-              <span className="font-poppins font-black bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent">
+            <h1 className="bubble-title text-[40px] sm:text-[54px] lg:text-[62px] font-black text-slate-900 leading-[1.08] tracking-tight mb-4 drop-shadow-sm">
+              Authentic Telugu<br />
+              <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent font-black">
                 Homemade Flavours
               </span>
             </h1>
 
-            <p className="font-poppins text-slate-700 text-[15px] sm:text-base font-medium leading-relaxed mb-8 max-w-lg">
-              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the <span className="text-orange-600 font-bold underline decoration-orange-300 decoration-2 underline-offset-4">Hayathnagar → Ibrahimpatnam</span> route.
+            <p className="bubble-subtitle text-slate-700 text-[15px] sm:text-base font-bold leading-relaxed mb-8 max-w-lg">
+              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 4–5 day preparation gap along the <span className="text-orange-600 font-extrabold underline decoration-orange-300 decoration-2 underline-offset-4">Hayathnagar → Ibrahimpatnam</span> route.
             </p>
 
             {/* CTAs */}
