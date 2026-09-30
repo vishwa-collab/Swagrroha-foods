@@ -28,6 +28,8 @@ export default {
         sans: ['Outfit', 'Inter', 'sans-serif'],
         bubble: ['"Baloo 2"', 'Sniglet', 'Fredoka', 'cursive', 'sans-serif'],
         rounded: ['Quicksand', 'Fredoka', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'Georgia', 'serif'],
+        poppins: ['Poppins', 'sans-serif'],
       },
       scale: {
         '108': '1.08',
