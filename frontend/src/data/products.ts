@@ -107,8 +107,8 @@ export const PRODUCTS: Product[] = [
     name: 'Special Spicy Mixture',
     teluguName: 'హాట్ మిక్చర్',
     category: 'Snacks',
-    basePrice: 411,
-    priceUnitText: '₹411 / kg',
+    basePrice: 360, // ₹90 for 250g
+    priceUnitText: '₹360 / kg',
     description: 'Rich blend of sev, fried peanuts, roasted chana dal, curry leaves, and secret spices.',
     image: IMAGES.mixture,
     weightOptions: SNACK_WEIGHTS,
@@ -190,8 +190,8 @@ export const PRODUCTS: Product[] = [
     name: 'Homemade Motichoor / Besan Laddu',
     teluguName: 'లడ్డు',
     category: 'Sweets',
-    basePrice: 471,
-    priceUnitText: '₹471 / kg',
+    basePrice: 440, // ₹110 for 250g
+    priceUnitText: '₹440 / kg',
     description: 'Melt-in-mouth golden laddus prepared with pure cow ghee and fragrant cardamom.',
     image: IMAGES.laddu,
     weightOptions: SWEET_WEIGHTS,
@@ -253,7 +253,7 @@ export const PRODUCTS: Product[] = [
     isPopular: true,
   },
 
-  // --- PICKLES (Chicken ₹650/500g, Mutton ₹1050/500g) — starts from 500g ---
+  // --- PICKLES (Chicken ₹650/500g, Mutton ₹1200/500g) — starts from 500g ---
   {
     id: 'chicken-pickle',
     name: 'Spicy Homemade Chicken Pickle',
@@ -276,14 +276,14 @@ export const PRODUCTS: Product[] = [
     name: 'Royal Spicy Mutton Pickle',
     teluguName: 'మటన్ పచ్చడి',
     category: 'Pickles',
-    basePrice: 1050, // ₹1050 for 500g
-    priceUnitText: '₹1,050 (500g)',
+    basePrice: 1200, // ₹1200 for 500g
+    priceUnitText: '₹1,200 (500g)',
     description: 'Premium boneless mutton fried crisp and steeped in rich aromatic ginger-garlic pickle gravy.',
     image: IMAGES.muttonPickle,
     weightOptions: [
-      { label: '500g', multiplier: 1.0 },   // ₹1050
-      { label: '1 kg', multiplier: 2.0 },   // ₹2100
-      { label: '2 kg', multiplier: 4.0 },   // ₹4200
+      { label: '500g', multiplier: 1.0 },   // ₹1200
+      { label: '1 kg', multiplier: 2.0 },   // ₹2400
+      { label: '2 kg', multiplier: 4.0 },   // ₹4800
     ],
     isBestseller: true,
   },

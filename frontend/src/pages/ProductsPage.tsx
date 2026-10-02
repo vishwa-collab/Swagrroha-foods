@@ -62,10 +62,10 @@ export const ProductsPage: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'Snacks', price: 'From ₹411/kg', color: 'text-amber-300 border-amber-500/40 bg-amber-500/10' },
-              { label: 'Sweets', price: 'From ₹471/kg', color: 'text-purple-300 border-purple-500/40 bg-purple-500/10' },
+              { label: 'Snacks', price: 'From ₹90/250g', color: 'text-amber-300 border-amber-500/40 bg-amber-500/10' },
+              { label: 'Sweets', price: 'From ₹110/250g', color: 'text-purple-300 border-purple-500/40 bg-purple-500/10' },
               { label: 'Chicken', price: 'From ₹650', color: 'text-red-300 border-red-500/40 bg-red-500/10' },
-              { label: 'Mutton', price: 'From ₹1,050', color: 'text-rose-300 border-rose-500/40 bg-rose-500/10' },
+              { label: 'Mutton', price: 'From ₹1,200', color: 'text-rose-300 border-rose-500/40 bg-rose-500/10' },
             ].map(b => (
               <div key={b.label} className={`tag-chip ${b.color}`}>
                 <span className="font-black">{b.label}:</span> {b.price}
