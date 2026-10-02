@@ -194,7 +194,7 @@ async function generateNewOrderCoupon(orderObj) {
       coupons.unshift(newCoupon);
     }
 
-    console.log(`🎟️ New order coupon generated: ${code} (10% off, min order ₹200, 1-time use)`);
+    console.log(`🎟️ New order coupon generated: ${code} (5% off, min order ₹200, 1-time use)`);
     return newCoupon;
   } catch (e) {
     console.error('❌ Error generating new order coupon:', e.message);

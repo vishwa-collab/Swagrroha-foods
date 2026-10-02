@@ -359,6 +359,9 @@ export const CartPage: React.FC = () => {
                       {couponError}
                     </p>
                   )}
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    🔒 Single-use only (5% OFF) • For each new order, you earn a new coupon!
+                  </p>
                 </div>
               )}
 

@@ -153,7 +153,7 @@ export const PaymentPage: React.FC = () => {
           <p className="text-5xl font-black text-white py-2">Rs.{grandTotal}</p>
           {appliedCoupon && couponDiscount > 0 && (
             <p className="text-xs font-bold text-emerald-400">
-              🎟️ {appliedCoupon.code}: {appliedCoupon.discountValue || 10}% off − ₹{couponDiscount} saved!
+              🎟️ {appliedCoupon.code}: {appliedCoupon.discountValue || 5}% off − ₹{couponDiscount} saved!
             </p>
           )}
           <p className="text-[11px] text-slate-400">Order #{orderId}</p>
