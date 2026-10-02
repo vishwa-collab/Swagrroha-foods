@@ -382,20 +382,6 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 🎟️ Earn Coupon Reminder above Checkout */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-md shadow-amber-300/30">
-              <span className="text-2xl shrink-0">🎟️</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-black text-xs leading-tight">
-                  1 Order = 1 Free Coupon Code (5% OFF)!
-                </p>
-                <p className="text-amber-100 text-[10px] font-medium mt-0.5 leading-snug">
-                  After payment succeeds, your unique coupon is sent instantly — use it on your very next order.
-                </p>
-              </div>
-              <span className="text-white font-black text-lg shrink-0">→</span>
-            </div>
-
             {/* Checkout Action Button */}
             <button
               onClick={() => setActiveTab('checkout')}
