@@ -149,6 +149,7 @@ export const HomePage: React.FC = () => {
             { icon: '🏡', text: 'Made in Our Home Kitchen' },
             { icon: '📦', text: '250g – 2kg+ Packs' },
             { icon: '🛵', text: 'Scheduled Delivery (4–5 Days)' },
+            { icon: '🎟️', text: 'Every Order Earns a Coupon!' },
           ].map(t => (
             <div key={t.text} className="flex items-center gap-2 text-xs font-bold text-white">
               <span>{t.icon}</span>
