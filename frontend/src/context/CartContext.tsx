@@ -411,7 +411,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch {
       // Local fallback in case backend is offline or sleeping
-      if (cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR10-') || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
+      if (cleanCode === 'WELCOME10' || cleanCode === 'WELCOME15' || cleanCode.startsWith('PJR5-') || cleanCode.startsWith('PJR10-') || cleanCode.startsWith('PJR15-') || cleanCode.startsWith('THANK')) {
         const discountAmount = Math.round((billTotal * 5) / 100);
         setAppliedCoupon({
           code: cleanCode,
