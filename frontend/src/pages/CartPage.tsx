@@ -359,9 +359,18 @@ export const CartPage: React.FC = () => {
                       {couponError}
                     </p>
                   )}
-                  <p className="text-[10px] text-slate-500">
-                    🔒 Single-use only (5% OFF) • For each new order, you earn a new coupon!
-                  </p>
+                  {/* Earn coupon hint */}
+                  <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl px-3.5 py-2.5 flex items-center gap-3">
+                    <span className="text-xl shrink-0 animate-bounce" style={{animationDuration:'2.5s'}}>🎁</span>
+                    <div>
+                      <p className="text-[11px] font-black text-amber-900 leading-tight">
+                        Place this order &rarr; Get a <span className="text-orange-600">5% OFF coupon</span> for your next one!
+                      </p>
+                      <p className="text-[10px] text-amber-700 font-medium mt-0.5">
+                        Every successful order earns you a personal coupon code automatically.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -383,6 +392,20 @@ export const CartPage: React.FC = () => {
                 </div>
                 <span className="text-2xl font-black text-brand-600">₹{grandTotal}</span>
               </div>
+            </div>
+
+            {/* 🎟️ Earn Coupon Reminder above Checkout */}
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-md shadow-amber-300/30">
+              <span className="text-2xl shrink-0">🎟️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-black text-xs leading-tight">
+                  1 Order = 1 Free Coupon Code (5% OFF)!
+                </p>
+                <p className="text-amber-100 text-[10px] font-medium mt-0.5 leading-snug">
+                  After payment succeeds, your unique coupon is sent instantly — use it on your very next order.
+                </p>
+              </div>
+              <span className="text-white font-black text-lg shrink-0">→</span>
             </div>
 
             {/* Checkout Action Button */}
