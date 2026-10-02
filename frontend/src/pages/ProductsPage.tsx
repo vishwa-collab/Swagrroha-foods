@@ -31,9 +31,9 @@ export const ProductsPage: React.FC = () => {
   const filteredProducts = PRODUCTS.filter(p => {
     const matchCat = selectedCategory === 'All' || p.category === selectedCategory;
     const q = searchQuery.toLowerCase();
-    const matchSearch = p.name.toLowerCase().includes(q) ||
-      (p.teluguName && p.teluguName.includes(searchQuery)) ||
-      p.description.toLowerCase().includes(q);
+    const matchSearch = p.name.toLowerCase().includes(q) || 
+                        (p.teluguName && p.teluguName.includes(searchQuery)) ||
+                        p.description.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
@@ -43,12 +43,12 @@ export const ProductsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 pb-28 md:pb-12">
-
+      
       {/* ── Page Header ─────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl text-white hero-bg shadow-xl border border-white/5">
         <div className="absolute top-0 right-0 w-64 h-64 hero-glow-orange opacity-80 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 hero-glow-amber opacity-40 pointer-events-none" />
-
+        
         <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-amber-400 text-[11px] font-black uppercase tracking-widest mb-2">
@@ -83,10 +83,11 @@ export const ProductsPage: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${selectedCategory === cat
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                selectedCategory === cat
                   ? 'bg-brand-500 text-white shadow-brand'
                   : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-                }`}
+              }`}
             >
               <span>{catEmojis[cat]}</span>
               {cat === 'All' ? 'All Items' : cat}
@@ -100,7 +101,7 @@ export const ProductsPage: React.FC = () => {
         {/* Search */}
         <div className="relative flex-1 w-full sm:max-w-xs">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
+          <input 
             type="text"
             placeholder="Search snacks, sweets, pickles…"
             value={searchQuery}
@@ -134,7 +135,7 @@ export const ProductsPage: React.FC = () => {
 
             return (
               <div key={product.id} className="group bg-white rounded-3xl overflow-hidden card-product flex flex-col border border-slate-100">
-
+                
                 {/* Image — clear, no dark overlay */}
                 <div className="relative h-52 overflow-hidden bg-white shrink-0 border-b border-slate-100">
                   <img
@@ -142,7 +143,7 @@ export const ProductsPage: React.FC = () => {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   />
-
+                  
                   {/* Small badges only — no full dark overlay */}
                   <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                     {product.isBestseller && (

@@ -24,21 +24,21 @@ export interface Product {
 const SNACK_WEIGHTS: WeightOption[] = [
   { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
-  { label: '1 kg', multiplier: 1.0 },
-  { label: '2 kg', multiplier: 2.0 },
-  { label: '3 kg', multiplier: 3.0 },
-  { label: '4 kg', multiplier: 4.0 },
-  { label: '5 kg', multiplier: 5.0 },
+  { label: '1 kg',  multiplier: 1.0 },
+  { label: '2 kg',  multiplier: 2.0 },
+  { label: '3 kg',  multiplier: 3.0 },
+  { label: '4 kg',  multiplier: 4.0 },
+  { label: '5 kg',  multiplier: 5.0 },
 ];
 
 const SWEET_WEIGHTS: WeightOption[] = [
   { label: '250g', multiplier: 0.25 },
   { label: '500g', multiplier: 0.5 },
-  { label: '1 kg', multiplier: 1.0 },
-  { label: '2 kg', multiplier: 2.0 },
-  { label: '3 kg', multiplier: 3.0 },
-  { label: '4 kg', multiplier: 4.0 },
-  { label: '5 kg', multiplier: 5.0 },
+  { label: '1 kg',  multiplier: 1.0 },
+  { label: '2 kg',  multiplier: 2.0 },
+  { label: '3 kg',  multiplier: 3.0 },
+  { label: '4 kg',  multiplier: 4.0 },
+  { label: '5 kg',  multiplier: 5.0 },
 ];
 
 export const PRODUCTS: Product[] = [
