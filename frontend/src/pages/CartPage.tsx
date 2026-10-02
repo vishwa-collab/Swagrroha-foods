@@ -359,18 +359,6 @@ export const CartPage: React.FC = () => {
                       {couponError}
                     </p>
                   )}
-                  {/* Earn coupon hint */}
-                  <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl px-3.5 py-2.5 flex items-center gap-3">
-                    <span className="text-xl shrink-0 animate-bounce" style={{animationDuration:'2.5s'}}>🎁</span>
-                    <div>
-                      <p className="text-[11px] font-black text-amber-900 leading-tight">
-                        Place this order &rarr; Get a <span className="text-orange-600">5% OFF coupon</span> for your next one!
-                      </p>
-                      <p className="text-[10px] text-amber-700 font-medium mt-0.5">
-                        Every successful order earns you a personal coupon code automatically.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
 
