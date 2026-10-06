@@ -45,6 +45,7 @@ export const CartPage: React.FC = () => {
     applyCoupon,
     removeCoupon,
     earnedCouponCode,
+    allOrders,
   } = useCart();
 
   if (cart.length === 0) {
@@ -59,6 +60,24 @@ export const CartPage: React.FC = () => {
             Explore our homemade Telangana sweets, snacks, and chicken/mutton pickles to add items to your cart.
           </p>
         </div>
+
+        {/* 1st Order Coupon Perk Note */}
+        <div className="max-w-md mx-auto bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 text-left flex items-center gap-3">
+          <span className="text-2xl shrink-0">🎟️</span>
+          <div>
+            <p className="text-xs font-black text-amber-950">
+              {earnedCouponCode ? 'Reward Coupon Ready!' : 'Special Offer: 5% OFF Coupon'}
+            </p>
+            <p className="text-[11px] text-amber-800 leading-snug">
+              {earnedCouponCode ? (
+                <>Your coupon <span className="font-mono font-bold text-amber-950 bg-amber-200/60 px-1 py-0.5 rounded">{earnedCouponCode}</span> is unlocked and ready for your order (Min bill ₹200).</>
+              ) : (
+                <>Coupon is available after 1 successful order. Complete your first order today to unlock 5% OFF on your next order!</>
+              )}
+            </p>
+          </div>
+        </div>
+
         <div className="flex items-center justify-center">
           <button
             onClick={() => setActiveTab('products')}
@@ -81,6 +100,56 @@ export const CartPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-slate-500">
           Verify your items and select your delivery area along the Hayathnagar to Ibrahimpatnam route.
         </p>
+      </div>
+
+      {/* 🎟️ Top Coupon Status / Loyalty Announcement Banner */}
+      <div className={`rounded-2xl p-4 border shadow-sm flex items-start sm:items-center justify-between gap-4 transition-all ${
+        earnedCouponCode
+          ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-emerald-200 text-emerald-950'
+          : 'bg-gradient-to-r from-amber-50 via-orange-50/60 to-yellow-50 border-amber-200 text-amber-950'
+      }`}>
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-sm ${
+            earnedCouponCode ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-gradient-to-br from-amber-500 to-brand-500 text-white shadow-amber-500/20'
+          }`}>
+            {earnedCouponCode ? <Sparkles className="w-5 h-5" /> : <Tag className="w-5 h-5" />}
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                earnedCouponCode ? 'bg-emerald-200 text-emerald-900 font-mono' : 'bg-amber-200 text-amber-950'
+              }`}>
+                {earnedCouponCode ? 'Coupon Available' : 'Coupon Offer'}
+              </span>
+              <span className="text-xs font-bold text-slate-800">
+                {earnedCouponCode ? 'Reward Unlocked from Previous Order' : 'Coupon available after 1 successful order'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 leading-snug">
+              {earnedCouponCode ? (
+                <>
+                  Congratulations! Your <strong>5% OFF</strong> reward coupon code <strong className="font-mono font-black text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">{earnedCouponCode}</strong> is ready to use on orders of ₹200 or more.
+                </>
+              ) : (
+                <>
+                  Coupons are available after <strong>1 order is successful</strong>. Place your first order today to receive an exclusive <strong>5% OFF</strong> reward coupon code for your next order! (Min bill ₹200)
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {!appliedCoupon && earnedCouponCode && (
+          <button
+            onClick={() => {
+              setCouponInput(earnedCouponCode);
+              setTimeout(() => applyCoupon(), 50);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition-all shrink-0 whitespace-nowrap"
+          >
+            Apply {earnedCouponCode}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
@@ -234,10 +303,18 @@ export const CartPage: React.FC = () => {
                   <span className="text-xl animate-bounce">🎟️</span>
                   <div>
                     <p className="text-xs font-black text-emerald-900">
-                      5% OFF Coupon Unlocked! (Min ₹200 reached)
+                      {appliedCoupon
+                        ? '5% OFF Coupon Applied!'
+                        : earnedCouponCode
+                        ? '5% OFF Coupon Available! (Min ₹200 reached)'
+                        : '5% OFF Coupon Available After 1 Successful Order'}
                     </p>
                     <p className="text-[11px] text-emerald-700 font-semibold">
-                      {appliedCoupon ? `Coupon ${appliedCoupon.code} applied (1-time use)` : 'Enter your coupon code below to save 5%'}
+                      {appliedCoupon
+                        ? `Coupon ${appliedCoupon.code} applied (1-time use)`
+                        : earnedCouponCode
+                        ? `Coupon ${earnedCouponCode} unlocked from your 1st order!`
+                        : 'Complete this order to receive your 5% OFF coupon code for your next order (Min ₹200)'}
                     </p>
                   </div>
                 </div>
@@ -282,7 +359,7 @@ export const CartPage: React.FC = () => {
                     <span>🔒 Coupon Locked — Minimum Bill ₹200</span>
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Add ₹{200 - (subtotal + deliveryCharge)} more to unlock your <strong className="text-brand-500">5% OFF</strong> coupon!
+                    Add ₹{200 - (subtotal + deliveryCharge)} more to qualify for <strong className="text-brand-500">5% OFF</strong>!
                   </p>
                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">
                     <div
@@ -290,7 +367,10 @@ export const CartPage: React.FC = () => {
                       style={{ width: `${Math.min(((subtotal + deliveryCharge) / 200) * 100, 100)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400">{Math.round(((subtotal + deliveryCharge) / 200) * 100)}% towards coupon unlock</p>
+                  <p className="text-[10px] text-slate-400">{Math.round(((subtotal + deliveryCharge) / 200) * 100)}% towards ₹200 coupon threshold</p>
+                  <p className="text-[10px] text-amber-800 font-semibold bg-amber-50 rounded-lg py-1 px-2 border border-amber-200/60 mt-1 inline-block">
+                    📢 Note: Coupon is available after 1 successful order
+                  </p>
                 </div>
               ) : appliedCoupon ? (
                 <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl px-4 py-3 shadow-sm animate-fade-up">
@@ -315,11 +395,11 @@ export const CartPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {earnedCouponCode && (
+                  {earnedCouponCode ? (
                     <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-3 flex items-center justify-between gap-2 shadow-sm">
                       <div className="absolute inset-0 animate-pulse opacity-20 bg-amber-200 rounded-xl pointer-events-none" />
                       <div>
-                        <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wide">🎁 Your Reward Coupon</p>
+                        <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wide">🎁 Your Reward Coupon (1st Order Completed)</p>
                         <p className="text-xs font-mono font-black text-amber-950">{earnedCouponCode}</p>
                       </div>
                       <button
@@ -332,13 +412,25 @@ export const CartPage: React.FC = () => {
                         1-Tap Apply
                       </button>
                     </div>
+                  ) : (
+                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5 text-xs text-amber-950 flex items-start gap-2 shadow-sm">
+                      <span className="text-base shrink-0 mt-0.5">ℹ️</span>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-amber-950">
+                          Coupon Available After 1 Successful Order
+                        </p>
+                        <p className="text-[11px] text-amber-800 leading-snug">
+                          Complete this order today to automatically unlock an exclusive <strong>5% OFF</strong> coupon code on your confirmation receipt and WhatsApp for your next order!
+                        </p>
+                      </div>
+                    </div>
                   )}
                   <div className="flex items-center gap-2 group">
                     <div className="relative flex-1">
                       <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-brand-500 transition-colors" />
                       <input
                         type="text"
-                        placeholder="Enter coupon code (e.g. WELCOME10)"
+                        placeholder={earnedCouponCode ? `Enter coupon (e.g. ${earnedCouponCode})` : "Enter coupon code (available after 1st order)"}
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                         onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
@@ -360,7 +452,7 @@ export const CartPage: React.FC = () => {
                     </p>
                   )}
                   <p className="text-[10px] text-slate-500 font-medium">
-                    🔒 Single-use only (5% OFF) • For each new order, you earn a new coupon!
+                    🔒 Single-use only (5% OFF) • Coupon available after 1 successful order • Minimum bill ₹200
                   </p>
                 </div>
               )}
