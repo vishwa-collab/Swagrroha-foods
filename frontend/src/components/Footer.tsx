@@ -103,7 +103,7 @@ export const Footer: React.FC = () => {
               <Calendar className="w-3.5 h-3.5 text-brand-500" /> Scheduled Delivery
             </h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Fresh bulk prep with a <strong className="text-amber-300">1–2 days fresh gap</strong>.
+              Fresh bulk prep with a <strong className="text-amber-300">2–3 days fresh gap</strong>.
             </p>
             <div className="bg-slate-800/80 p-2 rounded-lg border border-slate-700/60 text-[11px] space-y-1">
               <div className="flex items-center justify-between text-slate-300">

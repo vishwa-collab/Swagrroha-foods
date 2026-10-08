@@ -36,7 +36,7 @@ export const HomePage: React.FC = () => {
     { emoji: '🏡', title: 'Own Kitchen', desc: 'Made fresh in our home', bg: 'bg-orange-50', border: 'border-orange-200' },
     { emoji: '🚫', title: 'No Preservatives', desc: 'Pure, natural ingredients', bg: 'bg-green-50', border: 'border-green-200' },
     { emoji: '📦', title: 'Flexible Packs', desc: '250g · 500g · 1kg · 2kg+', bg: 'bg-blue-50', border: 'border-blue-200' },
-    { emoji: '🛵', title: 'Scheduled Delivery', desc: '1–2 day fresh prep & deliver', bg: 'bg-purple-50', border: 'border-purple-200' },
+    { emoji: '🛵', title: 'Scheduled Delivery', desc: '2–3 day fresh prep & deliver', bg: 'bg-purple-50', border: 'border-purple-200' },
   ];
 
   return (
@@ -79,7 +79,7 @@ export const HomePage: React.FC = () => {
             </h1>
 
             <p className="bubble-subtitle text-slate-700 text-[15px] sm:text-base font-bold leading-relaxed mb-8 max-w-lg">
-              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 1–2 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
+              Fresh traditional sweets, snacks &amp; savouries — handcrafted in fresh batches with a 2–3 day preparation gap along the Hayathnagar → Ibrahimpatnam route.
             </p>
 
             {/* CTAs */}
@@ -148,7 +148,7 @@ export const HomePage: React.FC = () => {
             { icon: '✅', text: 'No Preservatives' },
             { icon: '🏡', text: 'Made in Our Home Kitchen' },
             { icon: '📦', text: '250g – 2kg+ Packs' },
-            { icon: '🛵', text: 'Scheduled Delivery (1–2 Days)' },
+            { icon: '🛵', text: 'Scheduled Delivery (2–3 Days)' },
             { icon: '🎟️', text: 'Every Order Earns a Coupon!' },
           ].map(t => (
             <div key={t.text} className="flex items-center gap-2 text-xs font-bold text-white">
