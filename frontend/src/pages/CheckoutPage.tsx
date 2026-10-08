@@ -219,7 +219,7 @@ export const CheckoutPage: React.FC = () => {
             <p className="text-xs text-slate-300 font-medium">Select your preferred delivery slot:</p>
 
             <div className="grid grid-cols-2 gap-3">
-              {/* Primary Slot: 4 Days Gap */}
+              {/* Primary Slot: 1 Day Gap */}
               <button
                 type="button"
                 onClick={() => setSelectedSlot('slot1')}
@@ -231,7 +231,7 @@ export const CheckoutPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black text-amber-300">
-                    {slotOptions.slot1.dayOfWeekName} (4 Days)
+                    {slotOptions.slot1.dayOfWeekName} (1 Day)
                   </span>
                   {selectedSlot === 'slot1' && (
                     <CheckCircle className="w-4 h-4 text-amber-400" />
@@ -242,7 +242,7 @@ export const CheckoutPage: React.FC = () => {
                 </p>
               </button>
 
-              {/* Secondary Slot: 5 Days Gap */}
+              {/* Secondary Slot: 2 Days Gap */}
               <button
                 type="button"
                 onClick={() => setSelectedSlot('slot2')}
@@ -254,7 +254,7 @@ export const CheckoutPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black text-emerald-300">
-                    {slotOptions.slot2.dayOfWeekName} (5 Days)
+                    {slotOptions.slot2.dayOfWeekName} (2 Days)
                   </span>
                   {selectedSlot === 'slot2' && (
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -277,7 +277,7 @@ export const CheckoutPage: React.FC = () => {
                 Fresh Preparation Schedule:
               </p>
               <ul className="space-y-1 text-[11px] text-slate-300 pl-4 list-disc">
-                <li><strong className="text-emerald-300">4-Day Delivery Gap</strong> → Prepared fresh on order</li>
+                <li><strong className="text-emerald-300">1–2 Days Delivery</strong> → Prepared fresh on order</li>
                 <li>Estimated delivery on <strong className="text-amber-300">{slotOptions.slot1.dayOfWeekName}</strong> ({slotOptions.slot1.formattedDate})</li>
                 <li>Handcrafted in hygienic homemade batches</li>
               </ul>

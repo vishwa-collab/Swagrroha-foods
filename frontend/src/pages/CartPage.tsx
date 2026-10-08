@@ -265,7 +265,7 @@ export const CartPage: React.FC = () => {
                 onChange={(e) => setSelectedAreaById(e.target.value)}
                 className="w-full p-3.5 rounded-2xl border-2 border-brand-500 bg-brand-50/40 text-slate-900 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm cursor-pointer"
               >
-                <optgroup label="Near Zone (₹20 Delivery)">
+                <optgroup label="Near Zone (₹10 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Near').map(area => (
                     <option key={area.id} value={area.id}>
                       📍 {area.name} — Near Zone (₹{area.charge} Delivery)
@@ -273,7 +273,7 @@ export const CartPage: React.FC = () => {
                   ))}
                 </optgroup>
 
-                <optgroup label="Medium Zone (₹30 Delivery)">
+                <optgroup label="Medium Zone (₹20 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Medium').map(area => (
                     <option key={area.id} value={area.id}>
                       📍 {area.name} — Medium Zone (₹{area.charge} Delivery)
@@ -281,7 +281,7 @@ export const CartPage: React.FC = () => {
                   ))}
                 </optgroup>
 
-                <optgroup label="Far Zone (₹40 Delivery)">
+                <optgroup label="Far Zone (₹30 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Far').map(area => (
                     <option key={area.id} value={area.id}>
                       📍 {area.name} — Far Zone (₹{area.charge} Delivery)

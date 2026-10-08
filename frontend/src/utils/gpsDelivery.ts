@@ -2,15 +2,15 @@
  * gpsDelivery.ts
  * Rapido-style GPS-based delivery charge calculator.
  *
- * Pricing rule: ₹10 per every 7 km (minimum ₹10).
- *   0–7  km →  ₹10
- *   7–14 km →  ₹20
- *  14–21 km →  ₹30
- *  21–28 km →  ₹40
- *  28–35 km →  ₹50
+ * Pricing rule: Decreased by ₹10 for all delivery slabs (₹10 per every 7 km with ₹10 discount applied).
+ *   0–7  km →  ₹0 (Free / near zone)
+ *   7–14 km →  ₹10
+ *  14–21 km →  ₹20
+ *  21–28 km →  ₹30
+ *  28–35 km →  ₹40
  *  ...and so on.
  *
- * Formula: Math.max(10, Math.ceil(distanceKm / 7) * 10)
+ * Formula: Math.max(0, Math.ceil(distanceKm / 7) * 10 - 10)
  */
 
 /** PJR Swagrooha Foods store location — Hayathnagar, Hyderabad */
@@ -51,10 +51,10 @@ export function haversineDistanceKm(
 
 /**
  * Returns the delivery charge for a given distance.
- * Rule: ₹10 per 7 km slab, minimum ₹10.
+ * Rule: ₹10 per 7 km slab minus ₹10 discount (minimum ₹0).
  */
 export function calcGpsDeliveryCharge(distanceKm: number): number {
-  return Math.max(10, Math.ceil(distanceKm / 7) * 10);
+  return Math.max(0, Math.ceil(distanceKm / 7) * 10 - 10);
 }
 
 /**
