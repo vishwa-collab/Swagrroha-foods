@@ -102,6 +102,34 @@ export const CartPage: React.FC = () => {
         </p>
       </div>
 
+      {/* 🚚 Free Delivery Offer Banner */}
+      {!isFreeDelivery ? (
+        <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 border border-orange-200 rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-orange-400/30">
+            <Truck className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-orange-900">🎉 Add 1 more product for FREE Delivery!</p>
+            <p className="text-xs text-orange-700 font-semibold leading-snug">
+              You currently have <strong>{cart.length} product type{cart.length !== 1 ? 's' : ''}</strong> in your cart. Add <strong>any 1 more different product</strong> and get your delivery charge waived — completely FREE! 🚚✨
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border border-emerald-300 rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-sm animate-scale-in">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-emerald-400/30">
+            <Truck className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-emerald-900">🎉 FREE Delivery Unlocked!</p>
+            <p className="text-xs text-emerald-700 font-semibold leading-snug">
+              You've ordered <strong>{cart.length} different products</strong> — your delivery is completely <strong>FREE</strong>! 🚚✨
+            </p>
+          </div>
+          <span className="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">FREE</span>
+        </div>
+      )}
+
       {/* 🎟️ Top Coupon Status / Loyalty Announcement Banner */}
       <div className={`rounded-2xl p-4 border shadow-sm flex items-start sm:items-center justify-between gap-4 transition-all ${
         earnedCouponCode
@@ -346,7 +374,14 @@ export const CartPage: React.FC = () => {
                   <Truck className="w-3.5 h-3.5 text-brand-500" />
                   Delivery Charge ({selectedArea.name})
                 </span>
-                <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+                {isFreeDelivery ? (
+                  <span className="font-black text-emerald-600 flex items-center gap-1">
+                    <span className="line-through text-slate-400 font-semibold">₹{originalDeliveryCharge}</span>
+                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full">FREE</span>
+                  </span>
+                ) : (
+                  <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+                )}
               </div>
 
               {/* Coupon Input / Applied Badge */}

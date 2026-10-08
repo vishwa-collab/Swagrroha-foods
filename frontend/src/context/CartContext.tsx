@@ -229,11 +229,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
-  // Calculation of Subtotal & Delivery (Free delivery on ₹500 removed)
+  // Calculation of Subtotal & Delivery
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-  const isFreeDelivery = false; // Bill 500 free delivery rule removed
+  const isFreeDelivery = cart.length >= 2; // Free delivery when 2 or more different products are ordered
   const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
-  const deliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
+  const deliveryCharge = isFreeDelivery ? 0 : (cart.length > 0 ? selectedArea.charge : 0);
 
   // Coupon state
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number; discountType: string; discountValue: number } | null>(null);
@@ -547,7 +547,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Client-side fallback if backend is unreachable / starting up
-    if (cleanEmail === 'vishwa81251@gmail.com' && cleanPass === '8121347549') {
+    if (cleanEmail === 'vishwa81251@gmail.com' && cleanPass === '9247467111') {
       const token = 'jwt_owner_session_' + Date.now();
       setAdminToken(token);
       setAdminEmail(cleanEmail);
