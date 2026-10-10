@@ -149,7 +149,7 @@ export const HomePage: React.FC = () => {
             { icon: '🏡', text: 'Made in Our Home Kitchen' },
             { icon: '📦', text: '250g – 2kg+ Packs' },
             { icon: '🛵', text: 'Scheduled Delivery (2–3 Days)' },
-            { icon: '🚚', text: 'FREE Delivery on 2+ Items!' },
+            { icon: '🚚', text: 'FREE Delivery on 3+ Items!' },
             { icon: '🎟️', text: 'Every Order Earns a Coupon!' },
           ].map(t => (
             <div key={t.text} className="flex items-center gap-2 text-xs font-bold text-white">
@@ -196,7 +196,7 @@ export const HomePage: React.FC = () => {
             },
             {
               label: 'Laddu',
-              sub: 'Motichoor, Besan & Palli Laddu',
+              sub: 'Besan, Rava & Palli Laddu',
               tag: 'All Time Fav',
               tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
               img: IMAGES.laddu,

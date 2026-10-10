@@ -231,7 +231,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Calculation of Subtotal & Delivery
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-  const isFreeDelivery = cart.length >= 2; // Free delivery when 2 or more different products are ordered
+  const totalItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const isFreeDelivery = totalItemCount >= 3; // Free delivery when 3 or more items are ordered
   const originalDeliveryCharge = cart.length > 0 ? selectedArea.charge : 0;
   const deliveryCharge = isFreeDelivery ? 0 : (cart.length > 0 ? selectedArea.charge : 0);
 

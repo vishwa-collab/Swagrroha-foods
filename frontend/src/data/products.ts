@@ -187,8 +187,8 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'laddu',
-    name: 'Homemade Motichoor / Besan Laddu',
-    teluguName: 'లడ్డు',
+    name: 'Homemade Besan Laddu',
+    teluguName: 'బేసన్ లడ్డు',
     category: 'Sweets',
     basePrice: 440, // ₹110 for 250g
     priceUnitText: '₹440 / kg',

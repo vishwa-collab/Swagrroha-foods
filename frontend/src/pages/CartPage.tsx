@@ -91,6 +91,9 @@ export const CartPage: React.FC = () => {
     );
   }
 
+  const totalItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const itemsNeededForFreeDelivery = Math.max(1, 3 - totalItemCount);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
@@ -109,9 +112,11 @@ export const CartPage: React.FC = () => {
             <Truck className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-orange-900">🎉 Add 1 more product for FREE Delivery!</p>
+            <p className="text-sm font-black text-orange-900">
+              🎉 Add {itemsNeededForFreeDelivery} more {itemsNeededForFreeDelivery === 1 ? 'item' : 'items'} for FREE Delivery!
+            </p>
             <p className="text-xs text-orange-700 font-semibold leading-snug">
-              You currently have <strong>{cart.length} product type{cart.length !== 1 ? 's' : ''}</strong> in your cart. Add <strong>any 1 more different product</strong> and get your delivery charge waived — completely FREE! 🚚✨
+              You currently have <strong>{totalItemCount} item{totalItemCount !== 1 ? 's' : ''}</strong> in your cart. Add <strong>{itemsNeededForFreeDelivery} more item{itemsNeededForFreeDelivery !== 1 ? 's' : ''}</strong> and get your delivery charge waived — completely FREE! 🚚✨
             </p>
           </div>
         </div>
@@ -123,7 +128,7 @@ export const CartPage: React.FC = () => {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-black text-emerald-900">🎉 FREE Delivery Unlocked!</p>
             <p className="text-xs text-emerald-700 font-semibold leading-snug">
-              You've ordered <strong>{cart.length} different products</strong> — your delivery is completely <strong>FREE</strong>! 🚚✨
+              You've added <strong>{totalItemCount} items</strong> — your delivery is completely <strong>FREE</strong>! 🚚✨
             </p>
           </div>
           <span className="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">FREE</span>
