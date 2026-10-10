@@ -8,9 +8,14 @@
     "backend": "node ../backend/server/index.cjs",
     "start": "concurrently \"npm run backend\" \"npm run dev\"",
     "build": "npx -p typescript tsc && npx vite build",
-    "preview": "npx vite preview"
+    "preview": "npx vite preview",
+    "cap:build": "npm run build && npx cap sync",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
@@ -22,6 +27,7 @@
     "tailwind-merge": "^3.0.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
