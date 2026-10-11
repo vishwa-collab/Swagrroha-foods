@@ -435,7 +435,7 @@ export const CartPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {earnedCouponCode ? (
+                  {earnedCouponCode && (
                     <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-3 flex items-center justify-between gap-2 shadow-sm">
                       <div className="absolute inset-0 animate-pulse opacity-20 bg-amber-200 rounded-xl pointer-events-none" />
                       <div>
@@ -451,18 +451,6 @@ export const CartPage: React.FC = () => {
                       >
                         1-Tap Apply
                       </button>
-                    </div>
-                  ) : (
-                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5 text-xs text-amber-950 flex items-start gap-2 shadow-sm">
-                      <span className="text-base shrink-0 mt-0.5">ℹ️</span>
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-amber-950">
-                          Coupon Available After 1 Successful Order
-                        </p>
-                        <p className="text-[11px] text-amber-800 leading-snug">
-                          Complete this order today to automatically unlock an exclusive <strong>5% OFF</strong> coupon code on your confirmation receipt and WhatsApp for your next order!
-                        </p>
-                      </div>
                     </div>
                   )}
                   <div className="flex items-center gap-2 group">
