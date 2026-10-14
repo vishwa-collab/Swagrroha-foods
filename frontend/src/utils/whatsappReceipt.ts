@@ -37,7 +37,7 @@ ${itemsList}
 
 ⭐ *How was your experience?*
 Please rate your food & leave feedback on our tracking page:
-https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}
+https://swagrroha-foods.vercel.app/track?orderId=${order.orderId}
 
 For queries, call/WhatsApp us: +91 8125154114
  
@@ -97,7 +97,7 @@ ${itemsList}
 ${order.rewardCouponCode ? `\n🎟️ *Your Next Order Gift:* Code *${order.rewardCouponCode}* for *5% OFF* (Min bill ₹200 • 1-time use)` : ''}
 
 Track your order anytime:
-https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}
+https://swagrroha-foods.vercel.app/track?orderId=${order.orderId}
 
 For queries, call/WhatsApp us: +91 8125154114
 
@@ -151,7 +151,7 @@ ${itemsList}
 💳 Payment Method: ${order.paymentMethod || 'Online UPI'} (Ref: ${utr})
 
 Track Order:
-https://swagrroha-foods.onrender.com/track?orderId=${order.orderId}`;
+https://swagrroha-foods.vercel.app/track?orderId=${order.orderId}`;
 
   return `https://wa.me/918125154114?text=${encodeURIComponent(text)}`;
 }

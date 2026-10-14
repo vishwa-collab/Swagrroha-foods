@@ -186,14 +186,43 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [activeTab, setActiveTabState] = useState<'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
       const p = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
-      if (p.includes('admin') || p.includes('owner') || h.includes('admin') || h.includes('owner')) {
+      if (path.includes('admin') || p.includes('admin') || p.includes('owner') || h.includes('admin') || h.includes('owner')) {
         return 'admin';
+      }
+      if (path.includes('track') || p.includes('orderid') || p.includes('track') || h.includes('track')) {
+        return 'track';
+      }
+      if (path.includes('cart') || h.includes('cart')) {
+        return 'cart';
+      }
+      if (path.includes('products') || path.includes('menu') || h.includes('products') || h.includes('menu')) {
+        return 'products';
       }
     }
     return 'home';
   });
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const p = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      if (path.includes('admin') || p.includes('admin') || p.includes('owner') || h.includes('admin') || h.includes('owner')) {
+        setActiveTabState('admin');
+      } else if (path.includes('track') || p.includes('orderid') || p.includes('track') || h.includes('track')) {
+        setActiveTabState('track');
+      } else if (path.includes('cart') || h.includes('cart')) {
+        setActiveTabState('cart');
+      } else if (path.includes('products') || path.includes('menu') || h.includes('products') || h.includes('menu')) {
+        setActiveTabState('products');
+      }
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
 
   const setActiveTab = useCallback((tab: 'home' | 'products' | 'cart' | 'checkout' | 'payment' | 'confirmation' | 'track' | 'admin') => {
     setActiveTabState(tab);

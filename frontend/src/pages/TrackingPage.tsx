@@ -40,6 +40,31 @@ export const TrackingPage: React.FC = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
+  // Auto-fetch order from URL query parameters (e.g. ?orderId=PJR-475404) on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paramOrderId = params.get('orderId') || params.get('order') || params.get('id') || params.get('q');
+    if (paramOrderId) {
+      const cleanId = paramOrderId.trim();
+      setSearchQuery(cleanId);
+      setLoading(true);
+      setErrorMsg('');
+      fetchOrderForTracking(cleanId).then(order => {
+        if (order) {
+          setActiveOrder(order);
+        } else {
+          setErrorMsg(`No order found matching "${cleanId}". Please check the Order ID.`);
+        }
+      }).catch(err => {
+        console.error('Failed to fetch order from URL param:', err);
+        setErrorMsg('Unable to retrieve order details. Please try searching with your Order ID or Phone.');
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, []);
+
   // Synchronize when active order changes
   useEffect(() => {
     if (initialOrder) {
@@ -396,6 +421,14 @@ export const TrackingPage: React.FC = () => {
             </div>
           )}
 
+        </div>
+      ) : loading ? (
+        <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-4 border border-slate-100 shadow-sm max-w-lg mx-auto animate-fade-in">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <h3 className="font-extrabold text-slate-800 text-lg">Fetching Order Details...</h3>
+          <p className="text-xs text-slate-500">
+            Checking live status for #{searchQuery || 'your order'}
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-3xl p-12 text-center text-slate-400 space-y-3 border border-slate-100 shadow-sm max-w-lg mx-auto">

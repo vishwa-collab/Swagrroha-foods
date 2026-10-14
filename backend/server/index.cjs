@@ -370,6 +370,49 @@ app.get('/', (req, res) => {
   });
 });
 
+// ── Track & Client Route Redirects
+// When users click tracking links sent via WhatsApp or emails, redirect them to the live frontend
+app.get('/track', (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'https://swagrroha-foods.vercel.app';
+  const queryStr = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  const targetUrl = `${frontendUrl}/track${queryStr}`;
+  res.setHeader('Location', targetUrl);
+  return res.status(302).send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${targetUrl}">
+  <title>Redirecting to Order Tracking - PJR Swagruha Foods</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 40px; background: #FFFBF5;">
+  <p style="font-size: 16px; color: #333;">Redirecting to live order tracking...</p>
+  <p><a href="${targetUrl}" style="color: #EA580C; font-weight: bold;">Click here if you are not redirected automatically</a></p>
+  <script>window.location.replace(${JSON.stringify(targetUrl)});</script>
+</body>
+</html>`);
+});
+
+app.get('/admin', (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'https://swagrroha-foods.vercel.app';
+  const queryStr = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  const delimiter = queryStr ? '&' : '?';
+  const targetUrl = `${frontendUrl}${queryStr}${delimiter}admin=true`;
+  res.setHeader('Location', targetUrl);
+  return res.status(302).send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${targetUrl}">
+  <title>Redirecting to Admin Dashboard - PJR Swagruha Foods</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 40px; background: #FFFBF5;">
+  <p style="font-size: 16px; color: #333;">Redirecting to Admin Dashboard...</p>
+  <p><a href="${targetUrl}" style="color: #EA580C; font-weight: bold;">Click here if you are not redirected automatically</a></p>
+  <script>window.location.replace(${JSON.stringify(targetUrl)});</script>
+</body>
+</html>`);
+});
+
 // ── Admin credentials (from env)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vishwa81251@gmail.com';
 const ADMIN_PASS = process.env.ADMIN_PASS || '8121347549';
