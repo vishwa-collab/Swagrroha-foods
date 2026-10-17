@@ -253,7 +253,7 @@ export const PRODUCTS: Product[] = [
     isPopular: true,
   },
 
-  // --- PICKLES (Chicken ₹650/500g, Mutton ₹1200/500g) — starts from 500g ---
+  // --- PICKLES (Chicken ₹650/500g, Mutton ₹1050/500g) — starts from 500g ---
   {
     id: 'chicken-pickle',
     name: 'Spicy Homemade Chicken Pickle',
@@ -276,14 +276,14 @@ export const PRODUCTS: Product[] = [
     name: 'Royal Spicy Mutton Pickle',
     teluguName: 'మటన్ పచ్చడి',
     category: 'Pickles',
-    basePrice: 1200, // ₹1200 for 500g
-    priceUnitText: '₹1,200 (500g)',
+    basePrice: 1050, // ₹1050 for 500g
+    priceUnitText: '₹1,050 (500g)',
     description: 'Premium boneless mutton fried crisp and steeped in rich aromatic ginger-garlic pickle gravy.',
     image: IMAGES.muttonPickle,
     weightOptions: [
-      { label: '500g', multiplier: 1.0 },   // ₹1200
-      { label: '1 kg', multiplier: 2.0 },   // ₹2400
-      { label: '2 kg', multiplier: 4.0 },   // ₹4800
+      { label: '500g', multiplier: 1.0 },   // ₹1050
+      { label: '1 kg', multiplier: 2.0 },   // ₹2100
+      { label: '2 kg', multiplier: 4.0 },   // ₹4200
     ],
     isBestseller: true,
   },
