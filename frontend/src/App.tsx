@@ -10,6 +10,7 @@ import { PaymentPage } from './pages/PaymentPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { TrackingPage } from './pages/TrackingPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { InstallAppBanner } from './components/InstallAppBanner';
 import { CheckCircle2, ChevronRight } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
@@ -73,6 +74,9 @@ const MainAppContent: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* PWA Floating Install Prompt */}
+      <InstallAppBanner />
 
       {/* Footer */}
       <Footer />

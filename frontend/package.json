@@ -8,9 +8,15 @@
     "backend": "node ../backend/server/index.cjs",
     "start": "concurrently \"npm run backend\" \"npm run dev\"",
     "build": "npx -p typescript tsc && npx vite build",
-    "preview": "npx vite preview"
+    "preview": "npx vite preview",
+    "mobile:sync": "npm run build && npx cap sync android",
+    "mobile:open": "npx cap open android",
+    "mobile:apk": "npm run mobile:sync && cd android && .\\gradlew.bat assembleDebug --no-daemon"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",

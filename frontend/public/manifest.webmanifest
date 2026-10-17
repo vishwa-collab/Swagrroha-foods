@@ -1,0 +1,30 @@
+{
+  "name": "PJR Swagruha Foods",
+  "short_name": "PJR Swagruha",
+  "description": "Authentic homemade Telugu sweets, hot snacks, chicken & mutton pickles delivered fresh.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f27c24",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
