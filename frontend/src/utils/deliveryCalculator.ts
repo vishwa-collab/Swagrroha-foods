@@ -1,9 +1,9 @@
 /**
  * Business Rule:
- * Order date + 2-3 days delivery!
- * (e.g. Order Monday -> Delivered on Wednesday or Thursday)
- * Slot 1: 2 days gap
- * Slot 2: 3 days gap (Maximum 3 days)
+ * Order date + 1-2 days delivery!
+ * (e.g. Order Monday -> Delivered on Tuesday or Wednesday)
+ * Slot 1: 1 day gap
+ * Slot 2: 2 days gap (Maximum 2 days)
  */
 
 export interface CalculatedDeliveryDate {
@@ -44,16 +44,16 @@ export function getDeliverySlotOptions(currentDate: Date = new Date()): Delivery
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const orderDayName = dayNames[currentDate.getDay()];
 
-  // Primary slot: 2 days gap
+  // Primary slot: 1 day gap (Next day)
   const slot1Date = new Date(currentDate);
-  slot1Date.setDate(currentDate.getDate() + 2);
+  slot1Date.setDate(currentDate.getDate() + 1);
 
-  // Secondary slot: 3 days gap (Maximum 2-3 days)
+  // Secondary slot: 2 days gap (Maximum 1-2 days)
   const slot2Date = new Date(currentDate);
-  slot2Date.setDate(currentDate.getDate() + 3);
+  slot2Date.setDate(currentDate.getDate() + 2);
 
-  const slot1 = buildDeliveryDate(slot1Date, orderDayName, 2);
-  const slot2 = buildDeliveryDate(slot2Date, orderDayName, 3);
+  const slot1 = buildDeliveryDate(slot1Date, orderDayName, 1);
+  const slot2 = buildDeliveryDate(slot2Date, orderDayName, 2);
 
   return {
     slot1,

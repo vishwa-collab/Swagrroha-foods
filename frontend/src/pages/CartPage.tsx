@@ -271,10 +271,10 @@ export const CartPage: React.FC = () => {
           <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-start gap-3 text-xs text-amber-900">
             <Calendar className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-extrabold text-amber-950">Scheduled 4-Day Fresh Delivery</p>
+              <p className="font-extrabold text-amber-950">Scheduled 1–2 Day Fresh Delivery</p>
               <p className="text-amber-800 leading-relaxed">
                 Your order is estimated for <strong className="underline">{deliveryDateInfo.formattedDate}</strong> ({deliveryDateInfo.dayOfWeekName}). 
-                We prepare all food items fresh in small batches maintaining a 4-day preparation gap.
+                We prepare all food items fresh in small batches maintaining a 1–2 day preparation gap.
               </p>
             </div>
           </div>
