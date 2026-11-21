@@ -1434,21 +1434,9 @@ export const AdminDashboard: React.FC = () => {
               </span>
             </h2>
             <div className="flex items-center gap-2">
-              <button
-                onClick={async () => {
-                  try {
-                    showToast('⏳ Checking & sending 10-day reminders via Gmail...');
-                    const r = await fetch(`${API_BASE}/api/coupons/send-10day-reminders`);
-                    const d = await r.json();
-                    showToast(d.message || `Sent ${d.sentCount} reminders via Gmail.`);
-                  } catch (e) {
-                    showToast('❌ Failed sending reminders.');
-                  }
-                }}
-                className="flex items-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl transition-all shadow-sm"
-              >
-                <span>🔔 Send 10-Day Reminders</span>
-              </button>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-lg">
+                ⚡ Auto Email Reminders Active (10d & 2d)
+              </span>
               <button
                 onClick={() => {
                   setCouponsLoading(true);

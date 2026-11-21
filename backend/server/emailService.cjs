@@ -206,7 +206,7 @@ async function sendDeliveredReceiptEmail(order) {
  * Internal dispatcher — tries Resend → Brevo → Gmail SMTP in order.
  * Never exposes credentials in response.
  */
-async function _dispatchEmail(recipients, subject, htmlBody) {
+async function _dispatchEmail(recipients, subject, htmlBody, textBody = '') {
   const user = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim();
   const pass = (process.env.GMAIL_PASS || process.env.SMTP_PASS || '').trim();
 
@@ -220,6 +220,7 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
           to: recipients,
           subject,
           html: htmlBody,
+          text: textBody || undefined,
         },
         {
           headers: {
@@ -240,14 +241,16 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
   if (process.env.BREVO_API_KEY) {
     try {
       const senderEmail = user || 'vishwa81251@gmail.com';
+      const payload = {
+        sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagruha Foods', email: senderEmail },
+        to: recipients.map(email => ({ email })),
+        subject,
+        htmlContent: htmlBody,
+      };
+      if (textBody) payload.textContent = textBody;
       const response = await axios.post(
         'https://api.brevo.com/v3/smtp/email',
-        {
-          sender: { name: process.env.EMAIL_FROM_NAME || 'PJR Swagruha Foods', email: senderEmail },
-          to: recipients.map(email => ({ email })),
-          subject,
-          htmlContent: htmlBody,
-        },
+        payload,
         {
           headers: {
             'api-key': process.env.BREVO_API_KEY,
@@ -286,12 +289,15 @@ async function _dispatchEmail(recipients, subject, htmlBody) {
           tls: { rejectUnauthorized: false },
         });
 
-        const info = await transporter.sendMail({
+        const mailOpts = {
           from: `"${process.env.EMAIL_FROM_NAME || 'PJR Swagruha Foods'}" <${user.trim()}>`,
           to: recipients.join(', '),
           subject,
           html: htmlBody,
-        });
+        };
+        if (textBody) mailOpts.text = textBody;
+
+        const info = await transporter.sendMail(mailOpts);
 
         console.log(`✅ Email sent via Gmail SMTP [${cfg.label}] to:`, recipients.join(', '), info.messageId);
         return { success: true, provider: 'gmail_smtp', recipients, messageId: info.messageId };
@@ -320,5 +326,6 @@ module.exports = {
   sendCustomerEmailReceipt,
   sendOrderReceiptEmail: sendCustomerEmailReceipt,
   sendDeliveredReceiptEmail,
-  generateReceiptHtml
+  generateReceiptHtml,
+  dispatchEmail: _dispatchEmail
 };
