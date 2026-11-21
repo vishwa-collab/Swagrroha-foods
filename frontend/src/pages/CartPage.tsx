@@ -314,13 +314,15 @@ export const CartPage: React.FC = () => {
                   ))}
                 </optgroup>
 
-                <optgroup label="Extended Zone (₹25 Delivery)">
-                  {DELIVERY_AREAS.filter(a => a.tier === 'Extended').map(area => (
-                    <option key={area.id} value={area.id}>
-                      📍 {area.name} — Extended Zone (₹{area.charge} Delivery)
-                    </option>
-                  ))}
-                </optgroup>
+                {DELIVERY_AREAS.some(a => a.tier === 'Extended') && (
+                  <optgroup label="Extended Zone (₹25 Delivery)">
+                    {DELIVERY_AREAS.filter(a => a.tier === 'Extended').map(area => (
+                      <option key={area.id} value={area.id}>
+                        📍 {area.name} — Extended Zone (₹{area.charge} Delivery)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
 
                 <optgroup label="Far Zone (₹30 Delivery)">
                   {DELIVERY_AREAS.filter(a => a.tier === 'Far').map(area => (

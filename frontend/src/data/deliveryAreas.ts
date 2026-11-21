@@ -88,16 +88,14 @@ export const DELIVERY_AREAS: DeliveryArea[] = [
     estimatedDeliveryText: 'Scheduled Delivery (₹20) • 1–2 Days',
   },
 
-  // --- EXTENDED AREAS (₹25) ---
+  // --- FAR AREAS (₹30) ---
   {
     id: 'chaitanyapuri',
     name: 'Chaitanyapuri',
-    tier: 'Extended',
-    charge: 25,
-    estimatedDeliveryText: 'Scheduled Delivery (₹25) • 1–2 Days',
+    tier: 'Far',
+    charge: 30,
+    estimatedDeliveryText: 'Scheduled Delivery (₹30) • 1–2 Days',
   },
-
-  // --- FAR AREAS (₹30) ---
   {
     id: 'dilsukhnagar',
     name: 'Dilsukhnagar',
