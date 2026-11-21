@@ -161,7 +161,7 @@ export const CartPage: React.FC = () => {
             <p className="text-xs text-slate-600 leading-snug">
               {earnedCouponCode ? (
                 <>
-                  Congratulations! Your <strong>5% OFF</strong> reward coupon code <strong className="font-mono font-black text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">{earnedCouponCode}</strong> is ready to use on orders of ₹200 or more.
+                  Congratulations! Your <strong>5% OFF</strong> reward coupon code <strong className="font-mono font-black text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">{earnedCouponCode}</strong> is valid for 6 months and ready to use on orders of ₹200 or more.
                 </>
               ) : (
                 <>
@@ -310,6 +310,14 @@ export const CartPage: React.FC = () => {
                   {DELIVERY_AREAS.filter(a => a.tier === 'Medium').map(area => (
                     <option key={area.id} value={area.id}>
                       📍 {area.name} — Medium Zone (₹{area.charge} Delivery)
+                    </option>
+                  ))}
+                </optgroup>
+
+                <optgroup label="Extended Zone (₹25 Delivery)">
+                  {DELIVERY_AREAS.filter(a => a.tier === 'Extended').map(area => (
+                    <option key={area.id} value={area.id}>
+                      📍 {area.name} — Extended Zone (₹{area.charge} Delivery)
                     </option>
                   ))}
                 </optgroup>

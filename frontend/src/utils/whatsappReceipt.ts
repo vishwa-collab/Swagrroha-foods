@@ -94,7 +94,7 @@ ${itemsList}
 
 📍 Delivery Address: ${address}, ${areaName}
 📅 Scheduled Delivery: ${deliveryDateStr}
-${order.rewardCouponCode ? `\n🎟️ *Your Next Order Gift:* Code *${order.rewardCouponCode}* for *5% OFF* (Min bill ₹200 • 1-time use)` : ''}
+${order.rewardCouponCode ? `\n🎟️ *Your Next Order Gift:* Code *${order.rewardCouponCode}* for *5% OFF* (Min bill ₹200 • Valid for 6 months • 1-time use)` : ''}
 
 Track your order anytime:
 https://swagrroha-foods.vercel.app/track?orderId=${order.orderId}

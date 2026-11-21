@@ -97,8 +97,8 @@ function normalizeOrder(raw: any): PlacedOrder {
     totalAmount,
     deliveryDate: raw.deliveryDate
       ? (typeof raw.deliveryDate === 'string'
-          ? { formattedDate: raw.deliveryDate, dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' }
-          : raw.deliveryDate)
+        ? { formattedDate: raw.deliveryDate, dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' }
+        : raw.deliveryDate)
       : { formattedDate: 'Upcoming Saturday', dayName: 'Saturday', daysUntil: 0, dayOfWeekName: 'Saturday', isSameWeekend: false, orderDayName: '' },
     status: raw.status || 'PLACED',
     paymentStatus: raw.paymentStatus || 'PENDING_VERIFICATION',
@@ -296,12 +296,12 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // Filter orders strictly by status
-  const newOrders     = orders.filter(o => !o.status || o.status === 'PLACED');
-  const activeOrders  = orders.filter(o => ['CONFIRMED', 'PAYMENT_VERIFIED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
+  const newOrders = orders.filter(o => !o.status || o.status === 'PLACED');
+  const activeOrders = orders.filter(o => ['CONFIRMED', 'PAYMENT_VERIFIED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'].includes(o.status));
   const historyOrders = orders.filter(o => o.status === 'DELIVERED');
 
   // ── Dashboard overview computations ──
-  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
   const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
   const todayOrders = orders.filter(o => new Date(o.createdAt || 0) >= todayStart);
   const yesterdayOrders = orders.filter(o => {
@@ -472,9 +472,8 @@ export const AdminDashboard: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customers</span>
             </div>
             <p className="text-2xl font-black text-slate-900">{todayCustomers}</p>
-            <p className={`text-xs font-bold flex items-center gap-0.5 ${
-              pctChange(todayCustomers, yesterdayCustomers) >= 0 ? 'text-emerald-600' : 'text-red-500'
-            }`}>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${pctChange(todayCustomers, yesterdayCustomers) >= 0 ? 'text-emerald-600' : 'text-red-500'
+              }`}>
               {pctChange(todayCustomers, yesterdayCustomers) >= 0 ? '↑' : '↓'}
               {Math.abs(pctChange(todayCustomers, yesterdayCustomers))}% vs yesterday
             </p>
@@ -487,9 +486,8 @@ export const AdminDashboard: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Orders</span>
             </div>
             <p className="text-2xl font-black text-slate-900">{todayOrders.length}</p>
-            <p className={`text-xs font-bold flex items-center gap-0.5 ${
-              pctChange(todayOrders.length, yesterdayOrders.length) >= 0 ? 'text-emerald-600' : 'text-red-500'
-            }`}>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${pctChange(todayOrders.length, yesterdayOrders.length) >= 0 ? 'text-emerald-600' : 'text-red-500'
+              }`}>
               {pctChange(todayOrders.length, yesterdayOrders.length) >= 0 ? '↑' : '↓'}
               {Math.abs(pctChange(todayOrders.length, yesterdayOrders.length))}% vs yesterday
             </p>
@@ -502,9 +500,8 @@ export const AdminDashboard: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg Order</span>
             </div>
             <p className="text-2xl font-black text-slate-900">₹{avgOrderToday}</p>
-            <p className={`text-xs font-bold flex items-center gap-0.5 ${
-              pctChange(avgOrderToday, avgOrderYesterday) >= 0 ? 'text-emerald-600' : 'text-red-500'
-            }`}>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${pctChange(avgOrderToday, avgOrderYesterday) >= 0 ? 'text-emerald-600' : 'text-red-500'
+              }`}>
               {pctChange(avgOrderToday, avgOrderYesterday) >= 0 ? '↑' : '↓'}
               {Math.abs(pctChange(avgOrderToday, avgOrderYesterday))}% vs yesterday
             </p>
@@ -519,9 +516,8 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-2xl font-black text-slate-900">
               {todayRevenue >= 1000 ? `₹${(todayRevenue / 1000).toFixed(1)}K` : `₹${todayRevenue}`}
             </p>
-            <p className={`text-xs font-bold flex items-center gap-0.5 ${
-              pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
-            }`}>
+            <p className={`text-xs font-bold flex items-center gap-0.5 ${pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
+              }`}>
               {pctChange(todayRevenue, yesterdayRevenue) >= 0 ? '↑' : '↓'}
               {Math.abs(pctChange(todayRevenue, yesterdayRevenue))}% vs yesterday
             </p>
@@ -532,9 +528,9 @@ export const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50">
           <span className="text-lg">🏪</span>
           <a href="https://pjrswagrooha.in" target="_blank" rel="noopener noreferrer"
-             className="text-sm font-bold text-blue-600 hover:underline flex-1">www.pjrswagrooha.in</a>
+            className="text-sm font-bold text-blue-600 hover:underline flex-1">www.pjrswagrooha.in</a>
           <a href="https://pjrswagrooha.in" target="_blank" rel="noopener noreferrer"
-             className="text-xs bg-white border border-slate-200 text-slate-600 font-bold px-3 py-1 rounded-xl hover:bg-slate-100 transition-all">↗ Open Site</a>
+            className="text-xs bg-white border border-slate-200 text-slate-600 font-bold px-3 py-1 rounded-xl hover:bg-slate-100 transition-all">↗ Open Site</a>
         </div>
 
         {/* ── Total Sales Chart ── */}
@@ -545,9 +541,8 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-2xl font-black text-slate-900 mt-0.5">
                 {todayRevenue >= 1000 ? `₹${(todayRevenue / 1000).toFixed(1)}K` : `₹${todayRevenue}`}
                 {yesterdayRevenue > 0 && (
-                  <span className={`text-sm font-bold ml-2 ${
-                    pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
-                  }`}>
+                  <span className={`text-sm font-bold ml-2 ${pctChange(todayRevenue, yesterdayRevenue) >= 0 ? 'text-emerald-600' : 'text-red-500'
+                    }`}>
                     {pctChange(todayRevenue, yesterdayRevenue) >= 0 ? '↑' : '↓'} +{Math.abs(pctChange(todayRevenue, yesterdayRevenue))}% vs yesterday
                   </span>
                 )}
@@ -574,7 +569,7 @@ export const AdminDashboard: React.FC = () => {
               {/* X-axis labels */}
               {[0, 4, 8, 12, 16, 20, 23].map(h => {
                 const p = bucketToPoint(todayBuckets, h);
-                const label = h === 0 ? '12AM' : h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
+                const label = h === 0 ? '12AM' : h === 12 ? '12PM' : h > 12 ? `${h - 12}PM` : `${h}AM`;
                 return <text key={h} x={p.x} y={chartH + 15} textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{label}</text>;
               })}
             </svg>
@@ -591,11 +586,10 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTabSection('new')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'new'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'new'
               ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>📦 Start with Fresh Orders</span>
           {newOrders.length > 0 && (
@@ -607,11 +601,10 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTabSection('active')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'active'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'active'
               ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>🔄 Active Orders</span>
           {activeOrders.length > 0 && (
@@ -623,33 +616,30 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTabSection('history')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'history'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'history'
               ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>📜 History / Completed ({historyOrders.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTabSection('route-grouping')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'route-grouping'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'route-grouping'
               ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>🗺️ Route Planning</span>
         </button>
 
         <button
           onClick={() => setActiveTabSection('analytics')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'analytics'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'analytics'
               ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>📊 Analytics &amp; Reviews</span>
         </button>
@@ -664,11 +654,10 @@ export const AdminDashboard: React.FC = () => {
               .then(data => { setCoupons(Array.isArray(data) ? data : []); setCouponsLoading(false); })
               .catch(() => setCouponsLoading(false));
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${
-            activeTabSection === 'coupons'
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all ${activeTabSection === 'coupons'
               ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
+            }`}
         >
           <span>🎟️ Coupons</span>
           {coupons.filter(c => !c.isUsed && c.isActive).length > 0 && (
@@ -894,7 +883,7 @@ export const AdminDashboard: React.FC = () => {
 
                     {/* SIMPLE CENTERED ORDER PIPELINE */}
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                      <OrderPipeline 
+                      <OrderPipeline
                         currentStatus={order.status}
                         interactive={true}
                         disabled={isUpdating}
@@ -910,21 +899,20 @@ export const AdminDashboard: React.FC = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                         {(
                           [
-                            { status: 'PREPARING',        label: 'Preparing',       icon: <ChefHat className="w-4 h-4" />,      activeClass: 'bg-amber-500 text-slate-950 border-amber-600' },
-                            { status: 'READY',            label: 'Ready & Packed',  icon: <Package className="w-4 h-4" />,      activeClass: 'bg-blue-600 text-white border-blue-700' },
-                            { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery',icon: <Truck className="w-4 h-4" />,        activeClass: 'bg-purple-600 text-white border-purple-700' },
-                            { status: 'DELIVERED',        label: 'Mark Delivered',  icon: <CheckCircle2 className="w-4 h-4" />, activeClass: 'bg-emerald-600 text-white border-emerald-700' },
+                            { status: 'PREPARING', label: 'Preparing', icon: <ChefHat className="w-4 h-4" />, activeClass: 'bg-amber-500 text-slate-950 border-amber-600' },
+                            { status: 'READY', label: 'Ready & Packed', icon: <Package className="w-4 h-4" />, activeClass: 'bg-blue-600 text-white border-blue-700' },
+                            { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: <Truck className="w-4 h-4" />, activeClass: 'bg-purple-600 text-white border-purple-700' },
+                            { status: 'DELIVERED', label: 'Mark Delivered', icon: <CheckCircle2 className="w-4 h-4" />, activeClass: 'bg-emerald-600 text-white border-emerald-700' },
                           ] as { status: OrderStageStatus; label: string; icon: React.ReactNode; activeClass: string }[]
                         ).map(({ status, label, icon, activeClass }) => (
                           <button
                             key={status}
                             onClick={() => handleStatusChange(order.orderId, status)}
                             disabled={isUpdating}
-                            className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${
-                              order.status === status
+                            className={`p-3 rounded-2xl font-black flex items-center justify-center gap-1.5 transition-all border ${order.status === status
                                 ? `${activeClass} shadow-md scale-105`
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 disabled:opacity-50'
-                            }`}
+                              }`}
                           >
                             {isUpdating && order.status === status
                               ? <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1210,7 +1198,7 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Middle Section: Top Products & Area Distribution */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
+
               {/* Top Products */}
               <div className="bg-white rounded-3xl p-6 shadow-swiggy border border-slate-100 space-y-4">
                 <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1224,9 +1212,8 @@ export const AdminDashboard: React.FC = () => {
                     {topProducts.map(([name, data], idx) => (
                       <div key={name} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-slate-50 border border-slate-100">
                         <div className="flex items-center gap-3">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs ${
-                            idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : 'bg-orange-100 text-orange-900'
-                          }`}>
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs ${idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : 'bg-orange-100 text-orange-900'
+                            }`}>
                             #{idx + 1}
                           </span>
                           <div>
@@ -1307,9 +1294,8 @@ export const AdminDashboard: React.FC = () => {
                         {[1, 2, 3, 4, 5].map(s => (
                           <Star
                             key={s}
-                            className={`w-4 h-4 ${
-                              s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
-                            }`}
+                            className={`w-4 h-4 ${s <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -1333,11 +1319,11 @@ export const AdminDashboard: React.FC = () => {
 
       {/* ── PAYMENT PROOF SCREENSHOT LIGHTBOX MODAL ── */}
       {activeScreenshot && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all"
           onClick={() => setActiveScreenshot(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200 flex flex-col animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1447,19 +1433,36 @@ export const AdminDashboard: React.FC = () => {
                 Auto-generated after 1 delivered order
               </span>
             </h2>
-            <button
-              onClick={() => {
-                setCouponsLoading(true);
-                fetch(`${API_BASE}/api/coupons`)
-                  .then(r => r.json())
-                  .then(data => { setCoupons(Array.isArray(data) ? data : []); setCouponsLoading(false); })
-                  .catch(() => setCouponsLoading(false));
-              }}
-              className="flex items-center gap-1.5 text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${couponsLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    showToast('⏳ Checking & sending 10-day reminders via Gmail...');
+                    const r = await fetch(`${API_BASE}/api/coupons/send-10day-reminders`);
+                    const d = await r.json();
+                    showToast(d.message || `Sent ${d.sentCount} reminders via Gmail.`);
+                  } catch (e) {
+                    showToast('❌ Failed sending reminders.');
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl transition-all shadow-sm"
+              >
+                <span>🔔 Send 10-Day Reminders</span>
+              </button>
+              <button
+                onClick={() => {
+                  setCouponsLoading(true);
+                  fetch(`${API_BASE}/api/coupons`)
+                    .then(r => r.json())
+                    .then(data => { setCoupons(Array.isArray(data) ? data : []); setCouponsLoading(false); })
+                    .catch(() => setCouponsLoading(false));
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${couponsLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* How it works banner */}
@@ -1470,7 +1473,7 @@ export const AdminDashboard: React.FC = () => {
               <li>Generates a unique coupon code (e.g., <code className="font-mono bg-amber-100 px-1 rounded">THANK4114ABCD</code>)</li>
               <li>Sends it to the customer via email with instructions</li>
               <li>Gives <strong>5% off</strong> their next order (min bill ₹200) — single use only</li>
-              <li>Expires in 60 days</li>
+              <li>Expires in minimum 6 months (180 days)</li>
             </ol>
           </div>
 
@@ -1578,11 +1581,10 @@ export const AdminDashboard: React.FC = () => {
             ) : (
               <div className="space-y-2">
                 {coupons.map((c: any, i: number) => (
-                  <div key={c.code || i} className={`flex items-center justify-between p-3 rounded-2xl border text-xs ${
-                    c.isUsed ? 'bg-slate-50 border-slate-100 opacity-60' :
-                    !c.isActive ? 'bg-red-50 border-red-100' :
-                    'bg-emerald-50 border-emerald-100'
-                  }`}>
+                  <div key={c.code || i} className={`flex items-center justify-between p-3 rounded-2xl border text-xs ${c.isUsed ? 'bg-slate-50 border-slate-100 opacity-60' :
+                      !c.isActive ? 'bg-red-50 border-red-100' :
+                        'bg-emerald-50 border-emerald-100'
+                    }`}>
                     <div className="flex items-center gap-3">
                       <div>
                         <p className="font-black font-mono text-sm text-slate-900 tracking-widest">{c.code}</p>
@@ -1601,11 +1603,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Status badge */}
-                      <span className={`font-black px-2.5 py-1 rounded-full ${
-                        c.isUsed ? 'bg-slate-200 text-slate-600' :
-                        !c.isActive ? 'bg-red-100 text-red-700' :
-                        'bg-emerald-100 text-emerald-700'
-                      }`}>
+                      <span className={`font-black px-2.5 py-1 rounded-full ${c.isUsed ? 'bg-slate-200 text-slate-600' :
+                          !c.isActive ? 'bg-red-100 text-red-700' :
+                            'bg-emerald-100 text-emerald-700'
+                        }`}>
                         {c.isUsed ? '✓ Used' : c.isActive ? '● Active' : '○ Disabled'}
                       </span>
                       {/* Toggle enable/disable */}
@@ -1617,11 +1618,10 @@ export const AdminDashboard: React.FC = () => {
                             setCoupons(await r2.json());
                             showToast(`Coupon ${c.code} ${c.isActive ? 'disabled' : 'enabled'}.`);
                           }}
-                          className={`px-2.5 py-1 rounded-xl font-bold transition-all ${
-                            c.isActive
+                          className={`px-2.5 py-1 rounded-xl font-bold transition-all ${c.isActive
                               ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                               : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          }`}
+                            }`}
                         >
                           {c.isActive ? 'Disable' : 'Enable'}
                         </button>

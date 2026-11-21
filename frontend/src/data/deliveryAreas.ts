@@ -1,8 +1,8 @@
 export interface DeliveryArea {
   id: string;
   name: string;
-  tier: 'Near' | 'Medium' | 'Far';
-  charge: number;       // ₹10 (Near), ₹20 (Medium), ₹30 (Far)
+  tier: 'Near' | 'Medium' | 'Extended' | 'Far';
+  charge: number;       // ₹10 (Near), ₹20 (Medium), ₹25 (Extended), ₹30 (Far)
   estimatedDeliveryText: string;
 }
 
@@ -88,7 +88,23 @@ export const DELIVERY_AREAS: DeliveryArea[] = [
     estimatedDeliveryText: 'Scheduled Delivery (₹20) • 1–2 Days',
   },
 
+  // --- EXTENDED AREAS (₹25) ---
+  {
+    id: 'chaitanyapuri',
+    name: 'Chaitanyapuri',
+    tier: 'Extended',
+    charge: 25,
+    estimatedDeliveryText: 'Scheduled Delivery (₹25) • 1–2 Days',
+  },
+
   // --- FAR AREAS (₹30) ---
+  {
+    id: 'dilsukhnagar',
+    name: 'Dilsukhnagar',
+    tier: 'Far',
+    charge: 30,
+    estimatedDeliveryText: 'Scheduled Delivery (₹30) • 1–2 Days',
+  },
   {
     id: 'manneguda',
     name: 'Manneguda',

@@ -73,6 +73,16 @@ const orderLimiter = rateLimit({
 
 app.use(generalLimiter);
 
+// ── Autonomous Passive Trigger: Automatically checks & sends 10-day reminders on schedule (No human action needed)
+app.use((req, res, next) => {
+  if (req.method === 'GET') {
+    setImmediate(() => {
+      autoTriggerCouponCheck().catch(() => {});
+    });
+  }
+  next();
+});
+
 // ── MongoDB Schema & Connection Setup
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
 let isMongoConnected = false;
@@ -127,9 +137,12 @@ const couponSchema = new mongoose.Schema({
   usedInOrderId: String,
   usedAt: Date,
   isSingleUse: { type: Boolean, default: true },
+  createdForName: String,
   createdForPhone: String,
   createdForEmail: String,
   createdForOrderId: String,
+  reminder10DaysSent: { type: Boolean, default: false },
+  reminder10DaysSentAt: Date,
   expiresAt: Date,
   createdAt: { type: Date, default: Date.now },
 });
@@ -140,7 +153,7 @@ const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 const LOYALTY_COUPON_DISCOUNT_VALUE = 5;   // 5% off
 const LOYALTY_COUPON_DISCOUNT_TYPE = 'percent';
 const LOYALTY_COUPON_MIN_ORDER = 200;       // Minimum bill of ₹200 required
-const LOYALTY_COUPON_VALIDITY_DAYS = 60;   // valid for 60 days (single use)
+const LOYALTY_COUPON_VALIDITY_DAYS = 180;   // valid for minimum 6 months (180 days, single use)
 
 // Pre-seeded 1-time welcome coupon (5% off on min bill ₹200)
 const WELCOME_COUPON = {
@@ -181,6 +194,7 @@ async function generateNewOrderCoupon(orderObj) {
       isActive: true,
       isUsed: false,
       isSingleUse: true,
+      createdForName: (orderObj.customer?.name || '').trim(),
       createdForPhone: customerPhone,
       createdForEmail: customerEmail,
       createdForOrderId: orderObj.orderId,
@@ -236,6 +250,7 @@ async function generateLoyaltyCoupon(orderObj) {
       minOrderValue: LOYALTY_COUPON_MIN_ORDER,
       isActive: true,
       isUsed: false,
+      createdForName: (orderObj.customer?.name || '').trim(),
       createdForPhone: customerPhone,
       createdForEmail: customerEmail,
       createdForOrderId: orderObj.orderId,
@@ -285,7 +300,7 @@ async function sendCouponRewardEmail({ name, email, phone, couponCode, discountV
       auth: { user: gmailUser, pass: gmailPass },
     });
     const discountText = discountType === 'percent' ? `${discountValue}%` : `₹${discountValue}`;
-    const expiry = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '60 days';
+    const expiry = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '6 months';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Your Reward Coupon - PJR Swagruha Foods</title></head>
 <body style="margin:0;padding:20px;background:#fef3c7;font-family:Segoe UI,Arial,sans-serif;">
 <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.10);border:2px solid #f59e0b;">
@@ -324,6 +339,202 @@ async function sendCouponRewardEmail({ name, email, phone, couponCode, discountV
     console.log(`✅ Coupon reward email sent to ${email} with code ${couponCode}`);
   } catch (e) {
     console.error('❌ Coupon email send failed:', e.message);
+  }
+}
+
+// ── Send 10-Day Coupon Expiry Reminder via Gmail (Selected Format A + Clean HTML) ──
+async function send10DayExpiryReminderEmail({ name, email, couponCode, discountValue, discountType, minOrderValue, expiresAt }) {
+  try {
+    const nodemailer = require('nodemailer');
+    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const gmailPass = process.env.GMAIL_PASS || process.env.SMTP_PASS;
+    if (!gmailUser || !gmailPass) {
+      console.log('⚠️ Email not configured, skipping 10-day coupon reminder');
+      return false;
+    }
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
+    });
+    const customerName = name || 'Valued Customer';
+    const expiry = expiresAt
+      ? new Date(expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'in 10 days';
+    const minBill = minOrderValue || 200;
+
+    const text = `Dear ${customerName},
+
+We hope you enjoyed your previous order with PJR Swagruha Foods!
+
+This is a friendly reminder that your 5% OFF reward coupon will expire in 10 days on ${expiry}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎟️ YOUR COUPON CODE: ${couponCode}
+💰 Discount: Flat 5% OFF on your entire order
+🛒 Minimum Order Value: ₹${minBill}
+⏰ Valid Until: ${expiry} (10 days remaining)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Popular Homemade Items You Can Order Today:
+* Traditional Snacks: Crunchy Sakinalu, Murukulu, Hot Mixture, Chegodilu
+* Homemade Pickles: Authentic Chicken Pickle & Mutton Pickle
+* Pure Ghee Sweets: Potharekulu, Sunnundallu, Laddu, Gujiya
+
+How to Redeem in 30 Seconds:
+1. Visit our website: https://swagrroha-foods.vercel.app
+2. Add your favorite items to the cart (Min bill ₹${minBill})
+3. Enter your coupon code ${couponCode} in the cart
+4. Select your delivery area for fresh doorstep delivery in 1–2 days!
+
+👉 Order Now: https://swagrroha-foods.vercel.app
+
+Warm regards,
+PJR Swagruha Foods Team
+📞 Phone: +91 8125154114
+✉️ Email: vishwa81251@gmail.com
+📍 Route: Hayathnagar ➔ LB Nagar ➔ Chaitanyapuri ➔ Dilsukhnagar ➔ Ibrahimpatnam`;
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Your Coupon is Expiring in 10 Days - PJR Swagruha Foods</title></head>
+<body style="margin:0;padding:20px;background:#fef7ed;font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;">
+<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+  <div style="background:#0f172a;padding:28px 24px;text-align:center;">
+    <span style="display:inline-block;background:#ea580c;color:#fff;font-size:11px;font-weight:800;padding:4px 14px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;">⏳ 10 DAYS REMAINING</span>
+    <h1 style="margin:10px 0 4px;font-size:26px;color:#fb923c;font-weight:900;">PJR Swagruha Foods</h1>
+    <p style="margin:0;font-size:13px;color:#94a3b8;">Authentic Homemade Telangana Delicacies</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <h2 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 12px;">Hi ${customerName},</h2>
+    <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 20px;">We hope you enjoyed your previous order with PJR Swagruha Foods! This is a friendly reminder that your <strong>5% OFF reward coupon</strong> will expire in <strong>10 days</strong> on <strong>${expiry}</strong>.</p>
+    <div style="background:#fff7ed;border:2px dashed #ea580c;border-radius:14px;padding:20px;text-align:center;margin:0 auto 24px;">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:800;color:#c2410c;letter-spacing:1px;text-transform:uppercase;">Your Coupon Code</p>
+      <p style="margin:0 0 8px;font-size:30px;font-weight:900;color:#c2410c;letter-spacing:3px;font-family:monospace;">${couponCode}</p>
+      <p style="margin:0;font-size:13px;font-weight:700;color:#9a3412;">5% OFF • Min. Bill ₹${minBill}</p>
+      <p style="margin:6px 0 0;font-size:12px;color:#dc2626;font-weight:700;">Valid Until: ${expiry} (10 days remaining)</p>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:24px;font-size:13px;line-height:1.7;color:#334155;">
+      <strong style="color:#0f172a;">Popular Homemade Items You Can Order Today:</strong><br>
+      • <strong>Traditional Snacks:</strong> Crunchy Sakinalu, Murukulu, Hot Mixture, Chegodilu<br>
+      • <strong>Homemade Pickles:</strong> Authentic Chicken Pickle &amp; Mutton Pickle<br>
+      • <strong>Pure Ghee Sweets:</strong> Potharekulu, Sunnundallu, Laddu, Gujiya<br>
+      • <strong>Scheduled 1–2 Days Delivery:</strong> Hayathnagar ➔ LB Nagar ➔ Chaitanyapuri ➔ Dilsukhnagar ➔ Ibrahimpatnam
+    </div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <a href="https://swagrroha-foods.vercel.app" style="display:inline-block;background:#ea580c;color:#fff;text-decoration:none;font-size:15px;font-weight:800;padding:14px 32px;border-radius:50px;">Order Now &amp; Apply Coupon</a>
+    </div>
+  </div>
+  <div style="background:#f1f5f9;padding:16px 24px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0;">
+    <p style="margin:0 0 4px;font-weight:700;color:#334155;">PJR Swagruha Foods Team</p>
+    <p style="margin:0;">📞 Phone: +91 8125154114 • ✉️ Email: vishwa81251@gmail.com</p>
+  </div>
+</div>
+</body></html>`;
+
+    await transporter.sendMail({
+      from: `"PJR Swagruha Foods" <${gmailUser}>`,
+      to: email,
+      subject: `⏳ Only 10 Days Left! Your 5% OFF coupon is waiting at PJR Swagruha Foods`,
+      text,
+      html,
+    });
+    console.log(`✅ 10-day coupon expiry reminder sent to ${email} for code ${couponCode}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ Failed sending 10-day coupon reminder to ${email}:`, err.message);
+    return false;
+  }
+}
+
+// ── Automated Coupon Expiry Check & Reminder Job ──
+async function checkAndSend10DayCouponReminders() {
+  try {
+    console.log('🔍 Checking for coupons expiring in 10 days...');
+    const now = new Date();
+    let pendingCoupons = [];
+
+    if (isMongoConnected) {
+      pendingCoupons = await Coupon.find({
+        isActive: true,
+        isUsed: false,
+        reminder10DaysSent: { $ne: true },
+        expiresAt: { $exists: true, $ne: null }
+      });
+    } else {
+      pendingCoupons = coupons.filter(c => c.isActive && !c.isUsed && !c.reminder10DaysSent && c.expiresAt);
+    }
+
+    let sentCount = 0;
+    for (const c of pendingCoupons) {
+      const expDate = new Date(c.expiresAt);
+      const diffMs = expDate.getTime() - now.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      // Trigger if coupon is within 10 days of expiring (between 0 and 10.5 days remaining)
+      if (diffDays > 0 && diffDays <= 10.5) {
+        let recipientEmail = (c.createdForEmail || '').trim();
+        let recipientName = (c.createdForName || '').trim();
+
+        // If email is missing on coupon, look up customer from the associated order
+        if (!recipientEmail && c.createdForOrderId) {
+          try {
+            const ord = isMongoConnected
+              ? await Order.findOne({ orderId: c.createdForOrderId }).lean()
+              : orders.find(o => o.orderId === c.createdForOrderId);
+            if (ord?.customer?.email) {
+              recipientEmail = ord.customer.email.trim();
+              recipientName = recipientName || ord.customer.name || '';
+            }
+          } catch (e) { }
+        }
+
+        if (recipientEmail) {
+          const sent = await send10DayExpiryReminderEmail({
+            name: recipientName,
+            email: recipientEmail,
+            couponCode: c.code,
+            discountValue: c.discountValue,
+            discountType: c.discountType,
+            minOrderValue: c.minOrderValue,
+            expiresAt: c.expiresAt,
+          });
+
+          if (sent) {
+            sentCount++;
+            if (isMongoConnected) {
+              await Coupon.updateOne(
+                { _id: c._id },
+                { $set: { reminder10DaysSent: true, reminder10DaysSentAt: new Date() } }
+              );
+            } else {
+              c.reminder10DaysSent = true;
+              c.reminder10DaysSentAt = new Date();
+            }
+          }
+        }
+      }
+    }
+
+    console.log(`✅ Coupon reminder check complete. ${sentCount} reminders sent.`);
+    return sentCount;
+  } catch (err) {
+    console.error('❌ Error during coupon reminder check:', err.message);
+    return 0;
+  }
+}
+
+// ── Multi-tier Automatic Trigger (Runs completely in background, 100% automated) ──
+let lastCouponCheckTime = 0;
+const COUPON_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // Auto-check every 6 hours
+
+async function autoTriggerCouponCheck() {
+  const now = Date.now();
+  if (now - lastCouponCheckTime < COUPON_CHECK_INTERVAL_MS) {
+    return;
+  }
+  lastCouponCheckTime = now;
+  try {
+    await checkAndSend10DayCouponReminders();
+  } catch (e) {
+    console.error('Auto coupon check error:', e.message);
   }
 }
 
@@ -1205,7 +1416,7 @@ app.post('/api/coupons', async (req, res) => {
       minOrderValue: Number(minOrderValue) || 0,
       isActive: true,
       isUsed: false,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       createdAt: new Date(),
     };
     if (isMongoConnected) {
@@ -1257,7 +1468,26 @@ app.delete('/api/coupons/:code', async (req, res) => {
 
 // ── END COUPON ROUTES ──────────────────────────────────────────
 
+// POST & GET /api/coupons/send-10day-reminders — Trigger 10-day reminder job
+app.all('/api/coupons/send-10day-reminders', async (req, res) => {
+  try {
+    const sentCount = await checkAndSend10DayCouponReminders();
+    return res.json({ success: true, message: `Checked coupons. Sent ${sentCount} reminders via Gmail.`, sentCount });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`PJR Swagrooha Foods API running on port ${PORT}`);
+
+  // 100% Autonomous Coupon Expiry Reminder Schedule (Runs without any human action)
+  setTimeout(() => {
+    autoTriggerCouponCheck().catch(err => console.error('Startup reminder check error:', err));
+  }, 15 * 1000);
+
+  setInterval(() => {
+    autoTriggerCouponCheck().catch(err => console.error('Scheduled reminder check error:', err));
+  }, 6 * 60 * 60 * 1000);
 });

@@ -111,7 +111,7 @@ export const Footer: React.FC = () => {
                 <span className="text-emerald-300 font-bold">{slotOptions.slot1.formattedDate}</span>
               </div>
               <div className="text-[10px] text-slate-400">
-                Route: Hayathnagar ➔ LB Nagar ➔ Ibrahimpatnam
+                Route: Hayathnagar ➔ LB Nagar ➔ Dilsukhnagar ➔ Ibrahimpatnam
               </div>
             </div>
           </div>

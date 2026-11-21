@@ -308,7 +308,7 @@ export const ConfirmationPage: React.FC = () => {
             </button>
           </div>
           <p className="text-[11px] text-amber-200/90 font-medium">
-            🔒 Single-use only • Valid on minimum bill of ₹200 • Automatically saved in cart for next time!
+            🔒 Single-use only • Valid for 6 months • Valid on minimum bill of ₹200 • Automatically saved in cart for next time!
           </p>
         </div>
       )}
